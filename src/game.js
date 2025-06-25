@@ -144,7 +144,14 @@ export class Game {
         const formationSpacing = this.mapManager.tileSize * 2.5;
         this.formationManager = new FormationManager(5, 5, formationSpacing);
         this.eventManager.subscribe('formation_assign_request', d => {
-            this.formationManager.assign(d.slotIndex, d.entityId);
+            if (d.squadId) {
+                const squad = this.squadManager.getSquad(d.squadId);
+                if (squad) {
+                    squad.members.forEach(id => this.formationManager.assign(d.slotIndex, id));
+                }
+            } else {
+                this.formationManager.assign(d.slotIndex, d.entityId);
+            }
             this.uiManager?.createSquadManagementUI();
         });
         this.saveLoadManager = new SaveLoadManager();

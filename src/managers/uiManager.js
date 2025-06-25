@@ -913,6 +913,12 @@ export class UIManager {
             panel.className = 'squad-panel';
             panel.dataset.squadId = sq.id === 'unassigned' ? '' : sq.id;
             panel.textContent = sq.name;
+            if (sq.id !== 'unassigned') {
+                panel.draggable = true;
+                panel.addEventListener('dragstart', e => {
+                    e.dataTransfer.setData('text/plain', `squad:${sq.id}`);
+                });
+            }
 
             if (sq.id !== 'unassigned') {
                 const strategyContainer = document.createElement('div');
@@ -980,17 +986,23 @@ export class UIManager {
                     const idx = orientLeft
                         ? (cols - 1 - c) * rows + r
                         : c * rows + r;
-                    const id = this.formationManager.slots[idx];
+                    const ids = Array.from(this.formationManager.slots[idx] || []);
 
                     const cell = document.createElement('div');
                     cell.className = 'formation-cell';
                     cell.dataset.index = idx;
-                    cell.textContent = id ? id : idx + 1;
+                    cell.textContent = ids.length ? ids.join(',') : idx + 1;
                     cell.addEventListener('dragover', e => e.preventDefault());
                     cell.addEventListener('drop', e => {
                         e.preventDefault();
-                        const entityId = e.dataTransfer.getData('text/plain');
-                        this.eventManager?.publish('formation_assign_request', { entityId, slotIndex: idx });
+                        const data = e.dataTransfer.getData('text/plain');
+                        if (data.startsWith('squad:')) {
+                            const squadId = data.split(':')[1];
+                            this.eventManager?.publish('formation_assign_request', { squadId, slotIndex: idx });
+                        } else {
+                            const entityId = data;
+                            this.eventManager?.publish('formation_assign_request', { entityId, slotIndex: idx });
+                        }
                     });
                     grid.appendChild(cell);
                 }

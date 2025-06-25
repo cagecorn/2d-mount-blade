@@ -5,20 +5,23 @@ export class FormationManager {
         this.cols = Math.max(1, Math.floor(Number(cols) || 5));
         this.tileSize = tileSize;
         this.orientation = orientation; // LEFT or RIGHT
-        this.slots = Array(this.rows * this.cols).fill(null); // entity ids
+        this.slots = Array.from({ length: this.rows * this.cols }, () => new Set());
     }
 
     resize(rows, cols) {
         this.rows = Math.max(1, Math.floor(Number(rows) || this.rows));
         this.cols = Math.max(1, Math.floor(Number(cols) || this.cols));
-        this.slots = Array(this.rows * this.cols).fill(null);
+        this.slots = Array.from({ length: this.rows * this.cols }, () => new Set());
     }
 
     assign(slotIndex, entityId) {
         if (slotIndex < 0 || slotIndex >= this.slots.length) return;
-        const currentIndex = this.slots.indexOf(entityId);
-        if (currentIndex !== -1) this.slots[currentIndex] = null;
-        this.slots[slotIndex] = entityId;
+        this.slots.forEach(set => set.delete(entityId));
+        this.slots[slotIndex].add(entityId);
+    }
+
+    findSlotIndex(entityId) {
+        return this.slots.findIndex(set => set.has(entityId));
     }
 
     getSlotPosition(slotIndex) {
@@ -39,16 +42,16 @@ export class FormationManager {
     }
 
     apply(origin, entityMap) {
-        this.slots.forEach((id, idx) => {
-            if (!id) return;
-            const ent = entityMap[id];
-            if (ent) {
-                const off = this.getSlotPosition(idx);
-                const randomOffsetX = (Math.random() - 0.5) * this.tileSize * 0.5;
-                const randomOffsetY = (Math.random() - 0.5) * this.tileSize * 0.5;
-                ent.x = origin.x + off.x + randomOffsetX;
-                ent.y = origin.y + off.y + randomOffsetY;
-            }
+        this.slots.forEach((set, idx) => {
+            if (!set) return;
+            const off = this.getSlotPosition(idx);
+            set.forEach(id => {
+                const ent = entityMap[id];
+                if (ent) {
+                    ent.x = origin.x + off.x;
+                    ent.y = origin.y + off.y;
+                }
+            });
         });
     }
 }
