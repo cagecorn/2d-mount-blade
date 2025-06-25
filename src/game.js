@@ -9,7 +9,7 @@ import { uiManager } from './managers/uiManager.js';
 const TILE_SIZE = 64;
 
 class Game {
-    constructor(canvas) {
+    constructor(canvas = document.getElementById('gameCanvas')) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
         this.entities = {};
@@ -113,6 +113,3 @@ class Game {
     }
 }
 
-const canvas = document.getElementById('gameCanvas');
-const game = new Game(canvas);
-game.start();

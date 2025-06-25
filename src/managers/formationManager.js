@@ -1,11 +1,12 @@
 import { eventManager } from './eventManager.js';
 
 class FormationManager {
-    constructor(cols, rows, tileSize) {
-        this.cols = cols;
-        this.rows = rows;
+    constructor(cols = 5, rows = 5, tileSize = 64, orientation = 'LEFT') {
+        this.cols = Math.max(1, Math.floor(cols));
+        this.rows = Math.max(1, Math.floor(rows));
         this.tileSize = tileSize;
-        this.slots = new Array(cols * rows).fill(null);
+        this.orientation = orientation; // LEFT or RIGHT
+        this.slots = new Array(this.cols * this.rows).fill(null);
 
         eventManager.subscribe('formation_assign_request', this.handleAssignSquad.bind(this));
     }
@@ -24,10 +25,20 @@ class FormationManager {
         this.handleAssignSquad({ squadId, slotIndex });
     }
 
-    getSlotPosition(index) {
-        const x = (index % this.cols) * this.tileSize;
-        const y = Math.floor(index / this.cols) * this.tileSize;
-        return { x, y };
+    getSlotPosition(slotIndex) {
+        if (slotIndex < 0 || slotIndex >= this.slots.length) {
+            return { x: 0, y: 0 };
+        }
+        const row = Math.floor(slotIndex / this.cols);
+        const col = slotIndex % this.cols;
+
+        const centerRow = Math.floor(this.rows / 2);
+        const centerCol = Math.floor(this.cols / 2);
+        const orientationMult = this.orientation === 'RIGHT' ? -1 : 1;
+
+        const relativeX = (col - centerCol) * this.tileSize * orientationMult;
+        const relativeY = (row - centerRow) * this.tileSize;
+        return { x: relativeX, y: relativeY };
     }
 
     apply(origin, entityMap, squadManager) {
