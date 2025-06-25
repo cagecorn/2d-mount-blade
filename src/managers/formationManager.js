@@ -1,55 +1,52 @@
-export class FormationManager {
-    constructor(rows = 5, cols = 5, tileSize = 192, orientation = 'LEFT') {
-        // sanitize parameters to avoid invalid array length errors
-        this.rows = Math.max(1, Math.floor(Number(rows) || 5));
-        this.cols = Math.max(1, Math.floor(Number(cols) || 5));
+import { eventManager } from './eventManager.js';
+
+class FormationManager {
+    constructor(cols, rows, tileSize) {
+        this.cols = cols;
+        this.rows = rows;
         this.tileSize = tileSize;
-        this.orientation = orientation; // LEFT or RIGHT
-        this.slots = Array(this.rows * this.cols).fill(null); // entity ids
+        this.slots = new Array(cols * rows).fill(null);
+
+        eventManager.subscribe('formation_assign_request', this.handleAssignSquad.bind(this));
     }
 
-    resize(rows, cols) {
-        this.rows = Math.max(1, Math.floor(Number(rows) || this.rows));
-        this.cols = Math.max(1, Math.floor(Number(cols) || this.cols));
-        this.slots = Array(this.rows * this.cols).fill(null);
-    }
-
-    assign(slotIndex, entityId) {
-        if (slotIndex < 0 || slotIndex >= this.slots.length) return;
-        const currentIndex = this.slots.indexOf(entityId);
-        if (currentIndex !== -1) this.slots[currentIndex] = null;
-        this.slots[slotIndex] = entityId;
-    }
-
-    getSlotPosition(slotIndex) {
-        if (slotIndex < 0 || slotIndex >= this.slots.length) {
-            return { x: 0, y: 0 };
+    handleAssignSquad({ squadId, slotIndex }) {
+        const existingIndex = this.slots.findIndex(s => s && s.id === squadId);
+        if (existingIndex > -1) {
+            this.slots[existingIndex] = null;
         }
-        const row = Math.floor(slotIndex / this.cols);
-        const col = slotIndex % this.cols;
-
-        const centerRow = Math.floor(this.rows / 2);
-        const centerCol = Math.floor(this.cols / 2);
-        const orientationMultiplier = this.orientation === 'RIGHT' ? -1 : 1;
-
-        const relativeX = (col - centerCol) * this.tileSize * orientationMultiplier;
-        const relativeY = (row - centerRow) * this.tileSize;
-
-        return { x: relativeX, y: relativeY };
+        this.slots[slotIndex] = { id: squadId };
+        console.log(`${squadId} 분대를 슬롯 ${slotIndex}에 배치 요청`);
+        eventManager.publish('formation_data_changed', { slots: this.slots });
     }
 
-    apply(origin, entityMap) {
-        this.slots.forEach((id, idx) => {
-            if (!id) return;
-            const ent = entityMap[id];
-            if (ent) {
-                const off = this.getSlotPosition(idx);
-                const randomOffsetX = (Math.random() - 0.5) * this.tileSize * 0.5;
-                const randomOffsetY = (Math.random() - 0.5) * this.tileSize * 0.5;
-                ent.x = origin.x + off.x + randomOffsetX;
-                ent.y = origin.y + off.y + randomOffsetY;
-            }
+    assign(slotIndex, squadId) {
+        this.handleAssignSquad({ squadId, slotIndex });
+    }
+
+    getSlotPosition(index) {
+        const x = (index % this.cols) * this.tileSize;
+        const y = Math.floor(index / this.cols) * this.tileSize;
+        return { x, y };
+    }
+
+    apply(origin, entityMap, squadManager) {
+        this.slots.forEach((squadData, idx) => {
+            if (!squadData) return;
+            const squad = squadManager.getSquad(squadData.id);
+            if (!squad || !squad.members) return;
+            const basePos = this.getSlotPosition(idx);
+            squad.members.forEach(entityId => {
+                const ent = entityMap[entityId];
+                if (ent) {
+                    const randomOffsetX = (Math.random() - 0.5) * this.tileSize * 0.8;
+                    const randomOffsetY = (Math.random() - 0.5) * this.tileSize * 0.8;
+                    ent.x = origin.x + basePos.x + randomOffsetX;
+                    ent.y = origin.y + basePos.y + randomOffsetY;
+                }
+            });
         });
     }
 }
 
+export { FormationManager };
