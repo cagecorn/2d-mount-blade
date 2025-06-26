@@ -107,7 +107,12 @@ export class EffectManager {
         }
     }
 
-    update(entities) {
+    update(arg1, context) {
+        // tests에서는 엔티티 배열을 직접 전달하므로 그대로 사용
+        const entities = Array.isArray(arg1)
+            ? arg1
+            : Array.from(context.entityManager.entities.values());
+
         entities.forEach(entity => {
             if (entity.effects.length === 0) return;
 

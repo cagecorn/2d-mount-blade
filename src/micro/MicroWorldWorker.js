@@ -26,7 +26,14 @@ export class MicroWorldWorker extends EventEmitter {
         });
     }
 
-    update(items) {
+    update(arg1, arg2) {
+        // 기존 테스트 호환을 위해 배열이 전달되면 그대로 사용한다.
+        let items = Array.isArray(arg1) ? arg1 : null;
+        // 게임 루프에서 호출될 경우 (deltaTime, context) 형태다.
+        if (!items && arg2 && arg2.itemManager) {
+            items = arg2.itemManager.items;
+        }
+
         return new Promise((resolve) => {
             const listener = (event) => {
                 const msg = event.data;

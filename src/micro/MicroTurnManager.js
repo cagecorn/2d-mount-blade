@@ -7,7 +7,7 @@ export class MicroTurnManager {
      * 모든 아이템을 순회하며 미시 세계 관련 상태를 업데이트합니다.
      * @param {Item[]} allItems - 게임 내 존재하는 모든 아이템의 배열
      */
-    update(allItems) {
+    update(allItems = []) {
         this.turn++;
 
         for (const item of allItems) {
