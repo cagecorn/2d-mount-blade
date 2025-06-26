@@ -40,6 +40,21 @@ import { PossessionAIManager } from './possessionAIManager.js';
 import { CombatDecisionEngine } from './ai/CombatDecisionEngine.js';
 import { ReputationManager } from './ReputationManager.js';
 import { EntityManager } from './entityManager.js';
+import { EventManager } from './eventManager.js';
+import { CombatManager } from './combatManager.js';
+import { TurnManager } from './turnManager.js';
+import { InputHandler } from './inputHandler.js';
+import { SaveLoadManager } from './saveLoadManager.js';
+import { InventoryManager } from './inventoryManager.js';
+import { PathfindingManager } from './pathfindingManager.js';
+import { TagManager } from './tagManager.js';
+import { LayerManager } from './layerManager.js';
+import { CombatLogManager, SystemLogManager } from './logManager.js';
+import { CinematicManager } from './cinematicManager.js';
+import { FogManager } from './fogManager.js';
+import { AquariumManager } from './aquariumManager.js';
+import { ItemTracker } from './itemTracker.js';
+import { NarrativeManager } from './narrativeManager.js';
 import GuidelineLoader from './guidelineLoader.js';
 import { TooltipManager } from './tooltipManager.js';
 // DataRecorder is only needed in a Node.js environment so we lazy-load it
@@ -94,5 +109,21 @@ export {
     GuidelineLoader,
     StatusEffectsManager,
     TooltipManager,
+    CombatManager,
+    EventManager,
+    TurnManager,
+    InputHandler,
+    SaveLoadManager,
+    InventoryManager,
+    PathfindingManager,
+    TagManager,
+    LayerManager,
+    CombatLogManager,
+    SystemLogManager,
+    CinematicManager,
+    FogManager,
+    AquariumManager,
+    ItemTracker,
+    NarrativeManager,
     DataRecorder,
 };
