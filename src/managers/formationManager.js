@@ -34,14 +34,17 @@ export class FormationManager {
 
         const centerRow = Math.floor(this.rows / 2);
         const centerCol = Math.floor(this.cols / 2);
-        const orientationMultiplier = this.orientation === 'RIGHT' ? -1 : 1;
+        // orientation에 따라 x 좌표가 시각적으로 보이는 방향과 일치하도록 조정
+        let orientedCol = this.orientation === 'RIGHT' ? (this.cols - 1 - col) : col;
 
-        const relativeX = (col - centerCol) * this.tileSize * orientationMultiplier;
+        const relativeX = (orientedCol - centerCol) * this.tileSize;
         const relativeY = (row - centerRow) * this.tileSize;
-        const cos = Math.cos(this.rotation);
-        const sin = Math.sin(this.rotation);
-        const rotatedX = relativeX * cos - relativeY * sin;
-        const rotatedY = relativeX * sin + relativeY * cos;
+
+        // 회전 변환을 적용
+        const cosR = Math.cos(this.rotation);
+        const sinR = Math.sin(this.rotation);
+        const rotatedX = relativeX * cosR - relativeY * sinR;
+        const rotatedY = relativeX * sinR + relativeY * cosR;
 
         return { x: rotatedX, y: rotatedY };
     }
