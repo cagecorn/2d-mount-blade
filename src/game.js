@@ -41,46 +41,52 @@ export class Game {
         context.assets = await assetLoader.loadAssets();
         console.log("Assets loaded.");
 
-        // 2. 모든 매니저 생성
+        // 2. 핵심 관리자 우선 생성 및 등록
         const eventManager = new EventManager();
+        const entityManager = new EntityManager();
+        context.initialize({ eventManager, entityManager });
+        console.log("Core managers initialized.");
+
+        // 스탯 변경 이벤트가 발생하면 즉시 재계산
+        eventManager.subscribe('stats_changed', ({ entity }) => {
+            if (entity?.stats && typeof entity.stats.recalculate === 'function') {
+                entity.stats.recalculate();
+            }
+        });
+
+        // 3. 플레이어 생성 및 등록
+        const player = new Player({ x: 0, y: 0, tileSize: 32, groupId: 'player_party' });
+        context.player = player;
+        context.entityManager.addEntity(player);
+        console.log("Player created and registered.");
+
+        // 4. 나머지 관리자들 생성 및 등록
         const microWorld = new MicroWorldWorker();
         const vfxManager = new VFXManager(eventManager);
         const effectManager = new EffectManager(eventManager, vfxManager);
-        const entityManager = new EntityManager();
         const mercenaryManager = new MercenaryManager(eventManager);
         const managers = {
-            eventManager,
             microWorld,
-            entityManager,
+            vfxManager,
+            effectManager,
             audioManager: new AudioManager(),
             tooltipManager: new TooltipManager(),
             mercenaryManager,
             squadManager: new SquadManager(eventManager, mercenaryManager),
             turnManager: new TurnManager(),
             combatManager: new CombatManager(),
-            inputHandler: new InputHandler(this.canvas), // canvas를 직접 전달
+            inputHandler: new InputHandler(this),
             uiManager: new UIManager(),
-            vfxManager,
-            effectManager,
             aspirationManager: new AspirationManager(eventManager, microWorld, effectManager, vfxManager, entityManager),
             itemManager: new ItemManager(),
         };
-        
-        // 3. GameContext에 등록
         context.initialize(managers);
-        console.log("GameContext initialized.");
-        
-        // 4. 플레이어 생성 및 등록
-        // 이제 EventManager가 context에 있으므로 안전하게 전달 가능
-        context.player = new Player("Player", context.eventManager);
-        context.entityManager.addEntity(context.player); // 엔티티 매니저에도 플레이어 등록
-        console.log("Player created and registered.");
+        console.log("Remaining managers created.");
 
-        // 5. 각 매니저 초기화 - ✨ 누락되었던 핵심 단계 ✨
-        // 매니저들이 다른 매니저에 접근할 수 있도록 context를 주입합니다.
-        this.managersList = Object.values(managers);
+        // 5. 모든 관리자 초기화
+        this.managersList = Object.values(context);
         for (const mgr of this.managersList) {
-            if (typeof mgr.init === 'function') {
+            if (mgr && typeof mgr.init === 'function') {
                 mgr.init(this);
             }
         }
@@ -109,26 +115,33 @@ export class Game {
     }
 
     update(deltaTime) {
-        // ✨ 누락되었던 핵심 단계 ✨
-        // 각 매니저의 update 함수를 호출하여 게임 상태를 갱신합니다.
-        for (const mgr of this.managersList) {
-            if (typeof mgr.update === 'function') {
-                // update(deltaTime, context) 형태를 지원하도록 인자 전달
-                try {
-                    mgr.update(deltaTime, context);
-                } catch (e) {
-                    console.warn('Manager update failed:', e);
-                }
-            }
+        // 1. 입력 처리
+        context.inputHandler?.update?.(deltaTime);
+
+        // 2. 엔티티 기본 상태 업데이트
+        context.entityManager?.update?.(deltaTime, context);
+
+        // 3. 턴 기반 로직
+        if (context.turnManager) {
+            context.turnManager.update(
+                Array.from(context.entityManager.entities.values()),
+                { eventManager: context.eventManager, player: context.player }
+            );
         }
 
-        // TurnManager는 인자가 특별하므로 별도 처리
-        if (context.turnManager && typeof context.turnManager.update === 'function') {
-            context.turnManager.update(Array.from(context.entityManager.entities.values()), {
-                eventManager: context.eventManager,
-                player: context.player
-            });
-        }
+        // 4. AI 업데이트
+        context.metaAIManager?.update?.(context);
+
+        // 5. 전투 및 투사체
+        context.combatManager?.update?.(deltaTime, context);
+        context.projectileManager?.update?.(Array.from(context.entityManager.entities.values()));
+
+        // 6. 효과 및 시각 효과
+        context.effectManager?.update?.(deltaTime, context);
+        context.vfxManager?.update?.(deltaTime);
+
+        // 7. UI 업데이트
+        context.uiManager?.update?.(this);
     }
 
     render() {
