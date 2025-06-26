@@ -1,3 +1,11 @@
+const now = () => (typeof performance !== 'undefined' && performance.now)
+    ? performance.now()
+    : Date.now();
+
+const rAF = (typeof window !== 'undefined' && window.requestAnimationFrame)
+    ? window.requestAnimationFrame.bind(window)
+    : (cb) => setTimeout(() => cb(now()), 1000 / 60);
+
 export class GameLoop {
     constructor(update, render) {
         this.update = update;
@@ -9,7 +17,8 @@ export class GameLoop {
 
     start() {
         this.isRunning = true;
-        this.loop(0);
+        this.lastTime = now();
+        this.loop(this.lastTime);
     }
 
     stop() {
@@ -25,6 +34,6 @@ export class GameLoop {
         this.update(deltaTime * this.timeScale);
         this.render();
 
-        requestAnimationFrame(this.loop);
+        rAF(this.loop);
     }
 }
