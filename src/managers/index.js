@@ -21,6 +21,7 @@ import { EquipmentRenderManager } from './equipmentRenderManager.js';
 import { ParticleDecoratorManager } from './particleDecoratorManager.js';
 import { TraitManager } from './traitManager.js';
 import { ParasiteManager } from './parasiteManager.js';
+import { AspirationManager } from './aspirationManager.js';
 import { StatusEffectsManager } from './statusEffectsManager.js';
 import { MicroItemAIManager } from './microItemAIManager.js';
 import { EffectIconManager } from './effectIconManager.js';
@@ -71,6 +72,7 @@ export {
     ParticleDecoratorManager,
     TraitManager,
     ParasiteManager,
+    AspirationManager,
     MicroItemAIManager,
     PetManager,
     EffectIconManager,
