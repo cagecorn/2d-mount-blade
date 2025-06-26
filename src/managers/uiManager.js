@@ -395,7 +395,16 @@ export class UIManager {
             const div = document.createElement('div');
             div.className = 'merc-entry';
             div.textContent = `${idx + 1}. ${merc.constructor.name} (Lv.${merc.stats.get('level')})`;
-            div.onclick = () => this.showMercenaryDetail(merc);
+
+            // 중앙 관리 함수를 호출하여 마우스 휠 기능이 적용되도록 합니다.
+            // 이것이 용병 장비창의 마우스 휠 문제를 해결합니다.
+            div.addEventListener('click', () => {
+                const mercEntity = this.getEntityById(merc.id);
+                if (mercEntity) {
+                    this.displayCharacterSheet(mercEntity);
+                }
+            });
+
             this.mercenaryList.appendChild(div);
         });
     }
@@ -642,6 +651,15 @@ export class UIManager {
         });
     }
 
+    // 패널에 드래그 기능을 적용합니다. 이미 적용되어 있더라도 중복 적용을 방지합니다.
+    makeDraggable(panel) {
+        if (!panel) return;
+        if (!panel.classList.contains('draggable-window')) {
+            panel.classList.add('draggable-window', 'window');
+            new Draggable(panel, panel.querySelector('.window-header') || panel);
+        }
+    }
+
 
 
     // --- 다중 캐릭터 시트 및 드래그 앤 드롭 지원 메서드들 ---
@@ -695,6 +713,10 @@ export class UIManager {
             }
         }
         this.renderCharacterSheet(character, this.characterSheetPanel);
+        // 추가: 장비창이 열릴 때마다 드래그 기능을 확실하게 적용합니다.
+        // 이것이 플레이어 장비창 드래그 문제를 해결합니다.
+        this.makeDraggable(this.characterSheetPanel);
+
         this.characterSheetPanel.classList.remove('hidden');
     }
 
