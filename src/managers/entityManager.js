@@ -51,4 +51,8 @@ export class EntityManager {
     getMonsters() {
         return this.monsters;
     }
+
+    getAllEntities() {
+        return Array.from(this.entities.values());
+    }
 }
