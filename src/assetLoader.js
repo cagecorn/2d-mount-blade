@@ -62,4 +62,17 @@ export class AssetLoader {
         ];
         effects.forEach(([key, src]) => this.loadImage(key, src));
     }
+
+    async loadAssets() {
+        // BGM 로드
+        const bgm = new Audio('assets/bgm/bgm_1.mp3');
+        const bgmPromise = new Promise((resolve, reject) => {
+            bgm.addEventListener('canplaythrough', () => resolve(), { once: true });
+            bgm.addEventListener('error', () => reject(new Error('Failed to load BGM')), { once: true });
+        });
+        this.promises.push(bgmPromise);
+
+        await Promise.all(this.promises).catch(e => console.error(e));
+        return { ...this.assets, bgm };
+    }
 }
