@@ -73,19 +73,6 @@ body, html {
     overflow-y: auto;
 }
 
-/* 툴팁 (최상위) */
-.tooltip {
-    position: fixed;
-    z-index: 300;
-    color: #fff;
-    padding: 6px 8px;
-    border-radius: 4px;
-    pointer-events: none;
-    font-size: 12px;
-    max-width: 200px;
-}
-
-
 /* 공통 UI 프레임 스타일 */
 .ui-frame {
     border: 20px solid transparent;
