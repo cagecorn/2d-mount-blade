@@ -52,7 +52,6 @@ export class UIManager {
         this.squadManagementPanel = document.getElementById('squad-management-ui');
         this._squadUIInitialized = false;
         this.formationManager = null;
-        // 특정 HTML 요소가 존재하면 커스텀 툴팁을 사용합니다.
         this.tooltip = document.getElementById('tooltip');
         this.characterSheetTemplate = document.getElementById('character-sheet-template');
         this.uiContainer = document.getElementById('ui-container');
@@ -621,23 +620,17 @@ export class UIManager {
     }
 
     _attachTooltip(element, html) {
-        // 툴팁 요소가 존재하면 커스텀 툴팁을 사용하고, 없으면 기본 title 특성을 사용합니다.
-        if (this.tooltip) {
-            element.onmouseenter = (e) => {
-                this.tooltip.innerHTML = html;
-                this.tooltip.style.left = `${e.pageX + 10}px`;
-                this.tooltip.style.top = `${e.pageY + 10}px`;
-                this.tooltip.classList.remove('hidden');
-            };
-            element.onmouseleave = () => this.tooltip.classList.add('hidden');
-            element.onmousemove = (e) => {
-                this.tooltip.style.left = `${e.pageX + 10}px`;
-                this.tooltip.style.top = `${e.pageY + 10}px`;
-            };
-        } else {
-            // HTML 태그를 제거하고 기본 title 속성으로 보여준다
-            const text = html.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '');
-            element.title = text;
+        if (!this.tooltip) return;
+        element.onmouseenter = (e) => {
+            this.tooltip.innerHTML = html;
+            this.tooltip.style.left = `${e.pageX + 10}px`;
+            this.tooltip.style.top = `${e.pageY + 10}px`;
+            this.tooltip.classList.remove('hidden');
+        };
+        element.onmouseleave = () => this.tooltip.classList.add('hidden');
+        element.onmousemove = (e) => {
+             this.tooltip.style.left = `${e.pageX + 10}px`;
+             this.tooltip.style.top = `${e.pageY + 10}px`;
         }
     }
 
