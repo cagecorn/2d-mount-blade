@@ -1013,29 +1013,47 @@ export class UIManager {
 
             const rows = this.formationManager.rows;
             const cols = this.formationManager.cols;
-            const orientLeft = this.formationManager.orientation === 'LEFT';
 
             for (let r = 0; r < rows; r++) {
                 for (let c = 0; c < cols; c++) {
-                    const idx = orientLeft
-                        ? (cols - 1 - c) * rows + r
-                        : c * rows + r;
+                    const idx = r * cols + c;
                     const ids = Array.from(this.formationManager.slots[idx] || []);
 
                     const cell = document.createElement('div');
                     cell.className = 'formation-cell';
                     cell.dataset.index = idx;
-                    cell.textContent = ids.length ? ids.join(',') : idx + 1;
+
+                    if (ids.length > 0) {
+                        ids.forEach(id => {
+                            const entity = this.getEntityById(id);
+                            if (entity) {
+                                const portrait = document.createElement('div');
+                                portrait.className = 'merc-portrait';
+                                portrait.textContent = entity.name || entity.constructor.name.substring(0, 4);
+                                portrait.draggable = true;
+                                portrait.dataset.entityId = id;
+                                portrait.addEventListener('dragstart', e => {
+                                    e.dataTransfer.setData('text/plain', `entity:${id}`);
+                                });
+                                cell.appendChild(portrait);
+                            }
+                        });
+                    } else {
+                        cell.textContent = idx + 1;
+                    }
+
                     cell.addEventListener('dragover', e => e.preventDefault());
                     cell.addEventListener('drop', e => {
                         e.preventDefault();
                         const data = e.dataTransfer.getData('text/plain');
+                        const targetIndex = parseInt(cell.dataset.index, 10);
+
                         if (data.startsWith('squad:')) {
                             const squadId = data.split(':')[1];
-                            this.eventManager?.publish('formation_assign_request', { squadId, slotIndex: idx });
-                        } else {
-                            const entityId = data;
-                            this.eventManager?.publish('formation_assign_request', { entityId, slotIndex: idx });
+                            this.eventManager?.publish('formation_assign_request', { squadId, slotIndex: targetIndex });
+                        } else if (data.startsWith('entity:')) {
+                            const entityId = data.split(':')[1];
+                            this.eventManager?.publish('formation_assign_request', { entityId, slotIndex: targetIndex });
                         }
                     });
                     grid.appendChild(cell);
