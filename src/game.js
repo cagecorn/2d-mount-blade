@@ -40,17 +40,19 @@ export class Game {
         console.log("Assets loaded.");
 
         // 2. 모든 매니저 생성
+        const eventManager = new EventManager();
+        const mercenaryManager = new MercenaryManager(eventManager);
         const managers = {
-            eventManager: new EventManager(),
+            eventManager,
             entityManager: new EntityManager(),
             audioManager: new AudioManager(),
             tooltipManager: new TooltipManager(),
-            squadManager: new SquadManager(),
+            mercenaryManager,
+            squadManager: new SquadManager(eventManager, mercenaryManager),
             turnManager: new TurnManager(),
             combatManager: new CombatManager(),
             inputHandler: new InputHandler(this.canvas), // canvas를 직접 전달
             uiManager: new UIManager(),
-            mercenaryManager: new MercenaryManager(),
             aspirationManager: new AspirationManager(),
             vfxManager: new VFXManager(),
             itemManager: new ItemManager(),
