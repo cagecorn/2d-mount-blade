@@ -8,7 +8,7 @@ import { UIManager } from './managers/uiManager.js';
 import { Player } from './entities/player.js';
 import { Mercenary } from './entities/mercenary.js';
 
-class Game {
+export class Game {
     constructor() {
         this.eventManager = new EventManager();
         this.entityManager = new EntityManager(this.eventManager);
@@ -46,7 +46,4 @@ class Game {
     }
 }
 
-window.addEventListener('DOMContentLoaded', () => {
-    const game = new Game();
-    game.start();
-});
+// Game initialization is handled externally (e.g., in main.js)
