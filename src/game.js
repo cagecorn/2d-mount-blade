@@ -58,6 +58,7 @@ import { LanePusherAI } from './ai/archetypes.js';
 import { LaneAssignmentManager } from './managers/laneAssignmentManager.js';
 import { FormationManager } from './managers/formationManager.js';
 import { TooltipManager } from './managers/tooltipManager.js';
+import { CombatEngine } from "./engines/CombatEngine.js";
 
 export class Game {
     constructor() {
@@ -170,6 +171,7 @@ export class Game {
         });
         // 월드맵 로직을 담당하는 엔진
         this.worldEngine = new WorldEngine(this, assets);
+        this.combatEngine = new CombatEngine(this);
 
         // --- 매니저 생성 부분 수정 ---
         this.managers = {};
@@ -1415,239 +1417,18 @@ export class Game {
             return;
         }
 
-        this.handleCameraReset();
-
-        const { gameState, mercenaryManager, monsterManager, itemManager, mapManager, inputHandler, effectManager, turnManager, metaAIManager, eventManager, equipmentManager, pathfindingManager, microEngine, microItemAIManager } = this;
-        if (gameState.isPaused || gameState.isGameOver) return;
-
-        const allEntities = [gameState.player, ...mercenaryManager.mercenaries, ...monsterManager.monsters, ...(this.petManager?.pets || [])];
-        gameState.player.applyRegen();
-        effectManager.update(allEntities); // EffectManager 업데이트 호출
-        turnManager.update(allEntities, { eventManager, player: gameState.player, parasiteManager: this.parasiteManager }); // 턴 매니저 업데이트
-        itemManager.update();
-        this.petManager.update();
-        if (this.auraManager) {
-            this.auraManager.update(allEntities);
-        }
-        eventManager.publish('debug', { tag: 'Frame', message: '--- Frame Update Start ---' });
-        const player = gameState.player;
-        if (player.attackCooldown > 0) player.attackCooldown--;
-        let moveX = 0, moveY = 0;
-        if (inputHandler.keysPressed['ArrowUp']) moveY -= player.speed;
-        if (inputHandler.keysPressed['ArrowDown']) moveY += player.speed;
-        if (inputHandler.keysPressed['ArrowLeft']) moveX -= player.speed;
-        if (inputHandler.keysPressed['ArrowRight']) moveX += player.speed;
-        if (moveX !== 0 || moveY !== 0) {
-            const targetX = player.x + moveX;
-            const targetY = player.y + moveY;
-            const monsterToAttack = monsterManager.getMonsterAt(
-                targetX + player.width / 2,
-                targetY + player.height / 2
-            );
-            if (monsterToAttack && player.attackCooldown === 0) {
-                this.handleAttack(player, monsterToAttack, null);
-                const baseCd = 30;
-                player.attackCooldown = Math.max(1, Math.round(baseCd / (player.attackSpeed || 1)));
-            } else if (!mapManager.isWallAt(targetX, targetY, player.width, player.height)) {
-                player.x = targetX;
-                player.y = targetY;
-            } else {
-                if (!mapManager.isWallAt(targetX, player.y, player.width, player.height)) {
-                    player.x = targetX;
-                } else if (!mapManager.isWallAt(player.x, targetY, player.width, player.height)) {
-                    player.y = targetY;
-                }
-            }
-        }
-        const itemToPick = this.itemManager.items.find(item =>
-            player.x < item.x + mapManager.tileSize &&
-            player.x + player.width > item.x &&
-            player.y < item.y + mapManager.tileSize &&
-            player.y + player.height > item.y
-        );
-        if (itemToPick) {
-            if (itemToPick.baseId === 'gold' || itemToPick.name === 'gold') {
-                gameState.gold += 10;
-                this.combatLogManager.add(`골드를 주웠습니다! 현재 골드: ${gameState.gold}`);
-            } else if (itemToPick.tags?.includes('consumable')) {
-                if (!player.addConsumable(itemToPick)) {
-                    const existing = gameState.inventory.find(i => i.baseId === itemToPick.baseId);
-                    if (existing) {
-                        existing.quantity += 1;
-                    } else {
-                        gameState.inventory.push(itemToPick);
-                    }
-                }
-                this.combatLogManager.add(`${itemToPick.name}을(를) 획득했습니다.`);
-            } else {
-                const existing = gameState.inventory.find(i => i.baseId === itemToPick.baseId);
-                const invItem = existing || itemToPick;
-                if (existing) {
-                    existing.quantity += 1;
-                } else {
-                    gameState.inventory.push(itemToPick);
-                }
-                this.combatLogManager.add(`${itemToPick.name}을(를) 인벤토리에 추가했습니다.`);
-                if (itemToPick.tags.includes('pet') || itemToPick.type === 'pet') {
-                    player.addConsumable(invItem);
-                    this.petManager.equip(player, invItem, 'fox');
-                    // 아이템은 그대로 보유하도록 남겨둔다
-                }
-            }
-            this.itemManager.removeItem(itemToPick);
-        }
-        if (this.fogManager) {
-            this.fogManager.update(player, mapManager);
-        }
-        const context = {
-            eventManager,
-            player,
-            mapManager,
-            monsterManager,
-            mercenaryManager,
-            pathfindingManager,
-            laneManager: this.laneManager,
-            motionManager: this.motionManager,
-            movementManager: this.movementManager,
-            projectileManager: this.projectileManager,
-            itemManager: this.itemManager,
-            equipmentManager: this.equipmentManager,
-            vfxManager: this.vfxManager,
-            knockbackEngine: this.knockbackEngine,
-            supportEngine: this.supportEngine,
-            assets: this.loader.assets,
-            metaAIManager,
-            microItemAIManager,
-            playerGroup: this.playerGroup,
-            monsterGroup: this.monsterGroup,
-            speechBubbleManager: this.speechBubbleManager,
-            statusEffectsManager: this.statusEffectsManager,
-            enemies: metaAIManager.groups['dungeon_monsters']?.members || []
-        };
-        metaAIManager.update(context);
-        if (this.possessionAIManager) this.possessionAIManager.update(context);
-        this.itemAIManager.update(context);
-        this.projectileManager.update(allEntities);
-        this.vfxManager.update();
-        this.speechBubbleManager.update();
-        // micro-world engine runs after visuals and item logic
-        const allItems = [
-            ...this.gameState.inventory,
-            ...this.itemManager.items,
-            ...this.mercenaryManager.mercenaries.flatMap(m => m.consumables || []),
-            ...this.monsterManager.monsters.flatMap(m => m.consumables || []),
-        ];
-        this.microEngine.update(allItems);
-        eventManager.publish('debug', { tag: 'Frame', message: '--- Frame Update End ---' });
+        this.combatEngine.update(deltaTime);
     }
-
     render = () => {
-        const { layerManager, gameState, mapManager, itemManager, monsterManager, mercenaryManager, fogManager, uiManager } = this;
-        const assets = this.loader.assets;
-        const canvas = layerManager.layers.mapBase;
-
-        if (gameState.isGameOver) return;
-
-        layerManager.clear();
-
-        if (gameState.currentState === 'WORLD') {
-            this.worldEngine.render(layerManager.contexts.entity);
-            if (this.uiManager) this.uiManager.updateUI(gameState);
-            return;
-        } else if (gameState.currentState === 'FORMATION_SETUP') {
-            if (this.uiManager) this.uiManager.updateUI(gameState);
-            return;
-        } else if (gameState.currentState !== 'COMBAT') {
-            return;
+        this.layerManager.clear();
+        if (this.gameState.currentState === "WORLD") {
+            this.worldEngine.render(this.layerManager.contexts.entity);
+        } else if (this.gameState.currentState === "COMBAT") {
+            this.combatEngine.render();
         }
-
-        const camera = gameState.camera;
-        let zoom = gameState.zoomLevel;
-
-        if (this.cinematicManager.isPlaying) {
-            const cameraTarget = this.cinematicManager.targetEntity;
-            if (cameraTarget) {
-                const targetCameraX = cameraTarget.x - canvas.width / (2 * zoom);
-                const targetCameraY = cameraTarget.y - canvas.height / (2 * zoom);
-                camera.x += (targetCameraX - camera.x) * 0.08;
-                camera.y += (targetCameraY - camera.y) * 0.08;
-            }
-            const targetZoom = this.cinematicManager.targetZoom;
-            zoom += (targetZoom - zoom) * 0.08;
-        } else {
-            const mapPixelWidth = mapManager.width * mapManager.tileSize;
-            const mapPixelHeight = mapManager.height * mapManager.tileSize;
-            if (this.cameraDrag.followPlayer) {
-                const cameraTarget = gameState.player;
-                const targetCameraX = cameraTarget.x - canvas.width / (2 * zoom);
-                const targetCameraY = cameraTarget.y - canvas.height / (2 * zoom);
-                camera.x = Math.max(0, Math.min(targetCameraX, mapPixelWidth - canvas.width / zoom));
-                camera.y = Math.max(0, Math.min(targetCameraY, mapPixelHeight - canvas.height / zoom));
-            } else {
-                camera.x = Math.max(0, Math.min(camera.x, mapPixelWidth - canvas.width / zoom));
-                camera.y = Math.max(0, Math.min(camera.y, mapPixelHeight - canvas.height / zoom));
-            }
-        }
-        gameState.zoomLevel = zoom;
-
-        for (const key in layerManager.contexts) {
-            const ctx = layerManager.contexts[key];
-            if (ctx.save) {
-                ctx.save();
-                ctx.scale(zoom, zoom);
-                ctx.translate(-camera.x, -camera.y);
-            }
-        }
-
-        const contexts = layerManager.contexts;
-
-        mapManager.render(contexts.mapBase, contexts.mapDecor, assets);
-        this.laneRenderManager.render(contexts.mapDecor);
-        itemManager.render(contexts.mapDecor);
-
-        // buffManager.renderGroundAuras(contexts.groundFx, ...); // (미래 구멍)
-
-        // Build a unified render queue and sort by Y to get natural overlap.
-        // Tie-breaking by id keeps the order stable when Y values are equal.
-        const allEntitiesToRender = [
-            gameState.player,
-            ...(monsterManager?.monsters || []),
-            ...(mercenaryManager?.mercenaries || []),
-            ...(this.petManager?.pets || [])
-        ].filter(e => e && !e.isDying && !e.isHidden);
-
-        allEntitiesToRender.sort((a, b) =>
-            a.y === b.y ? a.id.localeCompare(b.id) : a.y - b.y
-        );
-
-        const entityCtx = contexts.entity;
-        for (const entity of allEntitiesToRender) {
-            entity.render(entityCtx);
-        }
-
-        if (fogManager) {
-            fogManager.render(contexts.vfx, mapManager.tileSize);
-        }
-        uiManager.renderHpBars(contexts.vfx, gameState.player, monsterManager.monsters, mercenaryManager.mercenaries);
-        this.projectileManager.render(contexts.vfx);
-        this.vfxManager.render(contexts.vfx);
-        this.speechBubbleManager.render(contexts.vfx);
-        this.effectIconManager.render(contexts.vfx, [gameState.player, ...monsterManager.monsters, ...mercenaryManager.mercenaries, ...this.petManager.pets], EFFECTS);
-        this.cinematicManager.render(contexts.vfx);
-
-        // weatherManager.render(contexts.weather); // (미래 구멍)
-
-        for (const key in layerManager.contexts) {
-            const ctx = layerManager.contexts[key];
-            if (ctx.restore) {
-                ctx.restore();
-            }
-        }
-
-        if (this.uiManager && this.gameState.currentState === 'COMBAT') {
-            uiManager.updateUI(gameState);
-        }
+        if (this.uiManager) this.uiManager.updateUI(this.gameState);
     }
+
 
     handleAttack(attacker, defender, skill = null) {
         this.eventManager.publish('entity_attack', { attacker, defender, skill });
