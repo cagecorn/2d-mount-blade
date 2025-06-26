@@ -52,7 +52,12 @@ export class UIManager {
         this.squadManagementPanel = document.getElementById('squad-management-ui');
         this._squadUIInitialized = false;
         this.formationManager = null;
-        this.tooltip = document.getElementById('tooltip');
+
+        // 별도의 툴팁 엘리먼트를 동적으로 생성하여 사용한다
+        this.tooltipElement = document.createElement('div');
+        this.tooltipElement.id = 'game-tooltip';
+        this.tooltipElement.style.display = 'none';
+        document.body.appendChild(this.tooltipElement);
         this.characterSheetTemplate = document.getElementById('character-sheet-template');
         this.uiContainer = document.getElementById('ui-container');
         this.callbacks = {};
@@ -66,6 +71,16 @@ export class UIManager {
 
         this.draggables = [];
         this._initDraggables();
+
+        // 부대 및 포메이션 상태 정보를 저장
+        this.squads = [];
+
+        // 이벤트 구독 설정
+        if (this.eventManager) {
+            this.eventManager.subscribe('squads_updated', this.handleSquadsUpdate.bind(this));
+            this.eventManager.subscribe('formation_updated', this.handleFormationUpdate.bind(this));
+            this.eventManager.subscribe('player_inventory_updated', this.renderPlayerInventory.bind(this));
+        }
 
         // 스탯 표시용 이름 매핑
         this.statDisplayNames = {
@@ -620,18 +635,16 @@ export class UIManager {
     }
 
     _attachTooltip(element, html) {
-        if (!this.tooltip) return;
-        element.onmouseenter = (e) => {
-            this.tooltip.innerHTML = html;
-            this.tooltip.style.left = `${e.pageX + 10}px`;
-            this.tooltip.style.top = `${e.pageY + 10}px`;
-            this.tooltip.classList.remove('hidden');
-        };
-        element.onmouseleave = () => this.tooltip.classList.add('hidden');
-        element.onmousemove = (e) => {
-             this.tooltip.style.left = `${e.pageX + 10}px`;
-             this.tooltip.style.top = `${e.pageY + 10}px`;
-        }
+        if (!this.tooltipElement) return;
+        element.addEventListener('mouseover', (e) => {
+            this.showTooltip(e, html);
+        });
+        element.addEventListener('mouseout', () => {
+            this.hideTooltip();
+        });
+        element.addEventListener('mousemove', (e) => {
+            this.updateTooltipPosition(e);
+        });
     }
 
     // --- 다중 캐릭터 시트 및 드래그 앤 드롭 지원 메서드들 ---
@@ -1073,6 +1086,96 @@ export class UIManager {
             this.eventManager?.subscribe('squad_data_changed', () => this.createSquadManagementUI());
             this._squadUIInitialized = true;
         }
+    }
+
+    handleSquadsUpdate(data) {
+        this.squads = data.squads || [];
+        this.renderSquadList();
+    }
+
+    renderSquadList() {
+        // TODO: squad 목록을 화면에 표시하는 로직을 구현합니다.
+    }
+
+    handleFormationUpdate(data) {
+        this.formationManager = data.formationManager || this.formationManager;
+        this.renderFormationGrid();
+    }
+
+    renderFormationGrid() {
+        // TODO: formation 그리드를 화면에 표시하는 로직을 구현합니다.
+    }
+
+    showTooltip(event, htmlContent) {
+        this.tooltipElement.innerHTML = htmlContent;
+        this.tooltipElement.style.display = 'block';
+        this.updateTooltipPosition(event);
+    }
+
+    hideTooltip() {
+        this.tooltipElement.style.display = 'none';
+    }
+
+    updateTooltipPosition(event) {
+        const rect = this.tooltipElement.getBoundingClientRect();
+        let left = event.pageX + 15;
+        let top = event.pageY + 15;
+        if (left + rect.width > window.innerWidth) {
+            left = window.innerWidth - rect.width - 15;
+        }
+        if (top + rect.height > window.innerHeight) {
+            top = window.innerHeight - rect.height - 15;
+        }
+        this.tooltipElement.style.left = `${left}px`;
+        this.tooltipElement.style.top = `${top}px`;
+    }
+
+    generateItemTooltipHTML(item) {
+        if (!item) return '';
+        const rarityColor = item.rarity === 'legendary' ? 'orange' : 'white';
+        let html = `<h3 style="color: ${rarityColor};">${item.name}</h3>`;
+        html += `<p>타입: ${item.type || '일반'}</p>`;
+        if (item.stats && Object.keys(item.stats).length > 0) {
+            html += '<h4>능력치</h4><ul>';
+            for (const [stat, value] of Object.entries(item.stats)) {
+                html += `<li>${stat}: ${value}</li>`;
+            }
+            html += '</ul>';
+        }
+        if (item.affixes && item.affixes.length > 0) {
+            html += '<h4>특수 효과</h4><ul>';
+            item.affixes.forEach(a => {
+                html += `<li>${a}</li>`;
+            });
+            html += '</ul>';
+        }
+        if (item.synergy) {
+            html += `<h4>시너지</h4><p>${item.synergy.description || '없음'}</p>`;
+        }
+        return html;
+    }
+
+    renderPlayerInventory({ inventory }) {
+        const panel = document.getElementById('inventory-panel');
+        if (!panel) {
+            console.warn('UI: inventory-panel not found!');
+            return;
+        }
+        panel.innerHTML = '';
+        (inventory || []).forEach(id => {
+            const item = this.getEntityById ? this.getEntityById(id) : null;
+            if (item) {
+                const slot = document.createElement('div');
+                slot.className = 'item-slot';
+                slot.textContent = item.name.substring(0, 1);
+                slot.addEventListener('mouseover', e => {
+                    this.showTooltip(e, this.generateItemTooltipHTML(item));
+                });
+                slot.addEventListener('mouseout', () => this.hideTooltip());
+                slot.addEventListener('mousemove', e => this.updateTooltipPosition(e));
+                panel.appendChild(slot);
+            }
+        });
     }
 
     updateCharacterSheet(entityId) {
