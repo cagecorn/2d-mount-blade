@@ -9,6 +9,8 @@ export class UIManager {
         this.synergyManager = null;
         this.squads = [];
         this.formationManager = null;
+        this.openCharacterSheets = new Map();
+        this.handlers = {};
 
         // 툴팁 엘리먼트 생성 및 초기화
         this.tooltipElement = document.createElement('div');
@@ -45,6 +47,124 @@ export class UIManager {
 
     setSynergyManager(manager) {
         this.synergyManager = manager;
+    }
+
+    /**
+     * 초기화 메서드. 게임에서 전달한 핸들러를 저장하고 버튼 이벤트를 연결합니다.
+     * @param {object} handlers - { onStatUp, onItemUse, onConsumableUse, onEquipItem }
+     */
+    init(handlers = {}) {
+        this.handlers = handlers;
+
+        // 스탯 증가 버튼 설정
+        document.querySelectorAll('.stat-plus').forEach(btn => {
+            btn.onclick = () => {
+                const stat = btn.id.replace('btn-plus-', '');
+                this.handlers.onStatUp?.(stat);
+            };
+        });
+
+        return this;
+    }
+
+    showPanel(panelId) {
+        const panel = document.getElementById(panelId);
+        if (panel) panel.classList.remove('hidden');
+    }
+
+    hidePanel(panelId) {
+        const panel = document.getElementById(panelId);
+        if (panel) panel.classList.add('hidden');
+    }
+
+    showCharacterSheet(entity) {
+        if (!entity) return;
+        let panel = this.openCharacterSheets.get(entity.id);
+        if (!panel) {
+            const template = document.getElementById('character-sheet-template');
+            if (!template) return;
+            panel = template.cloneNode(true);
+            panel.id = `character-sheet-${entity.id}`;
+            panel.classList.remove('template');
+            document.body.appendChild(panel);
+            panel.querySelector('.close-btn').onclick = () => {
+                this.hideCharacterSheet(entity.id);
+            };
+            this.openCharacterSheets.set(entity.id, panel);
+        }
+        panel.classList.remove('hidden');
+        this.renderCharacterSheet(entity, panel);
+    }
+
+    hideCharacterSheet(entityId) {
+        const panel = this.openCharacterSheets.get(entityId);
+        if (panel) {
+            panel.classList.add('hidden');
+        }
+    }
+
+    renderCharacterSheet(entity, panel) {
+        if (!entity || !panel) return;
+        const nameEl = panel.querySelector('#sheet-character-name');
+        if (nameEl) nameEl.textContent = entity.name || 'Character';
+        const stats = panel.querySelector('#player-stats-container');
+        if (stats) {
+            stats.querySelector('#ui-player-level').textContent = entity.level ?? 1;
+            stats.querySelector('#ui-player-strength').textContent = entity.strength ?? 0;
+            stats.querySelector('#ui-player-agility').textContent = entity.agility ?? 0;
+            stats.querySelector('#ui-player-endurance').textContent = entity.endurance ?? 0;
+            stats.querySelector('#ui-player-focus').textContent = entity.focus ?? 0;
+            stats.querySelector('#ui-player-intelligence').textContent = entity.intelligence ?? 0;
+            stats.querySelector('#ui-player-movement').textContent = entity.movement ?? 0;
+            stats.querySelector('#ui-player-movementSpeed').textContent = entity.movementSpeed ?? 0;
+            stats.querySelector('#ui-player-attackPower').textContent = entity.attackPower ?? 0;
+        }
+    }
+
+    renderInventory(gameState) {
+        const grid = document.querySelector('#inventory-panel .inventory-grid');
+        if (!grid) return;
+        grid.innerHTML = '';
+        (gameState.inventory || []).forEach((item, idx) => {
+            const slot = document.createElement('div');
+            slot.className = 'inventory-item-slot';
+            if (item.image) {
+                const img = document.createElement('img');
+                img.src = item.image.src || item.image;
+                slot.appendChild(img);
+            } else {
+                slot.textContent = item.name?.[0] || '?';
+            }
+            if (item.quantity > 1) {
+                const qty = document.createElement('div');
+                qty.className = 'item-qty';
+                qty.textContent = item.quantity;
+                slot.appendChild(qty);
+            }
+            slot.onclick = () => this.handlers.onItemUse?.(idx);
+            grid.appendChild(slot);
+        });
+    }
+
+    updateUI(gameState) {
+        if (!gameState?.player) return;
+        const p = gameState.player;
+        const hpEl = document.getElementById('ui-player-hp');
+        const maxHpEl = document.getElementById('ui-player-maxHp');
+        const hpFill = document.getElementById('ui-hp-bar-fill');
+        if (hpEl) hpEl.textContent = Math.floor(p.hp);
+        if (maxHpEl) maxHpEl.textContent = Math.floor(p.maxHp);
+        if (hpFill) hpFill.style.width = `${(p.hp / p.maxHp) * 100}%`;
+
+        const mpEl = document.getElementById('ui-player-mp');
+        const maxMpEl = document.getElementById('ui-player-maxMp');
+        const mpFill = document.getElementById('ui-mp-bar-fill');
+        if (mpEl) mpEl.textContent = Math.floor(p.mp ?? 0);
+        if (maxMpEl) maxMpEl.textContent = Math.floor(p.maxMp ?? 0);
+        if (mpFill && p.maxMp) mpFill.style.width = `${(p.mp / p.maxMp) * 100}%`;
+
+        const goldEl = document.getElementById('ui-player-gold');
+        if (goldEl) goldEl.textContent = p.gold ?? 0;
     }
 
     /**
