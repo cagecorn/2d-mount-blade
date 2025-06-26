@@ -1,9 +1,12 @@
 // src/managers/uiManager.js
 
+import { SYNERGIES } from '../data/synergies.js';
+
 export class UIManager {
     constructor(eventManager, entityManager) {
         this.eventManager = eventManager;
         this.entityManager = entityManager;
+        this.synergyManager = null;
         this.squads = [];
         this.formationManager = null;
 
@@ -38,6 +41,10 @@ export class UIManager {
 
     renderFormationGrid() {
         // TODO: formation 그리드를 화면에 표시하는 로직을 구현합니다.
+    }
+
+    setSynergyManager(manager) {
+        this.synergyManager = manager;
     }
 
     /**
@@ -108,8 +115,14 @@ export class UIManager {
             html += '</ul>';
         }
 
-        if (item.synergy) {
-            html += `<h4>시너지</h4><p>${item.synergy.description || '없음'}</p>`;
+        if (item.synergies && item.synergies.length > 0) {
+            html += '<h4>시너지</h4><ul>';
+            item.synergies.forEach(key => {
+                const data = SYNERGIES[key];
+                const name = data ? `${data.icon || ''} ${data.name}` : key;
+                html += `<li>${name}</li>`;
+            });
+            html += '</ul>';
         }
 
         return html;
