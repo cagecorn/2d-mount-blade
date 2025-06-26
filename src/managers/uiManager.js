@@ -146,6 +146,42 @@ export class UIManager {
         });
     }
 
+    /**
+     * 공유 인벤토리(UI 패널 왼쪽 하단)에 현재 보유한 아이템을 표시합니다.
+     * InventoryManager에서 주입된 getSharedInventory() 함수를 활용합니다.
+     */
+    renderSharedInventory() {
+        const inventory = this.getSharedInventory ? this.getSharedInventory() : [];
+        const container = document.getElementById('inventory-slots');
+        if (!container) return;
+
+        container.innerHTML = '';
+        const slots = inventory.slots ? inventory.slots : inventory;
+        slots.forEach((item) => {
+            const slot = document.createElement('div');
+            slot.className = 'inventory-slot';
+
+            if (item) {
+                if (item.image) {
+                    const img = document.createElement('img');
+                    img.src = item.image.src || item.image;
+                    slot.appendChild(img);
+                } else {
+                    slot.textContent = item.name?.[0] || '?';
+                }
+
+                slot.addEventListener('mouseover', (e) => {
+                    const tooltipContent = this.generateItemTooltipHTML(item);
+                    this.showTooltip(e, tooltipContent);
+                });
+                slot.addEventListener('mouseout', () => this.hideTooltip());
+                slot.addEventListener('mousemove', (e) => this.updateTooltipPosition(e));
+            }
+
+            container.appendChild(slot);
+        });
+    }
+
     updateUI(gameState) {
         if (!gameState?.player) return;
         const p = gameState.player;
