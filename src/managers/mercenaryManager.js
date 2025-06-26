@@ -57,6 +57,11 @@ export class MercenaryManager {
         return this.mercenaries;
     }
 
+    // 현재 고용된 모든 용병의 목록을 반환합니다.
+    getHiredMercenaries() {
+        return this.mercenaries;
+    }
+
     setUIManager(uiManager) {
         this.uiManager = uiManager;
     }

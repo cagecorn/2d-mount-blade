@@ -55,6 +55,9 @@ export class UIManager {
         this.formationManager = null;
         this.characterSheetTemplate = document.getElementById('character-sheet-template');
         this.uiContainer = document.getElementById('ui-container');
+        // 장비창(캐릭터 시트) 패널 및 현재 표시 중인 캐릭터 ID 기록
+        this.characterSheetPanel = document.getElementById('character-sheet-panel');
+        this.currentCharacterId = null;
         this.callbacks = {};
         this._lastInventory = [];
         this._lastConsumables = [];
@@ -129,6 +132,21 @@ export class UIManager {
 
         document.querySelectorAll('.close-btn[data-panel-id]').forEach(btn => {
             btn.onclick = () => this.hidePanel(btn.dataset.panelId);
+        });
+
+        // 'c' 키를 눌러 캐릭터 시트를 토글하는 로직 추가
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'c') {
+                if (this.characterSheetPanel.classList.contains('hidden')) {
+                    const player = this.game?.player;
+                    if (player) {
+                        this.displayCharacterSheet(player);
+                    }
+                } else {
+                    this.characterSheetPanel.classList.add('hidden');
+                    this.currentCharacterId = null;
+                }
+            }
         });
 
 
@@ -660,6 +678,26 @@ export class UIManager {
         }
     }
 
+    // 특정 캐릭터의 장비창을 표시하는 중앙 함수
+    displayCharacterSheet(character) {
+        if (!character) return;
+        if (this.characterSheetPanel && this.characterSheetPanel.children.length === 0 && this.characterSheetTemplate) {
+            const temp = this.characterSheetTemplate.cloneNode(true);
+            temp.id = '';
+            temp.classList.remove('hidden', 'template');
+            this.characterSheetPanel.innerHTML = temp.innerHTML;
+            const closeBtn = this.characterSheetPanel.querySelector('.close-btn');
+            if (closeBtn) {
+                closeBtn.onclick = () => {
+                    this.characterSheetPanel.classList.add('hidden');
+                    this.currentCharacterId = null;
+                };
+            }
+        }
+        this.renderCharacterSheet(character, this.characterSheetPanel);
+        this.characterSheetPanel.classList.remove('hidden');
+    }
+
     getNextZIndex() {
         const arr = Array.from(this.openCharacterSheets.values());
         const maxZ = arr.reduce((max, p) => Math.max(max, parseInt(p.style.zIndex || 200)), 200);
@@ -667,6 +705,7 @@ export class UIManager {
     }
 
     renderCharacterSheet(entity, panel) {
+        this.currentCharacterId = entity.id; // 현재 표시된 캐릭터 ID 업데이트
         if (!panel) return;
         const nameEl = panel.querySelector('#sheet-character-name');
         if (nameEl) nameEl.textContent = `${entity.name || entity.constructor.name} (Lv.${entity.stats.get('level')})`;

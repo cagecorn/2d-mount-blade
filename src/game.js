@@ -131,7 +131,8 @@ export class Game {
         this.eventManager = new EventManager();
         this.tooltipManager = new TooltipManager();
         this.entityManager = new EntityManager(this.eventManager);
-        this.inputHandler = new InputHandler(this.eventManager, this);
+        // InputHandler를 생성할 때 game 객체(this)를 전달합니다.
+        this.inputHandler = new InputHandler(this);
         this.combatLogManager = new CombatLogManager(this.eventManager);
         
         this.statusEffectsManager = new StatusEffectsManager(this.eventManager);
@@ -272,6 +273,8 @@ export class Game {
         this.uiManager.particleDecoratorManager = this.particleDecoratorManager;
         this.uiManager.vfxManager = this.vfxManager;
         this.uiManager.eventManager = this.eventManager;
+        // UIManager가 Game 인스턴스에 접근할 수 있도록 참조를 전달
+        this.uiManager.game = this;
         this.uiManager.getSharedInventory = () => this.inventoryManager.getSharedInventory();
         this.uiManager.formationManager = this.formationManager;
         this.squadManager = new Managers.SquadManager(this.eventManager, this.mercenaryManager);
@@ -447,6 +450,8 @@ export class Game {
             followPlayer: true
         };
         this.playerGroup.addMember(player);
+        // Game 인스턴스에서 직접 플레이어에 접근할 수 있도록 참조를 저장합니다.
+        this.player = player;
         // 월드 엔진에서도 동일한 플레이어 데이터를 사용하도록 설정
         this.worldEngine.setPlayer(player);
 
@@ -754,7 +759,7 @@ export class Game {
         const playerInfoBtn = document.querySelector('.menu-btn[data-panel-id="character-sheet-panel"]');
         if (playerInfoBtn) {
             playerInfoBtn.onclick = () => {
-                this.uiManager.showCharacterSheet(this.gameState.player);
+                this.uiManager.displayCharacterSheet(this.gameState.player);
                 this.gameState.isPaused = true;
             };
         }
@@ -1351,8 +1356,8 @@ export class Game {
             );
 
             if (clickedMonster) {
-                if (this.uiManager.showCharacterSheet) {
-                    this.uiManager.showCharacterSheet(clickedMonster);
+                if (this.uiManager.displayCharacterSheet) {
+                    this.uiManager.displayCharacterSheet(clickedMonster);
                     this.gameState.isPaused = true;
                 }
                 return;
@@ -1675,6 +1680,13 @@ export class Game {
 
     endDragCamera() {
         this.cameraDrag.isDragging = false;
+    }
+
+    // 플레이어와 모든 고용된 용병을 포함하는 파티 목록을 반환합니다.
+    getPartyMembers() {
+        const party = [this.player];
+        const mercenaries = this.mercenaryManager.getHiredMercenaries();
+        return party.concat(mercenaries);
     }
 
     handleCameraReset() {
