@@ -29,8 +29,6 @@ import { SquadManager } from './squadManager.js';
 import { LaneAssignmentManager } from './laneAssignmentManager.js';
 import { FormationManager } from './formationManager.js';
 import { EnemyFormationManager } from './enemyFormationManager.js';
-import { EventManager } from './eventManager.js';
-import { TurnManager } from './turnManager.js';
 import { MetaAIManager } from './metaAIManager.js';
 import { AIManager } from './AIManager.js';
 import { SynergyManager } from '../micro/SynergyManager.js';
@@ -41,7 +39,6 @@ import { CombatDecisionEngine } from './ai/CombatDecisionEngine.js';
 import { ReputationManager } from './ReputationManager.js';
 import { EntityManager } from './entityManager.js';
 import GuidelineLoader from './guidelineLoader.js';
-import { InputHandler } from '../inputHandler.js';
 import { TooltipManager } from './tooltipManager.js';
 // DataRecorder is only needed in a Node.js environment so we lazy-load it
 let DataRecorder = null;
@@ -86,9 +83,6 @@ export {
     SynergyManager,
     SpeechBubbleManager,
     SquadManager,
-    EventManager,
-    TurnManager,
-    InputHandler,
     LaneAssignmentManager,
     ReputationManager,
     EntityManager,
