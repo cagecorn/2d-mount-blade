@@ -29,7 +29,7 @@ port.onmessage = (event) => {
             port.postMessage({ type: 'resolveAttackComplete', attacker: msg.attacker, defender: msg.defender });
             break;
         case 'update':
-            turnManager.update(msg.items);
+            turnManager.update(msg.items || []);
             port.postMessage({ type: 'updateComplete' });
             break;
     }
