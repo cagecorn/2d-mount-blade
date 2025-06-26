@@ -1,19 +1,34 @@
 // main.js
+
 import { Game } from './src/game.js';
-import { registerServiceWorker } from './src/utils/swRegister.js';
+import { context } from './src/gameContext.js';
 
-let game = null;
+let game;
 
-function initializeAudio() {
-    if (game) {
-        game.startBGM();
+function initializeAudio(event) {
+    if (event.type === 'keydown' || event.type === 'click') {
+        if (context.audioManager && !context.audioManager.isBgmPlaying) {
+            context.audioManager.startBGM();
+        }
+        document.removeEventListener('keydown', initializeAudio);
+        document.removeEventListener('click', initializeAudio);
     }
 }
 
 window.onload = () => {
-    registerServiceWorker();
-    game = new Game();
-    game.start();
-    document.addEventListener('keydown', initializeAudio, { once: true });
-    document.addEventListener('click', initializeAudio, { once: true });
+    try {
+        // 기본 게임 캔버스는 entity-canvas로 지정
+        game = new Game('entity-canvas');
+        
+        game.init().then(() => {
+            console.log("Game initialization complete. Ready for user interaction.");
+            document.addEventListener('keydown', initializeAudio);
+            document.addEventListener('click', initializeAudio);
+        }).catch(error => {
+            console.error("Failed to initialize game:", error);
+        });
+
+    } catch (error) {
+        console.error("Failed to create game object:", error);
+    }
 };

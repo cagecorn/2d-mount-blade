@@ -6,6 +6,13 @@ export class AssetLoader {
         this.promises = [];
     }
 
+    // 간단한 에셋 로드 메서드
+    async loadAssets() {
+        // 배경 음악 로드 예시
+        this.assets.bgm = new Audio('assets/bgm/bgm_1.mp3');
+        return this.assets;
+    }
+
     // 이미지를 로드하는 메서드
     loadImage(key, src) {
         const img = new Image();
