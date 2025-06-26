@@ -38,7 +38,6 @@ import { PossessionAIManager } from './possessionAIManager.js';
 import { CombatDecisionEngine } from './ai/CombatDecisionEngine.js';
 import { ReputationManager } from './ReputationManager.js';
 import { EntityManager } from './entityManager.js';
-import { CombatManager } from './combatManager.js';
 import GuidelineLoader from './guidelineLoader.js';
 import { TooltipManager } from './tooltipManager.js';
 // DataRecorder is only needed in a Node.js environment so we lazy-load it
@@ -81,7 +80,6 @@ export {
     AIManager,
     PossessionAIManager,
     AuraManager,
-    CombatManager,
     SynergyManager,
     SpeechBubbleManager,
     SquadManager,
