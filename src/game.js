@@ -18,8 +18,10 @@ import {
     MercenaryManager,
     AspirationManager,
     VFXManager,
-    ItemManager
+    ItemManager,
+    EffectManager
 } from './managers/index.js';
+import { MicroWorldWorker } from './micro/MicroWorldWorker.js';
 
 export class Game {
     constructor(canvasId) {
@@ -41,10 +43,15 @@ export class Game {
 
         // 2. 모든 매니저 생성
         const eventManager = new EventManager();
+        const microWorld = new MicroWorldWorker();
+        const vfxManager = new VFXManager(eventManager);
+        const effectManager = new EffectManager(eventManager, vfxManager);
+        const entityManager = new EntityManager();
         const mercenaryManager = new MercenaryManager(eventManager);
         const managers = {
             eventManager,
-            entityManager: new EntityManager(),
+            microWorld,
+            entityManager,
             audioManager: new AudioManager(),
             tooltipManager: new TooltipManager(),
             mercenaryManager,
@@ -53,8 +60,9 @@ export class Game {
             combatManager: new CombatManager(),
             inputHandler: new InputHandler(this.canvas), // canvas를 직접 전달
             uiManager: new UIManager(),
-            aspirationManager: new AspirationManager(),
-            vfxManager: new VFXManager(),
+            vfxManager,
+            effectManager,
+            aspirationManager: new AspirationManager(eventManager, microWorld, effectManager, vfxManager, entityManager),
             itemManager: new ItemManager(),
         };
         

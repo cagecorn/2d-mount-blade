@@ -15,6 +15,8 @@ class GameContext {
         this.inputHandler = null;
         this.audioManager = null;
         this.vfxManager = null;
+        this.effectManager = null;
+        this.microWorld = null;
         this.itemManager = null;
         this.player = null;
         this.assets = null;
