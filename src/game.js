@@ -10,6 +10,7 @@ import { EntityManager } from './managers/entityManager.js';
 import { EventManager } from './managers/eventManager.js';
 import { InputHandler } from './managers/inputHandler.js';
 import { SquadManager } from './managers/squadManager.js';
+import { MercenaryManager } from './managers/mercenaryManager.js';
 import { TooltipManager } from './managers/tooltipManager.js';
 import { TurnManager } from './managers/turnManager.js';
 import { UIManager } from './managers/uiManager.js';
@@ -41,12 +42,15 @@ export class Game {
         console.log("Player created.");
 
         // 3. 모든 매니저 생성 (수정: 직접 참조)
+        const eventManager = new EventManager();
+        const mercenaryManager = new MercenaryManager(eventManager);
         const managers = {
-            eventManager: new EventManager(),
+            eventManager,
+            mercenaryManager,
             entityManager: new EntityManager(),
             audioManager: new AudioManager(),
             tooltipManager: new TooltipManager(),
-            squadManager: new SquadManager(),
+            squadManager: new SquadManager(eventManager, mercenaryManager),
             turnManager: new TurnManager(),
             combatManager: new CombatManager(),
             inputHandler: new InputHandler(this),
