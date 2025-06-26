@@ -58,29 +58,46 @@ export class Game {
     }
 
     update() {
-        // Future game logic will go here
+        // 모든 엔티티(플레이어, 용병 등)의 상태를 업데이트합니다.
+        for (const entity of this.entityManager.getAllEntities()) {
+            if (entity.update) {
+                entity.update();
+            }
+        }
     }
 
     render() {
         const ctxBase = this.layerManager.contexts.mapBase;
         const ctxDecor = this.layerManager.contexts.mapDecor;
+        const ctxEntity = this.layerManager.contexts.entity; // 엔티티를 그릴 컨텍스트
+
         this.layerManager.clear('mapBase');
         this.layerManager.clear('mapDecor');
+        this.layerManager.clear('entity'); // 엔티티 레이어 클리어
+
+        // 맵 렌더링
         this.mapManager.render(
             ctxBase,
             ctxDecor,
             this.assetLoader.assets
         );
+
+        // 모든 엔티티 렌더링
+        for (const entity of this.entityManager.getAllEntities()) {
+            if (entity.render) {
+                entity.render(ctxEntity);
+            }
+        }
     }
 
     createInitialEntities() {
         // 플레이어 생성
-        const player = new Player({ id: 'player', name: 'Player' });
+        const player = new Player({ id: 'player', name: 'Player', x: 100, y: 100, tileSize: 32, image: this.assetLoader.assets.player });
         this.entityManager.addEntity(player);
 
         // 용병 생성
         for (let i = 1; i <= 5; i++) {
-            const merc = new Mercenary({ id: `merc_${i}`, name: `Mercenary ${i}` });
+            const merc = new Mercenary({ id: `merc_${i}`, name: `Mercenary ${i}`, x: 150 + i * 40, y: 100, tileSize: 32, image: this.assetLoader.assets.monster });
             this.entityManager.addEntity(merc);
         }
         
