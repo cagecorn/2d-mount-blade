@@ -1,20 +1,18 @@
 export class InputHandler {
-    constructor(eventManager, game) {
-        this.eventManager = eventManager;
+    // 생성자를 수정하여 game 객체를 받습니다.
+    constructor(game) {
         this.game = game;
         this.keysPressed = {};
+        this._setupListeners();
+    }
 
+    _setupListeners() {
         document.addEventListener('keydown', (event) => this.handleKeyDown(event));
-
         document.addEventListener('keyup', (event) => {
             delete this.keysPressed[event.key];
         });
-
-        document.addEventListener('wheel', (event) => {
-            event.preventDefault();
-            const direction = Math.sign(event.deltaY);
-            this.eventManager.publish('mouse_wheel', { direction });
-        }, { passive: false });
+        // 추가: 마우스 휠 이벤트 리스너
+        document.addEventListener('wheel', (e) => this.handleMouseWheel(e), { passive: false });
     }
 
     handleKeyDown(e) {
@@ -26,9 +24,36 @@ export class InputHandler {
             default:
                 break;
         }
-        // '1', '2' 같은 즉시 반응해야 하는 키는 여기서 이벤트 발행 가능
         if (['1', '2', '3', '4'].includes(e.key)) {
-            this.eventManager.publish('key_pressed', { key: e.key });
+            this.game.eventManager?.publish('key_pressed', { key: e.key });
         }
+    }
+
+    // 추가: 마우스 휠 이벤트를 처리하는 메서드
+    handleMouseWheel(e) {
+        const uiManager = this.game.uiManager;
+        // 장비창이 열려 있을 때만 작동
+        if (!uiManager.characterSheetPanel || uiManager.characterSheetPanel.classList.contains('hidden')) {
+            return;
+        }
+
+        e.preventDefault();
+
+        const party = this.game.getPartyMembers();
+        if (party.length <= 1) return;
+
+        const currentId = uiManager.currentCharacterId;
+        const currentIndex = party.findIndex(member => member.id === currentId);
+        if (currentIndex === -1) return;
+
+        let nextIndex;
+        if (e.deltaY < 0) {
+            nextIndex = (currentIndex - 1 + party.length) % party.length;
+        } else {
+            nextIndex = (currentIndex + 1) % party.length;
+        }
+
+        const nextCharacter = party[nextIndex];
+        uiManager.displayCharacterSheet(nextCharacter);
     }
 }
