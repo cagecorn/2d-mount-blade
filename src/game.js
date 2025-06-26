@@ -57,6 +57,7 @@ import { LaneRenderManager } from './managers/laneRenderManager.js';
 import { LanePusherAI } from './ai/archetypes.js';
 import { LaneAssignmentManager } from './managers/laneAssignmentManager.js';
 import { FormationManager } from './managers/formationManager.js';
+import { TooltipManager } from './managers/tooltipManager.js';
 
 export class Game {
     constructor() {
@@ -128,6 +129,7 @@ export class Game {
 
         // === 1. 모든 매니저 및 시스템 생성 ===
         this.eventManager = new EventManager();
+        this.tooltipManager = new TooltipManager();
         this.entityManager = new EntityManager(this.eventManager);
         this.inputHandler = new InputHandler(this.eventManager, this);
         this.combatLogManager = new CombatLogManager(this.eventManager);
@@ -192,7 +194,11 @@ export class Game {
         );
         for (const managerName of otherManagerNames) {
             if (managerName === 'UIManager') {
-                this.managers[managerName] = new Managers.UIManager(this.eventManager, (id) => this.entityManager?.getEntityById(id));
+                this.managers[managerName] = new Managers.UIManager(
+                    this.eventManager,
+                    (id) => this.entityManager?.getEntityById(id),
+                    this.tooltipManager
+                );
             } else {
                 this.managers[managerName] = new Managers[managerName](this.eventManager, assets, this.factory);
             }
