@@ -1,6 +1,94 @@
-// src/managers/uiManager.js
-
 import { SYNERGIES } from '../data/synergies.js';
+
+// A self-contained "engine" for managing tooltips.
+// This prevents tooltip errors from breaking the rest of the UI.
+class TooltipEngine {
+    constructor() {
+        this.element = document.createElement('div');
+        this.element.id = 'game-tooltip';
+        this.element.className = 'tooltip ui-frame hidden'; // Use existing styles
+        document.body.appendChild(this.element);
+    }
+
+    show(event, content) {
+        if (!content) return;
+        this.element.innerHTML = content;
+        this.element.classList.remove('hidden');
+        this.updatePosition(event);
+    }
+
+    hide() {
+        this.element.classList.add('hidden');
+    }
+
+    updatePosition(event) {
+        const rect = this.element.getBoundingClientRect();
+        let left = event.pageX + 15;
+        let top = event.pageY + 15;
+
+        if (left + rect.width > window.innerWidth) {
+            left = window.innerWidth - rect.width - 15;
+        }
+        if (top + rect.height > window.innerHeight) {
+            top = window.innerHeight - rect.height - 15;
+        }
+
+        this.element.style.left = `${left}px`;
+        this.element.style.top = `${top}px`;
+    }
+
+    // Safer HTML generation for tooltips
+    generateItemTooltipHTML(item) {
+        if (!item) return '';
+
+        try {
+            const rarityColor = {
+                'rare': '#4e9af1',
+                'unique': '#ff8000'
+            }[item.tier] || 'white';
+
+            let html = `<h3 style="color: ${rarityColor};">${item.name || '알 수 없는 아이템'}</h3>`;
+            html += `<p>등급: ${item.tier || '일반'}</p>`;
+            if (item.type) {
+                html += `<p>종류: ${item.type}</p>`;
+            }
+
+            const stats = item.stats instanceof Map ? Object.fromEntries(item.stats) : item.stats;
+            if (stats && Object.keys(stats).length > 0) {
+                html += '<h4>능력치</h4><ul>';
+                for (const [stat, value] of Object.entries(stats)) {
+                    html += `<li>${stat}: ${value}</li>`;
+                }
+                html += '</ul>';
+            }
+            
+            if(item.weight || item.toughness || item.durability) {
+                html += '<h4>미시세계 스탯</h4><ul>';
+                if(item.weight) html += `<li>무게(공격력): ${item.weight}</li>`;
+                if(item.toughness) html += `<li>강인함(방어력): ${item.toughness}</li>`;
+                if(item.durability) html += `<li>내구도(HP): ${item.durability}</li>`;
+                html += '</ul>';
+            }
+
+
+            if (item.synergies && Array.isArray(item.synergies) && item.synergies.length > 0) {
+                html += '<h4>시너지</h4><ul>';
+                item.synergies.forEach(key => {
+                    const data = SYNERGIES[key];
+                    const name = data ? `${data.icon || ''} ${data.name}` : key;
+                    html += `<li>${name}</li>`;
+                });
+                html += '</ul>';
+            }
+            
+            return html;
+        } catch (error) {
+            console.error("Error generating tooltip:", error, item);
+            return "툴팁 정보를 불러올 수 없습니다.";
+        }
+    }
+}
+
 
 export class UIManager {
     constructor(eventManager, entityManager) {
@@ -12,13 +100,9 @@ export class UIManager {
         this.openCharacterSheets = new Map();
         this.handlers = {};
 
-        // 툴팁 엘리먼트 생성 및 초기화
-        this.tooltipElement = document.createElement('div');
-        this.tooltipElement.id = 'game-tooltip';
-        this.tooltipElement.style.display = 'none';
-        document.body.appendChild(this.tooltipElement);
+        // The "Small Engine" for tooltips.
+        this.tooltipEngine = new TooltipEngine();
 
-        // 이벤트 구독
         this.eventManager?.subscribe('squads_updated', this.handleSquadsUpdate.bind(this));
         this.eventManager?.subscribe('formation_updated', this.handleFormationUpdate.bind(this));
         // 플레이어 인벤토리가 업데이트될 때 호출될 이벤트 구독
@@ -170,12 +254,13 @@ export class UIManager {
                     slot.textContent = item.name?.[0] || '?';
                 }
 
+                // Use the new tooltip engine
                 slot.addEventListener('mouseover', (e) => {
-                    const tooltipContent = this.generateItemTooltipHTML(item);
-                    this.showTooltip(e, tooltipContent);
+                    const tooltipContent = this.tooltipEngine.generateItemTooltipHTML(item);
+                    this.tooltipEngine.show(e, tooltipContent);
                 });
-                slot.addEventListener('mouseout', () => this.hideTooltip());
-                slot.addEventListener('mousemove', (e) => this.updateTooltipPosition(e));
+                slot.addEventListener('mouseout', () => this.tooltipEngine.hide());
+                slot.addEventListener('mousemove', (e) => this.tooltipEngine.updatePosition(e));
             }
 
             container.appendChild(slot);
@@ -202,88 +287,7 @@ export class UIManager {
         const goldEl = document.getElementById('ui-player-gold');
         if (goldEl) goldEl.textContent = p.gold ?? 0;
     }
-
-    /**
-     * 상세 툴팁을 생성하고 마우스 커서 주변에 표시합니다.
-     * @param {MouseEvent} event - 마우스 이벤트
-     * @param {string} htmlContent - 툴팁에 표시될 HTML 콘텐츠
-     */
-    showTooltip(event, htmlContent) {
-        this.tooltipElement.innerHTML = htmlContent;
-        this.tooltipElement.style.display = 'block';
-        this.updateTooltipPosition(event);
-    }
-
-    /**
-     * 툴팁을 숨깁니다.
-     */
-    hideTooltip() {
-        this.tooltipElement.style.display = 'none';
-    }
-
-    /**
-     * 마우스 움직임에 따라 툴팁 위치를 업데이트합니다.
-     * @param {MouseEvent} event - 마우스 이벤트
-     */
-    updateTooltipPosition(event) {
-        // 툴팁이 화면 가장자리를 벗어나지 않도록 처리
-        const tooltipRect = this.tooltipElement.getBoundingClientRect();
-        let left = event.pageX + 15;
-        let top = event.pageY + 15;
-
-        if (left + tooltipRect.width > window.innerWidth) {
-            left = window.innerWidth - tooltipRect.width - 15;
-        }
-        if (top + tooltipRect.height > window.innerHeight) {
-            top = window.innerHeight - tooltipRect.height - 15;
-        }
-
-        this.tooltipElement.style.left = `${left}px`;
-        this.tooltipElement.style.top = `${top}px`;
-    }
-
-    /**
-     * 아이템의 상세 정보를 바탕으로 툴팁에 들어갈 HTML을 생성합니다.
-     * @param {object} item - 상세 정보가 필요한 아이템 객체
-     * @returns {string} - 툴팁용 HTML 문자열
-     */
-    generateItemTooltipHTML(item) {
-        if (!item) return '';
-
-        // 아이템 희귀도에 따라 이름 색상을 다르게 할 수 있습니다. (예시)
-        const rarityColor = item.rarity === 'legendary' ? 'orange' : 'white';
-        let html = `<h3 style="color: ${rarityColor};">${item.name}</h3>`;
-        html += `<p>타입: ${item.type || '일반'}</p>`;
-
-        if (item.stats && Object.keys(item.stats).length > 0) {
-            html += '<h4>능력치</h4><ul>';
-            for (const [stat, value] of Object.entries(item.stats)) {
-                html += `<li>${stat}: ${value}</li>`;
-            }
-            html += '</ul>';
-        }
-
-        if (item.affixes && item.affixes.length > 0) {
-            html += '<h4>특수 효과</h4><ul>';
-            item.affixes.forEach(affix => {
-                html += `<li>${affix}</li>`;
-            });
-            html += '</ul>';
-        }
-
-        if (item.synergies && item.synergies.length > 0) {
-            html += '<h4>시너지</h4><ul>';
-            item.synergies.forEach(key => {
-                const data = SYNERGIES[key];
-                const name = data ? `${data.icon || ''} ${data.name}` : key;
-                html += `<li>${name}</li>`;
-            });
-            html += '</ul>';
-        }
-
-        return html;
-    }
-
+    
     /**
      * 플레이어의 인벤토리 UI를 렌더링합니다.
      * @param {object} data - { inventory: string[] } 형태의 인벤토리 아이템 ID 목록
@@ -307,14 +311,14 @@ export class UIManager {
 
                 // 각 아이템 슬롯에 툴팁 이벤트 리스너 추가
                 itemSlot.addEventListener('mouseover', (e) => {
-                    const tooltipContent = this.generateItemTooltipHTML(item);
-                    this.showTooltip(e, tooltipContent);
+                    const tooltipContent = this.tooltipEngine.generateItemTooltipHTML(item);
+                    this.tooltipEngine.show(e, tooltipContent);
                 });
                 itemSlot.addEventListener('mouseout', () => {
-                    this.hideTooltip();
+                    this.tooltipEngine.hide();
                 });
                 itemSlot.addEventListener('mousemove', (e) => {
-                    this.updateTooltipPosition(e);
+                    this.tooltipEngine.updatePosition(e);
                 });
 
                 inventoryPanel.appendChild(itemSlot);
