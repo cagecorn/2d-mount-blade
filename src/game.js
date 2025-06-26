@@ -142,7 +142,8 @@ export class Game {
         this.laneManager = new LaneManager(mapPixelWidth, mapPixelHeight, laneCenters);
         this.laneRenderManager = new LaneRenderManager(this.laneManager, SETTINGS.ENABLE_AQUARIUM_LANES);
         const formationSpacing = this.mapManager.tileSize * 2.5;
-        this.formationManager = new FormationManager(5, 5, formationSpacing);
+        const formationAngle = -Math.PI / 4; // align grid with battlefield orientation
+        this.formationManager = new FormationManager(5, 5, formationSpacing, 'LEFT', formationAngle);
         this.eventManager.subscribe('formation_assign_request', d => {
             if (d.squadId) {
                 const squad = this.squadManager.getSquad(d.squadId);
@@ -351,7 +352,7 @@ export class Game {
         this.monsterGroup = this.metaAIManager.createGroup('dungeon_monsters', STRATEGY.AGGRESSIVE);
 
         // === 몬스터 부대 생성 ===
-        const enemyFormationManager = new FormationManager(5, 5, formationSpacing, 'RIGHT');
+        const enemyFormationManager = new FormationManager(5, 5, formationSpacing, 'RIGHT', formationAngle);
         const enemyFormationOrigin = {
             x: (this.mapManager.width - 8) * this.mapManager.tileSize,
             y: (this.mapManager.height / 2) * this.mapManager.tileSize,
