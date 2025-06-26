@@ -62,4 +62,18 @@ export class AssetLoader {
         ];
         effects.forEach(([key, src]) => this.loadImage(key, src));
     }
+
+    async load() {
+        this.loadImage('player', 'assets/player.png');
+        this.loadImage('monster', 'assets/monster.png');
+        this.loadImage('epic_monster', 'assets/epic_monster.png');
+        this.loadImage('floor', 'assets/floor.png');
+        this.loadImage('wall', 'assets/wall.png');
+        this.loadImage('sword', 'assets/images/shortsword.png');
+        this.loadWeaponImages();
+        this.loadEmblemImages();
+        this.loadVfxImages();
+
+        return new Promise(resolve => this.onReady(resolve));
+    }
 }
