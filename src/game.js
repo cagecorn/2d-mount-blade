@@ -36,6 +36,8 @@ export class Game {
     start() {
         console.log("Starting game...");
         this._loadAssets(() => {
+            // 월드맵을 50x50 크기로 생성합니다.
+            this.mapManager.generateMap(50, 50);
             this.createInitialEntities();
             this.squadManager.createInitialSquads();
 
