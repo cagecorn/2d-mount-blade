@@ -231,10 +231,12 @@ export class Game {
         this.equipmentManager.setTagManager(this.tagManager);
 
         this.itemFactory = new ItemFactory(assets);
-        const eagerSword = this.itemFactory.create('eager_sword', 0, 0, this.mapManager.tileSize);
-        if (eagerSword) {
-            this.inventoryManager.getSharedInventory().push(eagerSword);
-        }
+                // 게임 시작 시 무기 아이템들을 한 개씩 고용 인벤토리에 배치합니다.
+        const weaponIds = Object.keys(ITEMS).filter(id => ITEMS[id].type === 'weapon');
+        weaponIds.forEach(id => {
+            const weapon = this.itemFactory.create(id, 0, 0, this.mapManager.tileSize);
+            if (weapon) this.inventoryManager.getSharedInventory().push(weapon);
+        });
         this.pathfindingManager = new PathfindingManager(this.mapManager);
         this.motionManager = new Managers.MotionManager(this.mapManager, this.pathfindingManager);
         this.knockbackEngine = new KnockbackEngine(this.motionManager, this.vfxManager);
