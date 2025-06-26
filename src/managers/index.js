@@ -10,7 +10,6 @@ import { VFXManager } from './vfxManager.js';
 import { SkillManager } from './skillManager.js';
 import { SoundManager } from './soundManager.js';
 import { BgmManager } from './bgmManager.js';
-import { AudioManager } from './audioManager.js';
 import { EffectManager } from './effectManager.js';
 import { ProjectileManager } from './projectileManager.js';
 import { ItemAIManager } from './item-ai-manager.js';
@@ -38,8 +37,6 @@ import { AuraManager } from './AuraManager.js';
 import { PossessionAIManager } from './possessionAIManager.js';
 import { CombatDecisionEngine } from './ai/CombatDecisionEngine.js';
 import { ReputationManager } from './ReputationManager.js';
-import { EventManager } from './eventManager.js';
-import { TurnManager } from './turnManager.js';
 import { EntityManager } from './entityManager.js';
 import GuidelineLoader from './guidelineLoader.js';
 import { TooltipManager } from './tooltipManager.js';
@@ -63,7 +60,6 @@ export {
     SkillManager,
     SoundManager,
     BgmManager,
-    AudioManager,
     EffectManager,
     ProjectileManager,
     ItemAIManager,
@@ -89,8 +85,6 @@ export {
     SquadManager,
     LaneAssignmentManager,
     ReputationManager,
-    EventManager,
-    TurnManager,
     EntityManager,
     CombatDecisionEngine,
     GuidelineLoader,
