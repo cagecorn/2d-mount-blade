@@ -4,17 +4,22 @@
 import { AssetLoader } from './assetLoader.js';
 import { Player } from './entities/player.js';
 import { context } from './gameContext.js';
-import { AudioManager } from './managers/audioManager.js';
-import { CombatManager } from './managers/combatManager.js';
-import { EntityManager } from './managers/entityManager.js';
-import { EventManager } from './managers/eventManager.js';
-import { InputHandler } from './managers/inputHandler.js';
-import { SquadManager } from './managers/squadManager.js';
-import { TooltipManager } from './managers/tooltipManager.js';
-import { TurnManager } from './managers/turnManager.js';
-import { UIManager } from './managers/uiManager.js';
-import { MercenaryManager } from './managers/mercenaryManager.js';
-import { AspirationManager } from './managers/aspirationManager.js';
+// 주요 매니저는 managers/index.js 에서 한 번에 불러옵니다.
+import {
+    AudioManager,
+    CombatManager,
+    EntityManager,
+    EventManager,
+    InputHandler,
+    SquadManager,
+    TooltipManager,
+    TurnManager,
+    UIManager,
+    MercenaryManager,
+    AspirationManager,
+    VFXManager,
+    ItemManager
+} from './managers/index.js';
 
 export class Game {
     constructor(canvasId) {
@@ -47,6 +52,8 @@ export class Game {
             uiManager: new UIManager(),
             mercenaryManager: new MercenaryManager(),
             aspirationManager: new AspirationManager(),
+            vfxManager: new VFXManager(),
+            itemManager: new ItemManager(),
         };
         
         // 3. GameContext에 등록
@@ -61,15 +68,17 @@ export class Game {
 
         // 5. 각 매니저 초기화 - ✨ 누락되었던 핵심 단계 ✨
         // 매니저들이 다른 매니저에 접근할 수 있도록 context를 주입합니다.
-        context.audioManager.init();
-        context.entityManager.init();
-        context.combatManager.init();
-        context.uiManager.init(this); // UIManager는 game 객체를 필요로 할 수 있음
-        context.mercenaryManager.init();
-        context.aspirationManager.init();
-        
+        this.managersList = Object.values(managers);
+        for (const mgr of this.managersList) {
+            if (typeof mgr.init === 'function') {
+                mgr.init(this);
+            }
+        }
+
         // UIManager가 TooltipManager를 사용하도록 연결
-        context.uiManager.tooltipManager = context.tooltipManager;
+        if (context.uiManager) {
+            context.uiManager.tooltipManager = context.tooltipManager;
+        }
 
 
         console.log("All managers initialized.");
@@ -91,10 +100,25 @@ export class Game {
 
     update(deltaTime) {
         // ✨ 누락되었던 핵심 단계 ✨
-        // 매니저들의 업데이트 함수를 호출하여 게임 상태를 갱신합니다.
-        context.entityManager.update(deltaTime);
-        context.combatManager.update(deltaTime);
-        // 필요에 따라 다른 매니저의 update도 호출
+        // 각 매니저의 update 함수를 호출하여 게임 상태를 갱신합니다.
+        for (const mgr of this.managersList) {
+            if (typeof mgr.update === 'function') {
+                // update(deltaTime, context) 형태를 지원하도록 인자 전달
+                try {
+                    mgr.update(deltaTime, context);
+                } catch (e) {
+                    console.warn('Manager update failed:', e);
+                }
+            }
+        }
+
+        // TurnManager는 인자가 특별하므로 별도 처리
+        if (context.turnManager && typeof context.turnManager.update === 'function') {
+            context.turnManager.update(Array.from(context.entityManager.entities.values()), {
+                eventManager: context.eventManager,
+                player: context.player
+            });
+        }
     }
 
     render() {
@@ -102,11 +126,16 @@ export class Game {
         // 화면을 그리고, 그 위에 게임 요소들을 렌더링합니다.
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        // 예시: 맵 렌더링 (구현 시 추가)
-        // context.mapManager.render(this.ctx);
-
-        // 엔티티(캐릭터, 적 등) 렌더링
-        context.entityManager.render(this.ctx);
+        // 맵, 엔티티, 효과 등 순서대로 렌더링
+        for (const mgr of this.managersList) {
+            if (typeof mgr.render === 'function') {
+                try {
+                    mgr.render(this.ctx);
+                } catch (e) {
+                    console.warn('Manager render failed:', e);
+                }
+            }
+        }
 
         // UI는 DOM 기반이므로 여기서 렌더링하지 않음
     }
