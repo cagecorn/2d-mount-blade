@@ -18,6 +18,13 @@ export class MapManager {
         this.map = this._generateMaze();
     }
 
+    generateMap(width = this.width, height = this.height) {
+        this.width = width;
+        this.height = height;
+        this.rooms = [];
+        this.map = this._generateMaze();
+    }
+
     _random() {
         const a = 1664525;
         const c = 1013904223;
