@@ -1,10 +1,11 @@
 export class FormationManager {
-    constructor(rows = 5, cols = 5, tileSize = 192, orientation = 'LEFT') {
+    constructor(rows = 5, cols = 5, tileSize = 192, orientation = 'LEFT', rotation = 0) {
         // sanitize parameters to avoid invalid array length errors
         this.rows = Math.max(1, Math.floor(Number(rows) || 5));
         this.cols = Math.max(1, Math.floor(Number(cols) || 5));
         this.tileSize = tileSize;
         this.orientation = orientation; // LEFT or RIGHT
+        this.rotation = rotation; // radian angle to rotate grid positions
         this.slots = Array.from({ length: this.rows * this.cols }, () => new Set());
     }
 
@@ -37,8 +38,12 @@ export class FormationManager {
 
         const relativeX = (col - centerCol) * this.tileSize * orientationMultiplier;
         const relativeY = (row - centerRow) * this.tileSize;
+        const cos = Math.cos(this.rotation);
+        const sin = Math.sin(this.rotation);
+        const rotatedX = relativeX * cos - relativeY * sin;
+        const rotatedY = relativeX * sin + relativeY * cos;
 
-        return { x: relativeX, y: relativeY };
+        return { x: rotatedX, y: rotatedY };
     }
 
     apply(origin, entityMap) {
