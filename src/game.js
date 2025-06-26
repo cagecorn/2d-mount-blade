@@ -548,201 +548,46 @@ export class Game {
         this.equipmentManager.entityManager = this.entityManager;
         this.aspirationManager = new AspirationManager(this.eventManager, this.microWorld, this.effectManager, this.vfxManager, this.entityManager);
 
-        // === 4. 용병 고용 로직 ===
-        const hireBtn = document.getElementById('hire-mercenary');
-        if (hireBtn) {
-            hireBtn.onclick = () => {
-                if (this.gameState.gold >= 50) {
-                    this.gameState.gold -= 50;
-                    const newMerc = this.mercenaryManager.hireMercenary(
-                        'warrior',
-                        this.gameState.player.x,
-                        this.gameState.player.y,
-                        this.mapManager.tileSize,
-                        'player_party'
-                    );
+        // === 4. UI 이벤트를 EventManager로 전달 ===
+        this.setupUIEvents();
 
-                    if (newMerc) {
-                        this.laneAssignmentManager.assignMercenaryToLane(newMerc);
-                        this.entityManager.addEntity(newMerc);
-                        this.playerGroup.addMember(newMerc);
-                        this.eventManager.publish('mercenary_hired', { mercenary: newMerc });
-                    }
-                } else {
-                    this.eventManager.publish('log', { message: `골드가 부족합니다.` });
+        this.eventManager.subscribe('hire_request', ({ jobId }) => {
+            const cost = jobId === 'fire_god' ? 100 : 50;
+            if (this.gameState.gold >= cost) {
+                this.gameState.gold -= cost;
+                const newMerc = this.mercenaryManager.hireMercenary(
+                    jobId,
+                    this.gameState.player.x,
+                    this.gameState.player.y,
+                    this.mapManager.tileSize,
+                    'player_party'
+                );
+
+                if (newMerc) {
+                    this.laneAssignmentManager.assignMercenaryToLane(newMerc);
+                    this.entityManager.addEntity(newMerc);
+                    this.playerGroup.addMember(newMerc);
+                    this.eventManager.publish('mercenary_hired', { mercenary: newMerc });
                 }
-            };
-        }
+            } else {
+                this.eventManager.publish('log', { message: `골드가 부족합니다.` });
+            }
+        });
 
-        const archerBtn = document.getElementById('hire-archer');
-        if (archerBtn) {
-            archerBtn.onclick = () => {
-                if (this.gameState.gold >= 50) {
-                    this.gameState.gold -= 50;
-                    const newMerc = this.mercenaryManager.hireMercenary(
-                        'archer',
-                        this.gameState.player.x,
-                        this.gameState.player.y,
-                        this.mapManager.tileSize,
-                        'player_party'
-                    );
+        this.eventManager.subscribe('save_game', () => {
+            const saveData = this.saveLoadManager.gatherSaveData(this.gameState, this.monsterManager, this.mercenaryManager);
+            console.log("--- GAME STATE SAVED (SNAPSHOT) ---");
+            console.log(saveData);
+            this.eventManager.publish('log', { message: '게임 상태 스냅샷이 콘솔에 저장되었습니다.' });
+        });
 
-                    if (newMerc) {
-                        this.laneAssignmentManager.assignMercenaryToLane(newMerc);
-                        this.entityManager.addEntity(newMerc);
-                        this.playerGroup.addMember(newMerc);
-                        this.eventManager.publish('mercenary_hired', { mercenary: newMerc });
-                    }
-                } else {
-                    this.eventManager.publish('log', { message: `골드가 부족합니다.` });
-                }
-            };
-        }
-
-        const healerBtn = document.getElementById('hire-healer');
-        if (healerBtn) {
-            healerBtn.onclick = () => {
-                if (this.gameState.gold >= 50) {
-                    this.gameState.gold -= 50;
-                    const newMerc = this.mercenaryManager.hireMercenary(
-                        'healer',
-                        this.gameState.player.x,
-                        this.gameState.player.y,
-                        this.mapManager.tileSize,
-                        'player_party'
-                    );
-
-                    if (newMerc) {
-                        this.laneAssignmentManager.assignMercenaryToLane(newMerc);
-                        this.entityManager.addEntity(newMerc);
-                        this.playerGroup.addMember(newMerc);
-                        this.eventManager.publish('mercenary_hired', { mercenary: newMerc });
-                    }
-                } else {
-                    this.eventManager.publish('log', { message: `골드가 부족합니다.` });
-                }
-            };
-        }
-
-        const wizardBtn = document.getElementById('hire-wizard');
-        if (wizardBtn) {
-            wizardBtn.onclick = () => {
-                if (this.gameState.gold >= 50) {
-                    this.gameState.gold -= 50;
-                    const newMerc = this.mercenaryManager.hireMercenary(
-                        'wizard',
-                        this.gameState.player.x,
-                        this.gameState.player.y,
-                        this.mapManager.tileSize,
-                        'player_party'
-                    );
-
-                    if (newMerc) {
-                        this.laneAssignmentManager.assignMercenaryToLane(newMerc);
-                        this.entityManager.addEntity(newMerc);
-                        this.playerGroup.addMember(newMerc);
-                        this.eventManager.publish('mercenary_hired', { mercenary: newMerc });
-                    }
-                } else {
-                    this.eventManager.publish('log', { message: `골드가 부족합니다.` });
-                }
-            };
-        }
-
-        const bardBtn = document.getElementById('hire-bard');
-        if (bardBtn) {
-            bardBtn.onclick = () => {
-                if (this.gameState.gold >= 50) {
-                    this.gameState.gold -= 50;
-                    const newMerc = this.mercenaryManager.hireMercenary(
-                        'bard',
-                        this.gameState.player.x,
-                        this.gameState.player.y,
-                        this.mapManager.tileSize,
-                        'player_party'
-                    );
-
-                    if (newMerc) {
-                        this.laneAssignmentManager.assignMercenaryToLane(newMerc);
-                        this.entityManager.addEntity(newMerc);
-                        this.playerGroup.addMember(newMerc);
-                        this.eventManager.publish('mercenary_hired', { mercenary: newMerc });
-                    }
-                } else {
-                    this.eventManager.publish('log', { message: `골드가 부족합니다.` });
-                }
-            };
-        }
-
-        const summonerBtn = document.getElementById('hire-summoner');
-        if (summonerBtn) {
-            summonerBtn.onclick = () => {
-                if (this.gameState.gold >= 50) {
-                    this.gameState.gold -= 50;
-                    const newMerc = this.mercenaryManager.hireMercenary(
-                        'summoner',
-                        this.gameState.player.x,
-                        this.gameState.player.y,
-                        this.mapManager.tileSize,
-                        'player_party'
-                    );
-
-                    if (newMerc) {
-                        this.laneAssignmentManager.assignMercenaryToLane(newMerc);
-                        this.entityManager.addEntity(newMerc);
-                        this.playerGroup.addMember(newMerc);
-                        this.eventManager.publish('mercenary_hired', { mercenary: newMerc });
-                    }
-                } else {
-                    this.eventManager.publish('log', { message: `골드가 부족합니다.` });
-                }
-            };
-        }
-
-        const fireGodBtn = document.getElementById('hire-fire-god');
-        if (fireGodBtn) {
-            fireGodBtn.onclick = () => {
-                if (this.gameState.gold >= 100) {
-                    this.gameState.gold -= 100;
-                    const newMerc = this.mercenaryManager.hireMercenary(
-                        'fire_god',
-                        this.gameState.player.x,
-                        this.gameState.player.y,
-                        this.mapManager.tileSize,
-                        'player_party'
-                    );
-
-                    if (newMerc) {
-                        this.laneAssignmentManager.assignMercenaryToLane(newMerc);
-                        this.entityManager.addEntity(newMerc);
-                        this.playerGroup.addMember(newMerc);
-                        this.eventManager.publish('mercenary_hired', { mercenary: newMerc });
-                    }
-                } else {
-                    this.eventManager.publish('log', { message: `골드가 부족합니다.` });
-                }
-            };
-        }
-
-        const saveBtn = document.getElementById('save-game-btn');
-        if (saveBtn) {
-            saveBtn.onclick = () => {
-                const saveData = this.saveLoadManager.gatherSaveData(this.gameState, this.monsterManager, this.mercenaryManager);
-                console.log("--- GAME STATE SAVED (SNAPSHOT) ---");
-                console.log(saveData);
-                this.eventManager.publish('log', { message: '게임 상태 스냅샷이 콘솔에 저장되었습니다.' });
-            };
-        }
-
-        const autoBtn = document.getElementById('toggle-autobattle-btn');
-        if (autoBtn) {
-            autoBtn.onclick = () => {
-                const player = this.gameState.player;
-                player.autoBattle = !player.autoBattle;
-                if (typeof player.updateAI === 'function') player.updateAI();
-                autoBtn.textContent = `자동 전투: ${player.autoBattle ? 'ON' : 'OFF'}`;
-            };
-        }
+        this.eventManager.subscribe('toggle_autobattle', () => {
+            const player = this.gameState.player;
+            player.autoBattle = !player.autoBattle;
+            if (typeof player.updateAI === 'function') player.updateAI();
+            const autoBtn = document.getElementById('toggle-autobattle-btn');
+            if (autoBtn) autoBtn.textContent = `자동 전투: ${player.autoBattle ? 'ON' : 'OFF'}`;
+        });
 
         // === 메뉴 버튼 이벤트 리스너 수정 ===
         const playerInfoBtn = document.querySelector('.menu-btn[data-panel-id="character-sheet-panel"]');
@@ -1732,6 +1577,26 @@ export class Game {
     startBGM() {
         if (this.bgmManager && !this.bgmManager.isInitialized) {
             this.bgmManager.start();
+        }
+    }
+
+    setupUIEvents() {
+        const hireButtons = document.querySelectorAll('#mercenary-controls button[id^="hire-"]');
+        hireButtons.forEach(btn => {
+            btn.onclick = () => {
+                const jobId = btn.dataset.job;
+                if (jobId) this.eventManager.publish('hire_request', { jobId });
+            };
+        });
+
+        const saveBtn = document.getElementById('save-game-btn');
+        if (saveBtn) {
+            saveBtn.onclick = () => this.eventManager.publish('save_game');
+        }
+
+        const autoBtn = document.getElementById('toggle-autobattle-btn');
+        if (autoBtn) {
+            autoBtn.onclick = () => this.eventManager.publish('toggle_autobattle');
         }
     }
 }
