@@ -5,6 +5,8 @@ import { EntityManager } from './managers/entityManager.js';
 import { SquadManager } from './managers/squadManager.js';
 import { FormationManager } from './managers/formationManager.js';
 import { UIManager } from './managers/uiManager.js';
+import { BgmManager } from './managers/bgmManager.js';
+import { SoundManager } from './managers/soundManager.js';
 import { Player } from './entities/player.js';
 import { Mercenary } from './entities/mercenary.js';
 
@@ -15,6 +17,8 @@ export class Game {
         this.squadManager = new SquadManager(this.entityManager, this.eventManager);
         this.formationManager = new FormationManager(this.eventManager, 5, 5, 64, 'LEFT', 0);
         this.uiManager = new UIManager(this.eventManager, this.entityManager);
+        this.soundManager = new SoundManager(this.eventManager);
+        this.bgmManager = new BgmManager(this.eventManager);
         
         console.log("Game and managers initialized.");
     }
@@ -43,6 +47,12 @@ export class Game {
         
         // 초기 엔티티 목록 발행
         this.eventManager.publish('entities_updated', { entities: this.entityManager.getAllEntities() });
+    }
+
+    startBGM() {
+        if (this.bgmManager && !this.bgmManager.isInitialized) {
+            this.bgmManager.start();
+        }
     }
 }
 
