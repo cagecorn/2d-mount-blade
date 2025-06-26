@@ -8,6 +8,8 @@ class GameContext {
         this.entityManager = null;
         this.uiManager = null;
         this.squadManager = null;
+        // 용병 관련 매니저를 저장합니다.
+        this.mercenaryManager = null;
         this.turnManager = null;
         this.combatManager = null;
         this.inputHandler = null;
