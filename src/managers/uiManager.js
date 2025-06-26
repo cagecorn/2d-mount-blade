@@ -13,6 +13,7 @@ export class UIManager {
     constructor(eventManager = null, getEntityByIdCallback) {
         this.eventManager = eventManager;
         this.getEntityById = getEntityByIdCallback;
+        this.synergyManager = null;
         this.openCharacterSheets = new Map();
         this.levelElement = document.getElementById('ui-player-level');
         this.statPointsElement = document.getElementById('ui-player-statPoints');
@@ -95,6 +96,10 @@ export class UIManager {
             charmResist: '매혹 저항',
             movementResist: '이동 방해 저항',
         };
+    }
+
+    setSynergyManager(manager) {
+        this.synergyManager = manager;
     }
 
     init(callbacks) {
@@ -696,6 +701,35 @@ export class UIManager {
 
                 this.setupDropTarget(slotEl);
                 equipContainer.appendChild(slotEl);
+            }
+        }
+
+        const synergyBox = panel.querySelector('.sheet-synergies');
+        if (synergyBox) {
+            synergyBox.innerHTML = '';
+            const counts = {};
+            for (const slot in entity.equipment) {
+                const item = entity.equipment[slot];
+                if (item && Array.isArray(item.synergies)) {
+                    item.synergies.forEach(k => counts[k] = (counts[k] || 0) + 1);
+                }
+            }
+            for (const key in counts) {
+                const data = SYNERGIES[key];
+                if (!data) continue;
+                const div = document.createElement('div');
+                div.className = 'synergy-entry';
+                const icon = data.icon ? `${data.icon} ` : '';
+                let text = `${icon}${data.name} (${counts[key]})`;
+                const active = this.synergyManager?.activeBonuses.get(entity)?.[key];
+                if (active) text += ` - ${active.description}`;
+                div.textContent = text;
+                let tip = `<strong>${data.name}</strong><br>${data.description}`;
+                if (Array.isArray(data.bonuses)) {
+                    tip += '<br>' + data.bonuses.map(b => `${b.count}개: ${b.description}`).join('<br>');
+                }
+                this._attachTooltip(div, tip);
+                synergyBox.appendChild(div);
             }
         }
 
