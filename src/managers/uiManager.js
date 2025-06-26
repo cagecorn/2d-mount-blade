@@ -10,9 +10,10 @@ import { Draggable } from '../utils/Draggable.js';
 import { STRATEGY } from './ai-managers.js';
 
 export class UIManager {
-    constructor(eventManager = null, getEntityByIdCallback) {
+    constructor(eventManager = null, getEntityByIdCallback, tooltipManager) {
         this.eventManager = eventManager;
         this.getEntityById = getEntityByIdCallback;
+        this.tooltipManager = tooltipManager;
         this.synergyManager = null;
         this.openCharacterSheets = new Map();
         this.levelElement = document.getElementById('ui-player-level');
@@ -52,7 +53,6 @@ export class UIManager {
         this.squadManagementPanel = document.getElementById('squad-management-ui');
         this._squadUIInitialized = false;
         this.formationManager = null;
-        this.tooltip = document.getElementById('tooltip');
         this.characterSheetTemplate = document.getElementById('character-sheet-template');
         this.uiContainer = document.getElementById('ui-container');
         this.callbacks = {};
@@ -280,7 +280,9 @@ export class UIManager {
                     qty.textContent = item.quantity;
                     slot.appendChild(qty);
                 }
-                this._attachTooltip(slot, this._getItemTooltip(item));
+                if (this.tooltipManager) {
+                    this.tooltipManager.attach(slot, () => this._getItemTooltip(item));
+                }
                 slot.onclick = () => {
                     if (this.onConsumableUse) this.onConsumableUse(index);
                 };
@@ -299,7 +301,9 @@ export class UIManager {
                         slot.style.backgroundImage = `url(${skill.icon})`;
                         slot.style.backgroundSize = 'cover';
                         slot.style.backgroundPosition = 'center';
-                        slot.title = skill.name;
+                        if (this.tooltipManager) {
+                            this.tooltipManager.attach(slot, `<strong>${skill.name}</strong><br>${skill.description}`);
+                        }
                     }
                     const cd = player.skillCooldowns[skillId] || 0;
                     if (cd > 0) {
@@ -314,7 +318,6 @@ export class UIManager {
                     }
                 } else {
                     slot.style.backgroundImage = '';
-                    slot.title = '';
                     if (overlay) overlay.remove();
                 }
             });
@@ -596,7 +599,9 @@ export class UIManager {
                 qty.textContent = item.quantity;
                 slot.appendChild(qty);
             }
-            this._attachTooltip(slot, this._getItemTooltip(item));
+            if (this.tooltipManager) {
+                this.tooltipManager.attach(slot, () => this._getItemTooltip(item));
+            }
 
             // 드래그 앤 드롭을 사용하므로 클릭 이벤트는 필요 없습니다.
         }
@@ -619,20 +624,7 @@ export class UIManager {
         });
     }
 
-    _attachTooltip(element, html) {
-        if (!this.tooltip) return;
-        element.onmouseenter = (e) => {
-            this.tooltip.innerHTML = html;
-            this.tooltip.style.left = `${e.pageX + 10}px`;
-            this.tooltip.style.top = `${e.pageY + 10}px`;
-            this.tooltip.classList.remove('hidden');
-        };
-        element.onmouseleave = () => this.tooltip.classList.add('hidden');
-        element.onmousemove = (e) => {
-             this.tooltip.style.left = `${e.pageX + 10}px`;
-             this.tooltip.style.top = `${e.pageY + 10}px`;
-        }
-    }
+
 
     // --- 다중 캐릭터 시트 및 드래그 앤 드롭 지원 메서드들 ---
     showCharacterSheet(entity) {
@@ -728,7 +720,9 @@ export class UIManager {
                 if (Array.isArray(data.bonuses)) {
                     tip += '<br>' + data.bonuses.map(b => `${b.count}개: ${b.description}`).join('<br>');
                 }
-                this._attachTooltip(div, tip);
+                if (this.tooltipManager) {
+                    this.tooltipManager.attach(div, tip);
+                }
                 synergyBox.appendChild(div);
             }
         }
@@ -759,7 +753,9 @@ export class UIManager {
                 div.className = 'skill-slot';
                 div.style.backgroundImage = `url(${skill.icon})`;
                 div.style.backgroundSize = 'cover';
-                this._attachTooltip(div, `<strong>${skill.name}</strong><br>${skill.description}`);
+                if (this.tooltipManager) {
+                    this.tooltipManager.attach(div, `<strong>${skill.name}</strong><br>${skill.description}`);
+                }
                 skillBox.appendChild(div);
             });
         }
@@ -809,7 +805,9 @@ export class UIManager {
                 mLine.className = 'stat-line';
                 const span = document.createElement('span');
                 span.textContent = entity.properties.mbti;
-                this._attachTooltip(span, this._getMBTITooltip(entity.properties.mbti));
+                if (this.tooltipManager) {
+                    this.tooltipManager.attach(span, this._getMBTITooltip(entity.properties.mbti));
+                }
                 mLine.innerHTML = 'MBTI: ';
                 mLine.appendChild(span);
                 page1.appendChild(mLine);
@@ -821,7 +819,9 @@ export class UIManager {
                 const span2 = document.createElement('span');
                 const fId2 = entity.properties.faith;
                 span2.textContent = FAITHS[fId2].name;
-                this._attachTooltip(span2, this._getFaithTooltip(fId2));
+                if (this.tooltipManager) {
+                    this.tooltipManager.attach(span2, this._getFaithTooltip(fId2));
+                }
                 fLine2.innerHTML = 'faith: ';
                 fLine2.appendChild(span2);
                 page1.appendChild(fLine2);
@@ -834,7 +834,9 @@ export class UIManager {
                 entity.properties.traits.forEach(id => {
                     const span = document.createElement('span');
                     span.textContent = TRAITS[id]?.name || id;
-                    this._attachTooltip(span, this._getTraitTooltip(id));
+                    if (this.tooltipManager) {
+                        this.tooltipManager.attach(span, this._getTraitTooltip(id));
+                    }
                     tLine.appendChild(span);
                     tLine.appendChild(document.createTextNode(' '));
                 });
@@ -894,7 +896,7 @@ export class UIManager {
 
     // 슬롯에 아이템을 표시하고 드래그 기능을 부여합니다.
     renderItemInSlot(slotEl, item) {
-        slotEl.innerHTML = `<img src="${item.iconPath || item.image?.src || ''}" alt="${item.name}" title="${item.name}">`;
+        slotEl.innerHTML = `<img src="${item.iconPath || item.image?.src || ''}" alt="${item.name}">`;
         slotEl.classList.add('has-item');
         slotEl.draggable = true;
         slotEl.ondragstart = (e) => {
@@ -902,6 +904,9 @@ export class UIManager {
             e.dataTransfer.effectAllowed = 'move';
         };
         slotEl.ondragend = () => {};
+        if (this.tooltipManager) {
+            this.tooltipManager.attach(slotEl, () => this._getItemTooltip(item));
+        }
     }
 
     setupDropTarget(slotEl) {
