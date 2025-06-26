@@ -114,7 +114,7 @@ export class EffectManager {
             : Array.from(context.entityManager.entities.values());
 
         entities.forEach(entity => {
-            if (entity.effects.length === 0) return;
+            if (!entity.effects || entity.effects.length === 0) return;
 
             for (let i = entity.effects.length - 1; i >= 0; i--) {
                 const effect = entity.effects[i];
