@@ -142,9 +142,17 @@ export class Game {
         this.laneManager = new LaneManager(mapPixelWidth, mapPixelHeight, laneCenters);
         this.laneRenderManager = new LaneRenderManager(this.laneManager, SETTINGS.ENABLE_AQUARIUM_LANES);
         const formationSpacing = this.mapManager.tileSize * 2.5;
-        this.formationManager = new FormationManager(5, 5, formationSpacing);
+        const formationAngle = -Math.PI / 4; // align grid with battlefield orientation
+        this.formationManager = new FormationManager(5, 5, formationSpacing, 'LEFT', formationAngle);
         this.eventManager.subscribe('formation_assign_request', d => {
-            this.formationManager.assign(d.slotIndex, d.entityId);
+            if (d.squadId) {
+                const squad = this.squadManager.getSquad(d.squadId);
+                if (squad) {
+                    squad.members.forEach(id => this.formationManager.assign(d.slotIndex, id));
+                }
+            } else {
+                this.formationManager.assign(d.slotIndex, d.entityId);
+            }
             this.uiManager?.createSquadManagementUI();
         });
         this.saveLoadManager = new SaveLoadManager();
@@ -209,6 +217,7 @@ export class Game {
         this.microEngine = new MicroEngine(this.eventManager);
         this.microCombatManager = new MicroCombatManager(this.eventManager);
         this.synergyManager = new Managers.SynergyManager(this.eventManager);
+        this.uiManager.setSynergyManager(this.synergyManager);
         this.speechBubbleManager = this.managers.SpeechBubbleManager;
         this.equipmentRenderManager = this.managers.EquipmentRenderManager;
         this.mercenaryManager.equipmentRenderManager = this.equipmentRenderManager;
@@ -344,7 +353,7 @@ export class Game {
         this.monsterGroup = this.metaAIManager.createGroup('dungeon_monsters', STRATEGY.AGGRESSIVE);
 
         // === 몬스터 부대 생성 ===
-        const enemyFormationManager = new FormationManager(5, 5, formationSpacing, 'RIGHT');
+        const enemyFormationManager = new FormationManager(5, 5, formationSpacing, 'RIGHT', formationAngle);
         const enemyFormationOrigin = {
             x: (this.mapManager.width - 8) * this.mapManager.tileSize,
             y: (this.mapManager.height / 2) * this.mapManager.tileSize,
@@ -359,6 +368,22 @@ export class Game {
                 groupId: this.monsterGroup.id,
                 image: assets.monster,
             });
+            monster.equipmentRenderManager = this.equipmentRenderManager;
+
+            const weaponIds = ['short_sword','long_bow','axe','mace','staff','spear','scythe','whip','dagger','estoc'];
+            const wId = weaponIds[Math.floor(Math.random() * weaponIds.length)];
+            const weapon = this.itemFactory.create(wId, 0, 0, this.mapManager.tileSize);
+            if (weapon) this.equipmentManager.equip(monster, weapon, null);
+
+            const armorParts = ['iron_helmet','iron_gauntlets','iron_boots','leather_armor'];
+            armorParts.forEach(p => {
+                const item = this.itemFactory.create(p, 0, 0, this.mapManager.tileSize);
+                if (item) this.equipmentManager.equip(monster, item, null);
+            });
+
+            const consumable = this.itemFactory.create('potion', 0, 0, this.mapManager.tileSize);
+            if (consumable) monster.consumables.push(consumable);
+
             this.monsterManager.addMonster(monster);
             monsterSquad.push(monster);
         }

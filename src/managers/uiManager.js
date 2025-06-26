@@ -13,6 +13,7 @@ export class UIManager {
     constructor(eventManager = null, getEntityByIdCallback) {
         this.eventManager = eventManager;
         this.getEntityById = getEntityByIdCallback;
+        this.synergyManager = null;
         this.openCharacterSheets = new Map();
         this.levelElement = document.getElementById('ui-player-level');
         this.statPointsElement = document.getElementById('ui-player-statPoints');
@@ -95,6 +96,10 @@ export class UIManager {
             charmResist: '매혹 저항',
             movementResist: '이동 방해 저항',
         };
+    }
+
+    setSynergyManager(manager) {
+        this.synergyManager = manager;
     }
 
     init(callbacks) {
@@ -699,6 +704,35 @@ export class UIManager {
             }
         }
 
+        const synergyBox = panel.querySelector('.sheet-synergies');
+        if (synergyBox) {
+            synergyBox.innerHTML = '';
+            const counts = {};
+            for (const slot in entity.equipment) {
+                const item = entity.equipment[slot];
+                if (item && Array.isArray(item.synergies)) {
+                    item.synergies.forEach(k => counts[k] = (counts[k] || 0) + 1);
+                }
+            }
+            for (const key in counts) {
+                const data = SYNERGIES[key];
+                if (!data) continue;
+                const div = document.createElement('div');
+                div.className = 'synergy-entry';
+                const icon = data.icon ? `${data.icon} ` : '';
+                let text = `${icon}${data.name} (${counts[key]})`;
+                const active = this.synergyManager?.activeBonuses.get(entity)?.[key];
+                if (active) text += ` - ${active.description}`;
+                div.textContent = text;
+                let tip = `<strong>${data.name}</strong><br>${data.description}`;
+                if (Array.isArray(data.bonuses)) {
+                    tip += '<br>' + data.bonuses.map(b => `${b.count}개: ${b.description}`).join('<br>');
+                }
+                this._attachTooltip(div, tip);
+                synergyBox.appendChild(div);
+            }
+        }
+
         const invBox = panel.querySelector('.sheet-inventory');
         if (invBox) {
             invBox.innerHTML = '';
@@ -913,6 +947,12 @@ export class UIManager {
             panel.className = 'squad-panel';
             panel.dataset.squadId = sq.id === 'unassigned' ? '' : sq.id;
             panel.textContent = sq.name;
+            if (sq.id !== 'unassigned') {
+                panel.draggable = true;
+                panel.addEventListener('dragstart', e => {
+                    e.dataTransfer.setData('text/plain', `squad:${sq.id}`);
+                });
+            }
 
             if (sq.id !== 'unassigned') {
                 const strategyContainer = document.createElement('div');
@@ -973,24 +1013,48 @@ export class UIManager {
 
             const rows = this.formationManager.rows;
             const cols = this.formationManager.cols;
-            const orientLeft = this.formationManager.orientation === 'LEFT';
 
             for (let r = 0; r < rows; r++) {
                 for (let c = 0; c < cols; c++) {
-                    const idx = orientLeft
-                        ? (cols - 1 - c) * rows + r
-                        : c * rows + r;
-                    const id = this.formationManager.slots[idx];
+                    const idx = r * cols + c;
+                    const ids = Array.from(this.formationManager.slots[idx] || []);
 
                     const cell = document.createElement('div');
                     cell.className = 'formation-cell';
                     cell.dataset.index = idx;
-                    cell.textContent = id ? id : idx + 1;
+
+                    if (ids.length > 0) {
+                        ids.forEach(id => {
+                            const entity = this.getEntityById(id);
+                            if (entity) {
+                                const portrait = document.createElement('div');
+                                portrait.className = 'merc-portrait';
+                                portrait.textContent = entity.name || entity.constructor.name.substring(0, 4);
+                                portrait.draggable = true;
+                                portrait.dataset.entityId = id;
+                                portrait.addEventListener('dragstart', e => {
+                                    e.dataTransfer.setData('text/plain', `entity:${id}`);
+                                });
+                                cell.appendChild(portrait);
+                            }
+                        });
+                    } else {
+                        cell.textContent = idx + 1;
+                    }
+
                     cell.addEventListener('dragover', e => e.preventDefault());
                     cell.addEventListener('drop', e => {
                         e.preventDefault();
-                        const entityId = e.dataTransfer.getData('text/plain');
-                        this.eventManager?.publish('formation_assign_request', { entityId, slotIndex: idx });
+                        const data = e.dataTransfer.getData('text/plain');
+                        const targetIndex = parseInt(cell.dataset.index, 10);
+
+                        if (data.startsWith('squad:')) {
+                            const squadId = data.split(':')[1];
+                            this.eventManager?.publish('formation_assign_request', { squadId, slotIndex: targetIndex });
+                        } else if (data.startsWith('entity:')) {
+                            const entityId = data.split(':')[1];
+                            this.eventManager?.publish('formation_assign_request', { entityId, slotIndex: targetIndex });
+                        }
                     });
                     grid.appendChild(cell);
                 }

@@ -399,6 +399,18 @@ body, html {
     padding: 8px; margin-bottom: 5px; background-color: rgba(0,0,0,0.1);
     width: auto; height: auto;
 }
+.sheet-synergies {
+    margin-top: 5px;
+    padding: 5px;
+    background-color: rgba(0,0,0,0.2);
+    font-size: 12px;
+}
+.synergy-entry {
+    margin-bottom: 4px;
+}
+.synergy-entry:last-child {
+    margin-bottom: 0;
+}
 #sheet-inventory {
     display: grid; grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
     gap: 5px; padding: 5px; background-color: rgba(0,0,0,0.2); min-height: 200px;

@@ -1,24 +1,28 @@
 export class FormationManager {
-    constructor(rows = 5, cols = 5, tileSize = 192, orientation = 'LEFT') {
+    constructor(rows = 5, cols = 5, tileSize = 192, orientation = 'LEFT', rotation = 0) {
         // sanitize parameters to avoid invalid array length errors
         this.rows = Math.max(1, Math.floor(Number(rows) || 5));
         this.cols = Math.max(1, Math.floor(Number(cols) || 5));
         this.tileSize = tileSize;
         this.orientation = orientation; // LEFT or RIGHT
-        this.slots = Array(this.rows * this.cols).fill(null); // entity ids
+        this.rotation = rotation; // radian angle to rotate grid positions
+        this.slots = Array.from({ length: this.rows * this.cols }, () => new Set());
     }
 
     resize(rows, cols) {
         this.rows = Math.max(1, Math.floor(Number(rows) || this.rows));
         this.cols = Math.max(1, Math.floor(Number(cols) || this.cols));
-        this.slots = Array(this.rows * this.cols).fill(null);
+        this.slots = Array.from({ length: this.rows * this.cols }, () => new Set());
     }
 
     assign(slotIndex, entityId) {
         if (slotIndex < 0 || slotIndex >= this.slots.length) return;
-        const currentIndex = this.slots.indexOf(entityId);
-        if (currentIndex !== -1) this.slots[currentIndex] = null;
-        this.slots[slotIndex] = entityId;
+        this.slots.forEach(set => set.delete(entityId));
+        this.slots[slotIndex].add(entityId);
+    }
+
+    findSlotIndex(entityId) {
+        return this.slots.findIndex(set => set.has(entityId));
     }
 
     getSlotPosition(slotIndex) {
@@ -30,25 +34,32 @@ export class FormationManager {
 
         const centerRow = Math.floor(this.rows / 2);
         const centerCol = Math.floor(this.cols / 2);
-        const orientationMultiplier = this.orientation === 'RIGHT' ? -1 : 1;
+        // orientation에 따라 x 좌표가 시각적으로 보이는 방향과 일치하도록 조정
+        let orientedCol = this.orientation === 'RIGHT' ? (this.cols - 1 - col) : col;
 
-        const relativeX = (col - centerCol) * this.tileSize * orientationMultiplier;
+        const relativeX = (orientedCol - centerCol) * this.tileSize;
         const relativeY = (row - centerRow) * this.tileSize;
 
-        return { x: relativeX, y: relativeY };
+        // 회전 변환을 적용
+        const cosR = Math.cos(this.rotation);
+        const sinR = Math.sin(this.rotation);
+        const rotatedX = relativeX * cosR - relativeY * sinR;
+        const rotatedY = relativeX * sinR + relativeY * cosR;
+
+        return { x: rotatedX, y: rotatedY };
     }
 
     apply(origin, entityMap) {
-        this.slots.forEach((id, idx) => {
-            if (!id) return;
-            const ent = entityMap[id];
-            if (ent) {
-                const off = this.getSlotPosition(idx);
-                const randomOffsetX = (Math.random() - 0.5) * this.tileSize * 0.5;
-                const randomOffsetY = (Math.random() - 0.5) * this.tileSize * 0.5;
-                ent.x = origin.x + off.x + randomOffsetX;
-                ent.y = origin.y + off.y + randomOffsetY;
-            }
+        this.slots.forEach((set, idx) => {
+            if (!set) return;
+            const off = this.getSlotPosition(idx);
+            set.forEach(id => {
+                const ent = entityMap[id];
+                if (ent) {
+                    ent.x = origin.x + off.x;
+                    ent.y = origin.y + off.y;
+                }
+            });
         });
     }
 }
