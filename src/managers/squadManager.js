@@ -1,85 +1,46 @@
-import { STRATEGY } from './ai-managers.js';
+// src/managers/squadManager.js
+
+import { Squad } from '../entities/squad.js';
 
 export class SquadManager {
-    constructor(eventManager, mercenaryManager) {
+    constructor(entityManager, eventManager, config = {}) {
+        this.entityManager = entityManager;
         this.eventManager = eventManager;
-        this.mercenaryManager = mercenaryManager;
-        this.squads = {};
-        for (let i = 1; i <= 9; i++) {
-            this.squads[`squad_${i}`] = {
-                name: `${i}\uBD84\uB300`,
-                members: new Set(),
-                strategy: i === 1 ? STRATEGY.AGGRESSIVE : STRATEGY.DEFENSIVE
-            };
-        }
-        this.unassignedMercs = new Set(
-            this.mercenaryManager.getMercenaries().map(m => m.id)
-        );
-        if (this.eventManager) {
-            this.eventManager.subscribe('squad_assign_request', d => this.handleSquadAssignment(d));
-            this.eventManager.subscribe('squad_strategy_change_request', d => this.setSquadStrategy(d));
-            this.eventManager.subscribe('mercenary_hired', ({ mercenary }) => this.registerMercenary(mercenary));
-        }
+        this.squads = new Map();
+        this.nextSquadId = 1;
+        this.config = config;
     }
 
-    registerMercenary(merc) {
-        if (!merc) return;
-        this.unassignedMercs.add(merc.id);
-        merc.squadId = null;
+    createSquad(name, leaderId, memberIds = []) {
+        const squadId = `squad_${this.nextSquadId++}`;
+        const allMemberIds = new Set([leaderId, ...memberIds]);
+        const newSquad = new Squad(squadId, name, leaderId, allMemberIds);
+        this.squads.set(squadId, newSquad);
+
+        console.log(`Squad created: ${name} with leader ${leaderId}`);
+        this.eventManager.publish('squads_updated', { squads: Array.from(this.squads.values()) });
+        return newSquad;
     }
 
-    handleSquadAssignment({ mercId, toSquadId }) {
-        for (const squad of Object.values(this.squads)) {
-            squad.members.delete(mercId);
-        }
-        this.unassignedMercs.delete(mercId);
-        if (toSquadId && this.squads[toSquadId]) {
-            this.squads[toSquadId].members.add(mercId);
-            const merc = this.mercenaryManager.getMercenaries().find(m => m.id === mercId);
-            if (merc) merc.squadId = toSquadId;
-            console.log(`용병 ${mercId}를 ${this.squads[toSquadId].name}에 편성했습니다.`);
-        } else {
-            this.unassignedMercs.add(mercId);
-            const merc = this.mercenaryManager.getMercenaries().find(m => m.id === mercId);
-            if (merc) merc.squadId = null;
-            console.log(`용병 ${mercId}를 미편성 상태로 변경했습니다.`);
-        }
-        this.eventManager?.publish('squad_data_changed', { squads: this.squads });
-    }
-
-    setSquadStrategy(squadIdOrObj, maybeStrategy) {
-        let squadId = squadIdOrObj;
-        let strategy = maybeStrategy;
-        if (typeof squadIdOrObj === 'object') {
-            squadId = squadIdOrObj.squadId;
-            strategy = squadIdOrObj.newStrategy;
-        }
-        if (this.squads[squadId] && (strategy === STRATEGY.AGGRESSIVE || strategy === STRATEGY.DEFENSIVE)) {
-            this.squads[squadId].strategy = strategy;
-            console.log(`${this.squads[squadId].name}\uC758 \uC804\uB825\uC744 ${strategy}(\uC73C)\uB85C \uBCC0\uACBD\uD588\uC2B5\uB2C8\uB2E4.`);
-            this.eventManager?.publish('squad_data_changed', { squads: this.squads });
-        }
-    }
-
-    getSquads() {
-        return this.squads;
-    }
-
-    getSquadForMerc(mercId) {
-        for (const squad of Object.values(this.squads)) {
-            if (squad.members.has(mercId)) {
-                return squad;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * 특정 ID를 가진 분대 객체를 반환합니다.
-     * @param {string} squadId - 조회할 분대의 ID
-     * @returns {object|null} 분대 객체 또는 null
-     */
     getSquad(squadId) {
-        return this.squads[squadId] || null;
+        return this.squads.get(squadId);
+    }
+    
+    getAllSquads() {
+        return Array.from(this.squads.values());
+    }
+
+    // 초기 분대를 생성하는 예시 메서드
+    createInitialSquads() {
+        const player = this.entityManager.getPlayer();
+        if (player) {
+            this.createSquad('Player Squad', player.id);
+        }
+        
+        // 여기에 다른 초기 분대 생성 로직을 추가할 수 있습니다.
+        // 예: this.createSquad('Enemy Alpha', 'enemy_leader_1');
+
+        // 모든 초기 분대 생성이 끝난 후 한 번에 업데이트 이벤트를 발행할 수 있습니다.
+        this.eventManager.publish('squads_updated', { squads: this.getAllSquads() });
     }
 }
