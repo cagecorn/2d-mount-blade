@@ -30,24 +30,40 @@ export class WorldEngine {
         });
         // 플레이어 정보는 Game 초기화 이후 setPlayer()로 전달된다
         this.player = null;
-        this.monsters = [
-            {
-                tileX: 3,
-                tileY: 2,
-                x: this.tileSize * 3,
-                y: this.tileSize * 2,
-                width: this.tileSize,
-                height: this.tileSize,
-                image: this.assets['monster'],
-                troopSize: 10,
-                groupId: 'monster_party_1'
-            },
-        ];
+        // 월드맵에 표시될 몬스터 지휘관 목록
+        this.monsters = [];
         this.walkManager = new WalkManager();
         this.turnManager = new WorldTurnManager({
             movementEngine: this.movementEngine,
             entities: [...this.monsters]
         });
+    }
+
+    /**
+     * 월드맵에 몬스터 지휘관을 추가한다.
+     * @param {object} entity - 실제 몬스터 엔티티
+     * @param {number} tileX - 월드맵 타일 X 좌표
+     * @param {number} tileY - 월드맵 타일 Y 좌표
+     */
+    addMonster(entity, tileX, tileY) {
+        if (!entity) return;
+        const monster = {
+            id: entity.id,
+            entity,
+            groupId: entity.groupId,
+            tileX,
+            tileY,
+            x: tileX * this.tileSize,
+            y: tileY * this.tileSize,
+            width: this.tileSize,
+            height: this.tileSize,
+            image: entity.image || this.assets['monster'],
+            isActive: true,
+        };
+        this.monsters.push(monster);
+        if (this.turnManager) {
+            this.turnManager.entities = [this.player, ...this.monsters];
+        }
     }
 
     /**

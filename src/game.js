@@ -467,6 +467,11 @@ export class Game {
         });
         enemyFormationManager.apply(enemyFormationOrigin, monsterEntityMap);
 
+        // 월드맵에 첫 번째 몬스터를 지휘관으로 배치
+        if (this.worldEngine && monsterSquad[0]) {
+            this.worldEngine.addMonster(monsterSquad[0], 3, 2);
+        }
+
         // === 2. 플레이어 생성 ===
         let startPos;
         startPos = { x: this.mapManager.tileSize * 4, y: (this.mapManager.height * this.mapManager.tileSize) / 2 };
