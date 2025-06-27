@@ -59,14 +59,7 @@ export class BattleManager {
             this.battleInstance = null;
         }
 
-        const { attacker, defender } = this.lastCombatants;
-        const losingLeader = result.loser === 'player' ? attacker : defender;
-
-        console.log(`[BattleManager] Removing defeated leader ${losingLeader.id} and their group.`);
-        this.groupManager.removeGroup(losingLeader.groupId);
-        this.entityManager.removeEntityById(losingLeader.id);
-
-        // TODO: update survivors of the winning group based on result.survivors
+        // 전투 결과 처리는 BattleResultManager가 담당한다
 
         this.game.showWorldMap();
         this.game.isPaused = false;
