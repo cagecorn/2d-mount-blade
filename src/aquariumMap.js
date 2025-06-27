@@ -6,6 +6,8 @@ import { SETTINGS } from '../config/gameSettings.js';
 export class AquariumMapManager extends MapManager {
     constructor(seed) {
         super(seed);
+        // Turn-based maps use a smaller tile size for grid-based combat.
+        this.tileSize = 32;
         // 기본 크기를 절반으로 줄여 수족관 맵을 더 작게 만든다
         this.width = Math.floor(this.width / 2);
         this.height = Math.floor(this.height / 2);

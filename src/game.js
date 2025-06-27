@@ -157,6 +157,8 @@ export class Game {
         this.combatCalculator = new CombatCalculator(this.eventManager);
         // Player begins in the Aquarium map for feature testing
         this.mapManager = new AquariumMapManager();
+        // If using the Aquarium map, enable the experimental turn-based mode.
+        this.turnBasedMode = SETTINGS.ENABLE_TURN_BASED_COMBAT || this.mapManager.name === 'aquarium';
         const mapPixelWidth = this.mapManager.width * this.mapManager.tileSize;
         const mapPixelHeight = this.mapManager.height * this.mapManager.tileSize;
         const laneCenters = this.mapManager.getLaneCenters ? this.mapManager.getLaneCenters() : null;
@@ -1285,6 +1287,11 @@ export class Game {
     }
 
     update = (deltaTime) => {
+        if (this.turnBasedMode) {
+            // Turn-based engine runs independently once combat starts.
+            this.vfxManager.update();
+            return;
+        }
         if (this.gameState.currentState === 'WORLD') {
             this.worldEngine.update();
             return;
@@ -1298,7 +1305,13 @@ export class Game {
     }
     render = () => {
         this.layerManager.clear();
-        if (this.gameState.currentState === "WORLD") {
+        if (this.turnBasedMode) {
+            this.gridRenderer.render(
+                this.gridManager,
+                this.gameState.camera,
+                this.gameState.zoomLevel || 1
+            );
+        } else if (this.gameState.currentState === "WORLD") {
             this.worldEngine.render(this.layerManager.contexts.entity);
             this.worldGridRenderer.render(
                 this.worldGridManager,
