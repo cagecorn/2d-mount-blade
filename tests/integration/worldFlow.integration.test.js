@@ -63,10 +63,10 @@ describe('World-Battle Flow Integration', () => {
       microEngine.update(31); // 타이머 만료로 전투 종료
     });
 
-    // --- 적의 턴: 플레이어에게 한 칸 다가옴 ---
+    // --- 적의 턴: 플레이어에게 두 칸 다가옴 ---
     world.turnManager.currentTurn = 'ENEMY';
     world.update(1);
-    assert.strictEqual(enemyCommander.tileX, 3);
+    assert.strictEqual(enemyCommander.tileX, 2);
 
     // --- 플레이어 턴: 이동하여 충돌 유발 ---
     game.inputHandler.keysPressed['ArrowRight'] = true;

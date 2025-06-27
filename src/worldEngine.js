@@ -150,7 +150,7 @@ export class WorldEngine {
         for (const monster of this.monsters) {
             if (!monster || this.movementEngine.isMoving(monster)) continue;
 
-            const nextStep = this.walkManager.getNextStep(monster, this.player);
+            const nextStep = this.walkManager.getNextStep(monster, this.player, 2);
 
             if (nextStep.x >= 0 && nextStep.x < this.worldWidth / this.tileSize &&
                 nextStep.y >= 0 && nextStep.y < this.worldHeight / this.tileSize) {
