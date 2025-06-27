@@ -1,5 +1,6 @@
 export class BattleResultManager {
-    constructor(eventManager, groupManager, entityManager) {
+    constructor(game, eventManager, groupManager, entityManager) {
+        this.game = game;
         this.eventManager = eventManager;
         this.groupManager = groupManager;
         this.entityManager = entityManager;
@@ -52,7 +53,17 @@ export class BattleResultManager {
         }
 
         this.eventManager.publish('world_map_updated_after_battle');
+
+        // After processing, return to world map
+        console.log("[BattleResultManager] 모든 결과 처리를 마치고 월드맵으로 복귀합니다.");
+        if (this.game && this.game.showWorldMap) {
+            this.game.showWorldMap();
+            this.game.isPaused = false;
+        }
         this.lastCombatants = null;
+        if (this.game && this.game.battleManager) {
+            this.game.battleManager.cleanupBattle();
+        }
     }
 
     /**

@@ -149,6 +149,7 @@ export class Game {
         this.commanderManager = new CommanderManager(this.groupManager);
         // 전투 후 결과 처리를 담당하는 매니저
         this.battleResultManager = new BattleResultManager(
+            this,
             this.eventManager,
             this.groupManager,
             this.entityManager
