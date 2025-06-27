@@ -8,7 +8,7 @@ import { EventManager } from './managers/eventManager.js';
 import { CombatLogManager, SystemLogManager } from './managers/logManager.js';
 import { CombatCalculator } from './combat.js';
 import { TagManager } from './managers/tagManager.js';
-import { WorldEngine } from './engines/worldEngine.js';
+import { WorldEngine } from './worldEngine.js';
 import { MapManager } from './map.js';
 import { AquariumMapManager } from './aquariumMap.js';
 import { AquariumManager, AquariumInspector } from './managers/aquariumManager.js';
@@ -58,8 +58,7 @@ import { LanePusherAI } from './ai/archetypes.js';
 import { LaneAssignmentManager } from './managers/laneAssignmentManager.js';
 import { FormationManager } from './managers/formationManager.js';
 import { TooltipManager } from './managers/tooltipManager.js';
-import { CombatEngine } from './engines/CombatEngine.js';
-import { FormationEngine } from './engines/formationEngine.js';
+import { CombatEngine } from "./engines/CombatEngine.js";
 import { MovementEngine } from './engines/movementEngine.js';
 import { GridRenderer } from './renderers/gridRenderer.js';
 
@@ -177,9 +176,8 @@ export class Game {
             eventManager: this.eventManager,
             entityManager: this.entityManager,
         });
-        // Engines: world map, formation setup, combat
-        this.worldEngine = new WorldEngine(this);
-        this.formationEngine = new FormationEngine(this);
+        // 월드맵 로직을 담당하는 엔진
+        this.worldEngine = new WorldEngine(this, assets, this.movementEngine);
         this.combatEngine = new CombatEngine(this);
 
         // --- GridRenderer 인스턴스 생성 ---
@@ -1231,52 +1229,28 @@ export class Game {
         return nearest;
     }
 
-    // ----- State Transition Helpers -----
-    setupFormation(encounterContext) {
-        this.gameState.currentState = 'FORMATION_SETUP';
-        this.formationEngine.start(encounterContext);
-    }
-
-    startCombat(battleContext) {
-        this.gameState.currentState = 'COMBAT';
-        this.combatEngine.start(battleContext);
-    }
-
-    endCombat(combatResult) {
-        this.gameState.currentState = 'WORLD';
-        console.log('전투 종료:', combatResult);
-    }
-
     update = (deltaTime) => {
-        switch (this.gameState.currentState) {
-            case 'WORLD':
-                this.worldEngine.update(deltaTime);
-                break;
-            case 'FORMATION_SETUP':
-                this.formationEngine.update(deltaTime);
-                break;
-            case 'COMBAT':
-                this.combatEngine.update(deltaTime);
-                break;
+        if (this.gameState.currentState === 'WORLD') {
+            this.worldEngine.update(deltaTime);
+            return;
+        } else if (this.gameState.currentState === 'FORMATION_SETUP') {
+            return;
+        } else if (this.gameState.currentState !== 'COMBAT') {
+            return;
         }
+
+        this.combatEngine.update(deltaTime);
     }
     render = () => {
         this.layerManager.clear();
-        const mainCtx = this.layerManager.contexts.mapBase;
-        switch (this.gameState.currentState) {
-            case 'WORLD':
-                this.worldEngine.render(
-                    this.layerManager.contexts.mapBase,
-                    this.layerManager.contexts.mapDecor,
-                    this.layerManager.contexts.entity
-                );
-                break;
-            case 'FORMATION_SETUP':
-                this.formationEngine.render(mainCtx);
-                break;
-            case 'COMBAT':
-                this.combatEngine.render();
-                break;
+        if (this.gameState.currentState === "WORLD") {
+            this.worldEngine.render(
+                this.layerManager.contexts.mapBase,
+                this.layerManager.contexts.mapDecor,
+                this.layerManager.contexts.entity
+            );
+        } else if (this.gameState.currentState === "COMBAT") {
+            this.combatEngine.render();
         }
         if (this.uiManager) this.uiManager.updateUI(this.gameState);
     }
