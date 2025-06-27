@@ -43,6 +43,10 @@ export class MercenaryManager {
                 this.traitManager.applyTraits(merc, TRAITS);
             }
             this.mercenaries.push(merc);
+            // 고용이 완료되면 다른 매니저들이 반응할 수 있도록 이벤트를 발행한다.
+            if (this.eventManager) {
+                this.eventManager.publish('mercenary_hired', { mercenary: merc });
+            }
         }
         return merc;
     }
