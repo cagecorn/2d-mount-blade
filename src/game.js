@@ -1306,6 +1306,8 @@ export class Game {
     render = () => {
         this.layerManager.clear();
         if (this.turnBasedMode) {
+            const ctxEntity = this.layerManager.contexts.entity;
+            this.entityManager.renderSorted(ctxEntity, this.gameState.camera);
             this.gridRenderer.render(
                 this.gridManager,
                 this.gameState.camera,
