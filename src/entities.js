@@ -90,6 +90,13 @@ class Entity {
         };
     }
 
+    /**
+     * Bottom center position of the entity used for rendering and sorting.
+     */
+    get pos() {
+        return { x: this.x + this.width / 2, y: this.y + this.height };
+    }
+
     get speed() { return this.stats.get('movementSpeed'); }
     get attackPower() {
         return this.stats.get('attackPower') + (this.damageBonus || 0);
@@ -139,7 +146,8 @@ class Entity {
 
         ctx.save();
         // 캔버스 원점을 유닛의 발 중앙으로 이동
-        ctx.translate(this.x + this.width / 2, this.y + this.height);
+        const { x: baseX, y: baseY } = this.pos;
+        ctx.translate(baseX, baseY);
 
         // 1. 그림자 먼저 그리기 (yOffset의 영향을 받지 않음)
         ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
@@ -504,3 +512,6 @@ export class Ghost {
         this.state = 'seeking'; // 'seeking', 'possessing', 'wandering'
     }
 }
+
+// Export base Entity for generic usage
+export { Entity };

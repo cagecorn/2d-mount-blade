@@ -31,7 +31,7 @@ import { SupportEngine } from './systems/SupportEngine.js';
 import { SKILLS } from './data/skills.js';
 import { EFFECTS } from './data/effects.js';
 import { ITEMS } from './data/items.js';
-import { Item } from './entities.js';
+import { Item, Entity } from './entities.js';
 import { rollOnTable } from './utils/random.js';
 import { getMonsterLootTable } from './data/tables.js';
 import { MicroEngine } from './micro/MicroEngine.js';
@@ -151,12 +151,34 @@ export class Game {
         this.laneRenderManager = new LaneRenderManager(this.laneManager, SETTINGS.ENABLE_AQUARIUM_LANES);
 
         // 전투 맵 크기에 맞춘 그리드 매니저와 렌더러를 초기화합니다.
-        this.gridManager = new GridManager(this.mapManager.width, this.mapManager.height);
+        this.gridManager = new GridManager(
+            this.mapManager.width,
+            this.mapManager.height,
+            this.mapManager.tileSize
+        );
         this.gridRenderer = new GridRenderer(
             this.layerManager.contexts.mapDecor,
             this.eventManager,
             this.mapManager.tileSize
         );
+
+        // --- Temporary test units placed on the grid for Y-sorting demo ---
+        const unit1 = new Entity({
+            x: 0,
+            y: 0,
+            tileSize: this.mapManager.tileSize,
+            image: assets.player,
+        });
+        const unit2 = new Entity({
+            x: 0,
+            y: 0,
+            tileSize: this.mapManager.tileSize,
+            image: assets.player,
+        });
+        this.entityManager.addEntity(unit1);
+        this.entityManager.addEntity(unit2);
+        this.gridManager.placeUnit(unit1, 5, 4);
+        this.gridManager.placeUnit(unit2, 5, 5);
 
         const formationSpacing = this.mapManager.tileSize * 2.5;
         const formationAngle = -Math.PI / 4; // align grid with battlefield orientation
@@ -185,7 +207,11 @@ export class Game {
         this.worldEngine = new WorldEngine(this, assets);
         const worldGridW = this.worldEngine.worldWidth / this.worldEngine.tileSize;
         const worldGridH = this.worldEngine.worldHeight / this.worldEngine.tileSize;
-        this.worldGridManager = new GridManager(worldGridW, worldGridH);
+        this.worldGridManager = new GridManager(
+            worldGridW,
+            worldGridH,
+            this.worldEngine.tileSize
+        );
         this.worldGridRenderer = new GridRenderer(
             this.layerManager.contexts.entity,
             this.eventManager,

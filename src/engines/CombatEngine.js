@@ -184,21 +184,8 @@ export class CombatEngine {
         game.laneRenderManager.render(contexts.mapDecor);
         itemManager.render(contexts.mapDecor);
 
-        const allEntitiesToRender = [
-            gameState.player,
-            ...(monsterManager?.monsters || []),
-            ...(mercenaryManager?.mercenaries || []),
-            ...(game.petManager?.pets || [])
-        ].filter(e => e && !e.isDying && !e.isHidden);
-
-        allEntitiesToRender.sort((a, b) =>
-            a.y === b.y ? a.id.localeCompare(b.id) : a.y - b.y
-        );
-
         const entityCtx = contexts.entity;
-        for (const entity of allEntitiesToRender) {
-            entity.render(entityCtx);
-        }
+        game.entityManager.renderSorted(entityCtx);
 
         if (fogManager) {
             fogManager.render(contexts.vfx, mapManager.tileSize);
