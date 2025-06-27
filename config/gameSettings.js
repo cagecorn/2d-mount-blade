@@ -31,6 +31,8 @@ export const SETTINGS = {
     // Remote markdown guidelines are fetched via the GitHub API.
     // Specify the path in 'owner/repo/contents/<folder>?ref=branch' format.
     GUIDELINE_REPO_URL: "cagecorn/doom-crawler-newest/contents/TensorFlow%27s%20room?ref=main",
+    // Local fallback markdown file when remote fetch fails
+    DEFAULT_GUIDELINE_FILE: "TensorFlow's room/guideline.md",
     // 이동 속도는 StatManager의 'movement' 스탯으로부터 파생됩니다.
     // ... 나중에 더 많은 설정 추가
 };
