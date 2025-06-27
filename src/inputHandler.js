@@ -29,13 +29,12 @@ export class InputHandler {
         }
     }
 
-    // 기존 handleMouseWheel 함수를 아래의 새로운 코드로 완전히 교체합니다.
+    // 장비창 휠 전환 기능과 카메라 줌을 모두 처리합니다.
     handleMouseWheel(e) {
         const uiManager = this.game.uiManager;
 
-        // 조건 1: 장비창이 열려있는 경우 -> 캐릭터 전환
         if (uiManager.characterSheetPanel && !uiManager.characterSheetPanel.classList.contains('hidden')) {
-            // 장비창이 열려있을 땐 기본 스크롤/줌 동작을 막습니다.
+            // 장비창이 열려있을 땐 기본 스크롤/줌 동작을 막고 캐릭터를 전환합니다.
             e.preventDefault();
 
             const party = this.game.getPartyMembers();
@@ -43,31 +42,18 @@ export class InputHandler {
 
             const currentId = uiManager.currentCharacterId;
             const currentIndex = party.findIndex(member => member.id === currentId);
-
             if (currentIndex === -1) return;
 
-            let nextIndex;
-            if (e.deltaY < 0) { // 휠을 위로: 이전 캐릭터
-                nextIndex = (currentIndex - 1 + party.length) % party.length;
-            } else { // 휠을 아래로: 다음 캐릭터
-                nextIndex = (currentIndex + 1) % party.length;
-            }
+            const nextIndex = e.deltaY < 0
+                ? (currentIndex - 1 + party.length) % party.length
+                : (currentIndex + 1) % party.length;
 
-            const nextCharacter = party[nextIndex];
-            uiManager.displayCharacterSheet(nextCharacter);
-        }
-        // 조건 2: 그 외의 모든 경우 -> 카메라 확대/축소
-        else {
-            // 이 부분이 이전에 누락되었던 카메라 줌 로직입니다.
-            // this.game.camera 객체가 있다고 가정합니다. 실제 구조에 맞게 수정이 필요할 수 있습니다.
-            if (this.game.camera) {
-                const zoomIntensity = 0.05; // 줌 강도 조절
-                if (e.deltaY < 0) {
-                    this.game.camera.zoomIn(zoomIntensity);
-                } else {
-                    this.game.camera.zoomOut(zoomIntensity);
-                }
-            }
+            uiManager.displayCharacterSheet(party[nextIndex]);
+        } else {
+            // 장비창이 열려 있지 않으면 카메라 줌 이벤트를 발행합니다.
+            e.preventDefault();
+            const direction = Math.sign(e.deltaY);
+            this.game.eventManager?.publish('mouse_wheel', { direction });
         }
     }
 }
