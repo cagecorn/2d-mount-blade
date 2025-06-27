@@ -181,7 +181,7 @@ export class Game {
         const turnWorker = new Worker('./src/workers/turn.worker.js', { type: 'module' });
 
         // ★★★ CombatTurnEngine에 모든 의존성을 주입합니다. ★★★
-        this.combatTurnEngine = new CombatTurnEngine(this.eventManager, turnWorker, vfxManager, soundManager);
+        this.combatTurnEngine = new CombatTurnEngine(this, this.eventManager, turnWorker, vfxManager, soundManager);
 
         // ★★★ 테스트 유닛에 팀과 스킬 정보를 추가합니다. ★★★
         const managers = {

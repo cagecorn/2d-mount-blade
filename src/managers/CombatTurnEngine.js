@@ -7,7 +7,8 @@ import { ActionExecutionEngine } from '../engines/turn/ActionExecutionEngine.js'
  * TurnManager가 '전투' 국면에서 사용할 전략입니다.
  */
 export class CombatTurnEngine {
-    constructor(eventManager, worker, vfxManager, soundManager) {
+    constructor(game, eventManager, worker, vfxManager, soundManager) {
+        this.game = game;
         this.eventManager = eventManager;
         this.worker = worker;
         this.unitMap = new Map(); // ID로 유닛을 빠르게 찾기 위한 Map
@@ -18,7 +19,7 @@ export class CombatTurnEngine {
 
         this.sequencingEngine = new TurnSequencingEngine();
         // ★★★ 행동 실행 엔진을 생성하고 주입받은 매니저들을 넘겨줍니다. ★★★
-        this.executionEngine = new ActionExecutionEngine(eventManager, vfxManager, soundManager);
+        this.executionEngine = new ActionExecutionEngine(this.game, eventManager, vfxManager, soundManager);
 
         // 워커로부터 수신한 행동 계획을 처리합니다.
         this.worker.onmessage = (event) => {
