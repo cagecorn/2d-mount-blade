@@ -38,6 +38,7 @@ import { PossessionAIManager } from './possessionAIManager.js';
 import { CombatDecisionEngine } from './ai/CombatDecisionEngine.js';
 import { ReputationManager } from './ReputationManager.js';
 import { EntityManager } from './entityManager.js';
+import { CommanderManager } from './commanderManager.js';
 import GuidelineLoader from './guidelineLoader.js';
 import { TooltipManager } from './tooltipManager.js';
 import { BattleManager } from './battleManager.js';
@@ -92,6 +93,7 @@ export {
     GuidelineLoader,
     StatusEffectsManager,
     TooltipManager,
+    CommanderManager,
     DataRecorder,
     BattleManager,
     TimerManager,

@@ -63,6 +63,7 @@ import { CombatEngine } from "./engines/CombatEngine.js";
 import { MovementEngine } from './engines/movementEngine.js';
 import { GridRenderer } from './renderers/gridRenderer.js';
 import { GroupManager } from './managers/groupManager.js';
+import { CommanderManager } from './managers/commanderManager.js';
 import { WorldmapRenderManager } from './rendering/worldMapRenderManager.js';
 
 export class Game {
@@ -142,6 +143,8 @@ export class Game {
         this.tooltipManager = new TooltipManager();
         this.entityManager = new EntityManager(this.eventManager);
         this.groupManager = new GroupManager(this.eventManager, this.entityManager.getEntityById.bind(this.entityManager));
+        // CommanderManager 초기화
+        this.commanderManager = new CommanderManager(this.groupManager);
         // InputHandler를 생성할 때 game 객체(this)를 전달합니다.
         this.inputHandler = new InputHandler(this);
         this.combatLogManager = new CombatLogManager(this.eventManager);
@@ -227,7 +230,9 @@ export class Game {
                 this.managers[managerName] = new Managers.UIManager(
                     this.eventManager,
                     (id) => this.entityManager?.getEntityById(id),
-                    this.tooltipManager
+                    this.tooltipManager,
+                    this.commanderManager,
+                    this.entityManager
                 );
             } else {
                 this.managers[managerName] = new Managers[managerName](this.eventManager, assets, this.factory);

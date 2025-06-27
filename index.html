@@ -193,6 +193,19 @@
 
     <div id="tooltip" class="tooltip ui-frame hidden"></div>
 
+    <div id="commander-info-window" class="ui-window" style="display: none;">
+        <div class="ui-header">
+            <h3 id="commander-name">지휘관 이름</h3>
+            <button id="close-commander-info" class="close-button">X</button>
+        </div>
+        <div class="ui-content">
+            <p id="troop-total-hp">부대 체력: 100 / 100</p>
+            <h4>병력 구성</h4>
+            <ul id="troop-details-list" class="details-list">
+            </ul>
+        </div>
+    </div>
+
     <script type="module" src="main.js"></script>
 </body>
 </html>

@@ -10,10 +10,13 @@ import { Draggable } from '../utils/Draggable.js';
 import { STRATEGY } from './ai-managers.js';
 
 export class UIManager {
-    constructor(eventManager = null, getEntityByIdCallback, tooltipManager) {
+    // [수정] 생성자에서 commanderManager와 entityManager를 받습니다.
+    constructor(eventManager = null, getEntityByIdCallback, tooltipManager, commanderManager, entityManager) {
         this.eventManager = eventManager;
         this.getEntityById = getEntityByIdCallback;
         this.tooltipManager = tooltipManager;
+        this.commanderManager = commanderManager;
+        this.entityManager = entityManager;
         this.synergyManager = null;
         this.openCharacterSheets = new Map();
         this.levelElement = document.getElementById('ui-player-level');
@@ -66,6 +69,22 @@ export class UIManager {
         this.particleDecoratorManager = null;
         this.vfxManager = null;
         this.getSharedInventory = null;
+
+        // [추가] 지휘관 정보창 UI 요소들을 선택합니다.
+        this.commanderInfoWindow = document.getElementById('commander-info-window');
+        this.commanderName = document.getElementById('commander-name');
+        this.troopTotalHp = document.getElementById('troop-total-hp');
+        this.troopDetailsList = document.getElementById('troop-details-list');
+        this.closeCommanderInfo = document.getElementById('close-commander-info');
+
+        // [추가] 월드맵 캔버스에 클릭 이벤트 리스너를 등록합니다.
+        this.canvas = document.getElementById('map-base-canvas');
+        if (this.canvas) {
+            this.canvas.addEventListener('click', this.handleCanvasClick.bind(this));
+        }
+        if (this.closeCommanderInfo) {
+            this.closeCommanderInfo.addEventListener('click', () => this.hideCommanderInfo());
+        }
 
         if (this.eventManager) {
             this.eventManager.subscribe('inventory_updated', ({ involvedEntityIds }) => {
@@ -1180,5 +1199,59 @@ export class UIManager {
             accessory2: '장신구2'
         };
         return labels[slotName] || slotName;
+    }
+
+    /**
+     * 캔버스 클릭을 처리하는 메소드
+     */
+    handleCanvasClick(event) {
+        if (!this.entityManager) return;
+        const rect = this.canvas.getBoundingClientRect();
+        const mouseX = event.clientX - rect.left;
+        const mouseY = event.clientY - rect.top;
+
+        const entities = this.entityManager.getAllEntities().slice().reverse();
+        for (const entity of entities) {
+            if (entity.groupId &&
+                mouseX >= entity.x && mouseX <= entity.x + entity.tileSize &&
+                mouseY >= entity.y && mouseY <= entity.y + entity.tileSize) {
+                console.log(`지휘관 클릭: ${entity.id}`);
+                const info = this.commanderManager?.getUnitInfo(entity);
+                if (info) {
+                    this.showCommanderInfo(info);
+                }
+                return;
+            }
+        }
+        this.hideCommanderInfo();
+    }
+
+    /**
+     * 받아온 정보로 지휘관 정보창을 채우고 표시합니다.
+     * @param {object} info - CommanderManager가 반환한 부대 정보 객체
+     */
+    showCommanderInfo(info) {
+        if (!this.commanderInfoWindow) return;
+        this.commanderName.textContent = `${info.commanderName}의 부대 (총 ${info.totalMembers}명)`;
+        this.troopTotalHp.textContent = `부대 체력: ${info.currentHp} / ${info.totalHp}`;
+        this.troopDetailsList.innerHTML = '';
+        const headerLi = document.createElement('li');
+        headerLi.innerHTML = `<strong>병종</strong> <span>수량</span>`;
+        this.troopDetailsList.appendChild(headerLi);
+        info.troopDetails.forEach(detail => {
+            const li = document.createElement('li');
+            li.innerHTML = `<strong>${detail.jobId}</strong> <span>${detail.count}</span>`;
+            this.troopDetailsList.appendChild(li);
+        });
+        this.commanderInfoWindow.style.display = 'block';
+    }
+
+    /**
+     * 지휘관 정보창을 숨깁니다.
+     */
+    hideCommanderInfo() {
+        if (this.commanderInfoWindow && this.commanderInfoWindow.style.display !== 'none') {
+            this.commanderInfoWindow.style.display = 'none';
+        }
     }
 }
