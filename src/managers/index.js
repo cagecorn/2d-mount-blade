@@ -30,6 +30,7 @@ import { LaneAssignmentManager } from './laneAssignmentManager.js';
 import { FormationManager } from './formationManager.js';
 import { EnemyFormationManager } from './enemyFormationManager.js';
 import { MetaAIManager } from './metaAIManager.js';
+import { WorldMapAIManager } from './worldMapAIManager.js';
 import { AIManager } from './AIManager.js';
 import { SynergyManager } from '../micro/SynergyManager.js';
 import { SpeechBubbleManager } from './speechBubbleManager.js';
@@ -94,6 +95,7 @@ export {
     StatusEffectsManager,
     TooltipManager,
     CommanderManager,
+    WorldMapAIManager,
     DataRecorder,
     BattleManager,
     TimerManager,

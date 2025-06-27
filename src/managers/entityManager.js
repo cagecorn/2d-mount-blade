@@ -52,6 +52,10 @@ export class EntityManager {
         return this.monsters;
     }
 
+    getAllEntities() {
+        return Array.from(this.entities.values());
+    }
+
     removeEntityById(id) {
         if (this.entities.has(id)) {
             this.entities.delete(id);
