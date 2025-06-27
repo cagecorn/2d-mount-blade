@@ -24,11 +24,13 @@ export class TargetingEngine {
         // 맨해튼 거리 계산으로 가장 가까운 적을 찾습니다.
         for (const enemy of enemies) {
             const distance = Math.abs(actor.pos.x - enemy.pos.x) + Math.abs(actor.pos.y - enemy.pos.y);
-            if (distance < minDistance) {
+            if (Number.isFinite(distance) && distance < minDistance) {
                 minDistance = distance;
                 closestEnemy = enemy;
             }
         }
-        return closestEnemy.id;
+
+        // 유효한 대상을 찾지 못하면 null을 반환합니다.
+        return closestEnemy ? closestEnemy.id : null;
     }
 }
