@@ -59,6 +59,7 @@ import { LaneAssignmentManager } from './managers/laneAssignmentManager.js';
 import { FormationManager } from './managers/formationManager.js';
 import { TooltipManager } from './managers/tooltipManager.js';
 import { CombatEngine } from "./engines/CombatEngine.js";
+import { MovementEngine } from './engines/movementEngine.js';
 import { GridRenderer } from './renderers/gridRenderer.js';
 
 export class Game {
@@ -142,6 +143,9 @@ export class Game {
         this.combatCalculator = new CombatCalculator(this.eventManager, this.tagManager);
         // Player begins in the Aquarium map for feature testing
         this.mapManager = new AquariumMapManager();
+        // MovementEngine은 맵의 타일 크기를 기반으로 동작합니다.
+        this.movementEngine = new MovementEngine({ tileSize: this.mapManager.tileSize });
+
         const mapPixelWidth = this.mapManager.width * this.mapManager.tileSize;
         const mapPixelHeight = this.mapManager.height * this.mapManager.tileSize;
         const laneCenters = this.mapManager.getLaneCenters ? this.mapManager.getLaneCenters() : null;
@@ -443,6 +447,10 @@ export class Game {
             // 초반 난이도를 맞추기 위해 이동 속도를 낮춘다
             baseStats: { strength: 5, agility: 5, endurance: 15, movement: 4 }
         });
+        // MovementEngine과 연동하기 위해 초기 타일 좌표를 계산하고 참조를 저장합니다.
+        player.tileX = Math.floor(player.x / this.mapManager.tileSize);
+        player.tileY = Math.floor(player.y / this.mapManager.tileSize);
+        player.movementEngine = this.movementEngine;
         player.ai = null; // disable any automatic skills for the player
         player.equipmentRenderManager = this.equipmentRenderManager;
 
@@ -1224,6 +1232,9 @@ export class Game {
     }
 
     update = (deltaTime) => {
+        // 현재 활성화된 모든 움직임을 갱신합니다.
+        this.movementEngine.update(deltaTime);
+
         if (this.gameState.currentState === 'WORLD') {
             this.worldEngine.update();
             return;
@@ -1233,6 +1244,8 @@ export class Game {
             return;
         }
 
+        // 전투 중 플레이어 이동 입력을 처리합니다.
+        this.handleCombatInput();
         this.combatEngine.update(deltaTime);
     }
     render = () => {
@@ -1264,6 +1277,40 @@ export class Game {
             }
         }
         if (this.uiManager) this.uiManager.updateUI(this.gameState);
+    }
+
+    // 전투 중 입력을 처리하는 부분을 명확하게 분리합니다.
+    handleCombatInput() {
+        // 플레이어가 움직이는 중이면 새로운 입력을 받지 않습니다.
+        if (this.movementEngine.isMoving(this.player)) {
+            return;
+        }
+
+        let moved = false;
+        // 목표 타일 좌표를 현재 플레이어 타일 좌표로 초기화
+        const targetTile = { x: this.player.tileX, y: this.player.tileY };
+
+        if (this.inputHandler.isDown('ArrowUp')) {
+            targetTile.y -= 1;
+            moved = true;
+        } else if (this.inputHandler.isDown('ArrowDown')) {
+            targetTile.y += 1;
+            moved = true;
+        } else if (this.inputHandler.isDown('ArrowLeft')) {
+            targetTile.x -= 1;
+            moved = true;
+        } else if (this.inputHandler.isDown('ArrowRight')) {
+            targetTile.x += 1;
+            moved = true;
+        }
+
+        if (moved) {
+            const destX = targetTile.x * this.mapManager.tileSize;
+            const destY = targetTile.y * this.mapManager.tileSize;
+            if (!this.mapManager.isWallAt(destX, destY, this.player.width, this.player.height)) {
+                this.movementEngine.startMovement(this.player, targetTile);
+            }
+        }
     }
 
 

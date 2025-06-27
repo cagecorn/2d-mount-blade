@@ -244,6 +244,11 @@ export class Player extends Entity {
         this.consumables = [];
         this.consumableCapacity = 4;
         this.autoBattle = false;
+
+        // MovementEngine과 연동하기 위한 속성들
+        this.movementEngine = config.movementEngine || null;
+        this.tileX = Math.floor(this.x / this.tileSize);
+        this.tileY = Math.floor(this.y / this.tileSize);
     }
 
     render(ctx) {
@@ -267,6 +272,11 @@ export class Player extends Entity {
             this.ai = new PlayerCombatAI();
         }
         this.ai.updateBaseAI(this);
+    }
+
+    // MovementEngine을 사용할 때 애니메이션 로직 등을 처리하기 위한 자리
+    update(deltaTime) {
+        // 현재는 별도 로직이 없지만 추후 확장 가능
     }
 
 }
