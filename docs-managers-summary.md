@@ -62,10 +62,13 @@
 | `tagManager.js` | 아이템과 스킬에 부여된 태그를 조회해 AI나 다른 시스템에 전달합니다. |
 | `traitManager.js` | 유닛의 특성 부여와 스탯 변화를 관리합니다. |
 | `turnManager.js` | 턴 기반 전투 모드에서 행동 순서를 결정하도록 설계되었습니다. |
+| `CombatTurnEngine.js` | 전투 라운드의 턴 흐름을 관리하는 상위 엔진입니다. |
 | `uiManager.js` | 인벤토리와 용병 패널 등 DOM 기반 UI 요소를 관리합니다. |
 | `vfxManager.js` | 파티클 및 스프라이트 효과를 생성하여 시각 연출을 담당합니다. |
 | `vfx/ParticleEngine.js` | 파티클과 이미터 생성을 전담하는 내부 엔진입니다. |
 | `vfx/TextPopupEngine.js` | 데미지 수치 등 부유하는 텍스트 팝업을 관리합니다. |
+| `engines/turn/TurnSequencingEngine.js` | 무게 스탯을 바탕으로 행동 순서를 계산합니다. |
+| `engines/turn/ActionExecutionEngine.js` | 결정된 행동을 애니메이션과 사운드로 연출합니다. |
 | `../systems/KnockbackEngine.js` | 공격 피격 시 대상에게 밀쳐내기 효과와 시각 연출을 적용합니다. |
 | `../micro/MicroEngine.js` | 미시 세계 전투와 아이템 상태 갱신을 담당하는 엔진입니다. |
 | `../micro/MicroTurnManager.js` | 모든 아이템의 쿨타임 감소를 전담합니다. |
