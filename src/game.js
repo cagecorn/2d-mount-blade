@@ -62,6 +62,8 @@ import { CombatEngine } from "./engines/CombatEngine.js";
 import { GridManager } from './managers/GridManager.js';
 import { GridRenderer } from './renderers/GridRenderer.js';
 import { CombatTurnEngine } from './managers/CombatTurnEngine.js';
+import { VFXManager } from './managers/VFXManager.js';
+import { SoundManager } from './managers/SoundManager.js';
 
 export class Game {
     constructor() {
@@ -139,6 +141,13 @@ export class Game {
         this.inputHandler = new InputHandler(this);
         this.combatLogManager = new CombatLogManager(this.eventManager);
 
+        // ★★★ 연출 관련 매니저들을 생성합니다. ★★★
+        const vfxManager = new VFXManager();
+        const soundManager = new SoundManager();
+
+        this.vfxManager = vfxManager;
+        this.soundManager = soundManager;
+
         
         this.statusEffectsManager = new StatusEffectsManager(this.eventManager);
         this.tagManager = new TagManager();
@@ -166,8 +175,8 @@ export class Game {
         // ★★★ Web Worker를 생성합니다. ★★★
         const turnWorker = new Worker('./src/workers/turn.worker.js', { type: 'module' });
 
-        // CombatTurnEngine에 워커를 주입합니다.
-        this.combatTurnEngine = new CombatTurnEngine(this.eventManager, turnWorker);
+        // ★★★ CombatTurnEngine에 모든 의존성을 주입합니다. ★★★
+        this.combatTurnEngine = new CombatTurnEngine(this.eventManager, turnWorker, vfxManager, soundManager);
 
         // ★★★ 테스트 유닛에 팀과 스킬 정보를 추가합니다. ★★★
         const unit1 = new Entity({ id: 'Hero_Light', weight: 20, x: 0, y: 0, tileSize: this.mapManager.tileSize, image: assets.player });

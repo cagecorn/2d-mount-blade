@@ -1,21 +1,24 @@
 // src/managers/CombatTurnEngine.js
 import { TurnSequencingEngine } from '../engines/turn/TurnSequencingEngine.js';
+import { ActionExecutionEngine } from '../engines/turn/ActionExecutionEngine.js';
 
 /**
  * 전투 시 턴의 흐름을 관리하는 엔진.
  * TurnManager가 '전투' 국면에서 사용할 전략입니다.
  */
 export class CombatTurnEngine {
-    constructor(eventManager, worker) {
+    constructor(eventManager, worker, vfxManager, soundManager) {
         this.eventManager = eventManager;
         this.worker = worker;
+        this.unitMap = new Map(); // ID로 유닛을 빠르게 찾기 위한 Map
         this.units = [];
         this.turnOrder = [];
         this.currentTurnIndex = 0;
         this.roundCount = 0;
 
-        // 자신의 전문 엔진을 생성합니다.
         this.sequencingEngine = new TurnSequencingEngine();
+        // ★★★ 행동 실행 엔진을 생성하고 주입받은 매니저들을 넘겨줍니다. ★★★
+        this.executionEngine = new ActionExecutionEngine(vfxManager, soundManager);
 
         // 워커로부터 수신한 행동 계획을 처리합니다.
         this.worker.onmessage = (event) => {
@@ -33,6 +36,8 @@ export class CombatTurnEngine {
      */
     startCombat(units) {
         this.units = units;
+        // 유닛 배열을 Map으로 변환하여 검색 속도를 높입니다.
+        this.unitMap = new Map(units.map(u => [u.id, u]));
         this.roundCount = 1;
         console.log(`[CombatTurnEngine] 전투 시작! 총 ${this.units.length} 유닛 참여.`);
 
@@ -89,12 +94,11 @@ export class CombatTurnEngine {
      * @param {object} actionPlan
      */
     async executeAction(actionPlan) {
-        console.log(`[연출 시작] ${actionPlan.actorId}이(가) ${actionPlan.targetId}에게 ${actionPlan.type} 실행!`);
-
-        setTimeout(() => {
-            console.log("[연출 종료]");
-            this.currentTurnIndex++;
-            this.processNextTurn();
-        }, 1000);
+        // ★★★ 이제 모든 연출은 ActionExecutionEngine이 책임집니다. ★★★
+        await this.executionEngine.execute(actionPlan, this.unitMap);
+        
+        // 연출이 모두 끝나면 다음 턴으로 넘어갑니다.
+        this.currentTurnIndex++;
+        this.processNextTurn();
     }
 }
