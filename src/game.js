@@ -60,6 +60,7 @@ import { FormationManager } from './managers/formationManager.js';
 import { TooltipManager } from './managers/tooltipManager.js';
 import { CombatEngine } from "./engines/CombatEngine.js";
 import { GridManager } from './managers/GridManager.js';
+import { GridRenderer } from './renderers/GridRenderer.js';
 
 export class Game {
     constructor() {
@@ -143,6 +144,12 @@ export class Game {
         // 이 시점에서는 아직 다른 시스템이
         // GridManager에 의존하지 않습니다.
         this.gridManager = new GridManager(50, 30); // 50x30 크기의 그리드
+
+        // Grid 시각화를 담당하는 GridRenderer를 초기화합니다.
+        this.gridRenderer = new GridRenderer(
+            this.layerManager.contexts.mapDecor,
+            this.eventManager
+        );
         
         this.statusEffectsManager = new StatusEffectsManager(this.eventManager);
         this.tagManager = new TagManager();
@@ -1237,6 +1244,8 @@ export class Game {
         if (this.gameState.currentState === "WORLD") {
             this.worldEngine.render(this.layerManager.contexts.entity);
         } else if (this.gameState.currentState === "COMBAT") {
+            // 전투 중에는 그리드 시각화 후 전투 엔진 렌더링을 진행합니다.
+            this.gridRenderer.render(this.gridManager, this.gameState.camera);
             this.combatEngine.render();
         }
         if (this.uiManager) this.uiManager.updateUI(this.gameState);
