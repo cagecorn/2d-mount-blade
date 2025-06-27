@@ -1,24 +1,22 @@
 // src/managers/CombatTurnEngine.js
 import { TurnSequencingEngine } from '../engines/turn/TurnSequencingEngine.js';
-import { ActionExecutionEngine } from '../engines/turn/ActionExecutionEngine.js';
 
 /**
  * 전투 시 턴의 흐름을 관리하는 엔진.
  * TurnManager가 '전투' 국면에서 사용할 전략입니다.
  */
 export class CombatTurnEngine {
-    constructor(eventManager, turnWorker) {
+    constructor(eventManager) {
         this.eventManager = eventManager;
-        this.turnWorker = turnWorker; // AI 계산을 요청할 워커
-        this.units = []; // 전투 참여 유닛 목록
-        this.turnOrder = []; // 이번 라운드의 턴 순서
+        this.units = [];
+        this.turnOrder = [];
         this.currentTurnIndex = 0;
+        this.roundCount = 0;
 
-        // 전문 엔진들을 생성
+        // 자신의 전문 엔진을 생성합니다.
         this.sequencingEngine = new TurnSequencingEngine();
-        // this.executionEngine = new ActionExecutionEngine(...);
 
-        console.log("[CombatTurnEngine] Initialized.");
+        console.log("[CombatTurnEngine] Initialized: 전투 턴 엔진 준비 완료.");
     }
 
     /**
@@ -27,41 +25,58 @@ export class CombatTurnEngine {
      */
     startCombat(units) {
         this.units = units;
-        console.log("[CombatTurnEngine] Combat started.");
+        this.roundCount = 1;
+        console.log(`[CombatTurnEngine] 전투 시작! 총 ${this.units.length} 유닛 참여.`);
 
-        // 1. [용맹] 스탯에 따라 모든 유닛의 보호막을 계산하고 적용합니다.
-        // this.units.forEach(unit => unit.applyValorShield());
+        // [용맹] 시스템이 작동할 위치 (지금은 주석 처리)
+        // this.applyValorShields();
 
-        // 2. [무게]를 기반으로 첫 라운드의 턴 순서를 결정합니다.
-        this.turnOrder = this.sequencingEngine.calculateTurnOrder(this.units);
-
-        // 3. 첫 턴을 시작합니다.
-        this.startNextTurn();
+        this.startNewRound();
     }
 
     /**
-     * 다음 유닛의 턴을 시작합니다.
+     * 새로운 라운드를 시작합니다.
      */
-    async startNextTurn() {
+    startNewRound() {
+        console.log(`[CombatTurnEngine] --- 라운드 ${this.roundCount} 시작 ---`);
+        this.currentTurnIndex = 0;
+
+        // 턴 순서 결정 엔진을 통해 이번 라운드의 턴 순서를 계산합니다.
+        this.turnOrder = this.sequencingEngine.calculateTurnOrder(this.units);
+
+        // 첫 턴을 시작합니다.
+        this.processNextTurn();
+    }
+
+    /**
+     * 현재 턴을 처리하고, 다음 턴으로 넘어갑니다.
+     */
+    async processNextTurn() {
         if (this.currentTurnIndex >= this.turnOrder.length) {
-            // 모든 유닛이 행동했다면 라운드 종료
-            console.log("[CombatTurnEngine] Round ended.");
-            // 다음 라운드 준비...
+            console.log(`[CombatTurnEngine] --- 라운드 ${this.roundCount} 종료 ---`);
+            this.roundCount++;
+            // (임시) 3 라운드까지만 진행하고 전투 종료
+            if (this.roundCount > 3) {
+                 console.log("[CombatTurnEngine] 전투 종료.");
+                 this.eventManager.publish('combat_ended');
+                 return;
+            }
+            this.startNewRound();
             return;
         }
 
         const currentUnitId = this.turnOrder[this.currentTurnIndex];
-        const currentUnit = this.units.find(u => u.id === currentUnitId);
-        console.log(`[CombatTurnEngine] It's ${currentUnit.name}'s turn.`);
+        console.log(`%c[턴 진행] ${currentUnitId}의 턴입니다.`, 'color: #2196F3; font-weight: bold;');
 
-        // AI Worker에게 행동 결정을 요청합니다.
-        // const actionPlan = await this.turnWorker.decideAction(currentUnit, this.units);
-
-        // Worker로부터 받은 행동 계획을 실행 엔진에게 넘겨 연출합니다.
+        // AI Worker에게 행동 결정을 요청할 위치
+        // const actionPlan = await this.turnWorker.decideAction(...);
         // await this.executionEngine.execute(actionPlan);
 
-        // 턴 종료
-        this.currentTurnIndex++;
-        this.startNextTurn();
+        // 지금은 AI 결정 과정을 건너뛰고 바로 다음 턴으로 넘어갑니다.
+        // 1초 후 다음 턴 진행 (연출 시간 임시 구현)
+        setTimeout(() => {
+            this.currentTurnIndex++;
+            this.processNextTurn();
+        }, 1000);
     }
 }
