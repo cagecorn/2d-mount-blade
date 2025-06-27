@@ -40,6 +40,7 @@ export class WorldEngine {
                 height: this.tileSize,
                 image: this.assets['monster'],
                 troopSize: 10,
+                groupId: 'monster_party_1'
             },
         ];
         this.walkManager = new WalkManager();
@@ -63,6 +64,7 @@ export class WorldEngine {
             height: entity?.height || this.tileSize,
             speed: 5,
             image: entity?.image || this.assets['player'],
+            groupId: entity?.groupId,
             entity
         };
         if (this.movementEngine) {
@@ -129,12 +131,15 @@ export class WorldEngine {
     }
 
     handleEnemyTurn() {
-        const monster = this.monsters[0];
-        if (!monster) return;
-        const nextStep = this.walkManager.getNextStep(monster, this.player);
-        if (nextStep.x >= 0 && nextStep.x < this.worldWidth / this.tileSize &&
-            nextStep.y >= 0 && nextStep.y < this.worldHeight / this.tileSize) {
-            this.movementEngine.startMovement(monster, nextStep);
+        for (const monster of this.monsters) {
+            if (!monster || this.movementEngine.isMoving(monster)) continue;
+
+            const nextStep = this.walkManager.getNextStep(monster, this.player);
+
+            if (nextStep.x >= 0 && nextStep.x < this.worldWidth / this.tileSize &&
+                nextStep.y >= 0 && nextStep.y < this.worldHeight / this.tileSize) {
+                this.movementEngine.startMovement(monster, nextStep);
+            }
         }
         this.turnManager.nextTurn();
     }

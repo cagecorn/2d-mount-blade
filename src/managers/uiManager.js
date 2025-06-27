@@ -1205,25 +1205,35 @@ export class UIManager {
      * 캔버스 클릭을 처리하는 메소드
      */
     handleCanvasClick(event) {
-        if (!this.entityManager) return;
-        const rect = this.canvas.getBoundingClientRect();
-        const mouseX = event.clientX - rect.left;
-        const mouseY = event.clientY - rect.top;
+        // game 객체와 worldEngine이 없으면 실행하지 않음
+        if (!this.game || !this.game.worldEngine) return;
 
-        const entities = this.entityManager.getAllEntities().slice().reverse();
-        for (const entity of entities) {
-            if (entity.groupId &&
-                mouseX >= entity.x && mouseX <= entity.x + entity.tileSize &&
-                mouseY >= entity.y && mouseY <= entity.y + entity.tileSize) {
-                console.log(`지휘관 클릭: ${entity.id}`);
-                const info = this.commanderManager?.getUnitInfo(entity);
-                if (info) {
-                    this.showCommanderInfo(info);
-                }
-                return;
+        const worldEngine = this.game.worldEngine;
+        const rect = this.canvas.getBoundingClientRect();
+        const zoom = this.game.gameState.zoomLevel || 1;
+        const camera = worldEngine.camera;
+
+        // 클릭된 화면 좌표를 월드 좌표로 변환
+        const mouseX = (event.clientX - rect.left) / zoom + camera.x;
+        const mouseY = (event.clientY - rect.top) / zoom + camera.y;
+
+        // 월드맵의 모든 지휘관 (플레이어, 몬스터) 목록
+        const entities = [worldEngine.player, ...worldEngine.monsters];
+
+        // 클릭된 지휘관 찾기 (z-index 고려를 위해 역순으로 순회)
+        const clickedEntity = entities.slice().reverse().find(entity =>
+            mouseX >= entity.x && mouseX <= entity.x + entity.width &&
+            mouseY >= entity.y && mouseY <= entity.y + entity.height
+        );
+
+        if (clickedEntity) {
+            const info = this.commanderManager?.getUnitInfo(clickedEntity.entity || clickedEntity);
+            if (info) {
+                this.showCommanderInfo(info);
             }
+        } else {
+            this.hideCommanderInfo();
         }
-        this.hideCommanderInfo();
     }
 
     /**

@@ -79,6 +79,15 @@ export class BattleResultManager {
         } else {
             console.log(`[BattleResultManager] ${commander.id} 부대 전멸. 그룹 전체 제거.`);
             this.groupManager.removeGroup(commander.groupId);
+
+            // 월드맵의 몬스터 배열에서도 제거
+            if (this.game.worldEngine && this.game.worldEngine.monsters) {
+                const index = this.game.worldEngine.monsters.findIndex(m => m.id === commander.id);
+                if (index > -1) {
+                    this.game.worldEngine.monsters.splice(index, 1);
+                }
+            }
+
             if (this.entityManager.removeEntityById) {
                 this.entityManager.removeEntityById(commander.id);
             }
