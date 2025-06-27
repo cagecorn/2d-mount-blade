@@ -29,7 +29,7 @@ export class InputHandler {
         }
     }
 
-    // 추가: 마우스 휠 이벤트를 처리하는 메서드
+    // 기존 handleMouseWheel 함수를 아래의 새로운 코드로 완전히 교체합니다.
     handleMouseWheel(e) {
         const uiManager = this.game.uiManager;
 
