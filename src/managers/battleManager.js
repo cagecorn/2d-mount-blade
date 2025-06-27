@@ -1,11 +1,17 @@
 // src/managers/battleManager.js
 
 import { MicroEngine } from '../micro/MicroEngine.js';
+import { EventManager } from './eventManager.js';
 
 export class BattleManager {
     constructor(game, eventManager, groupManager, entityManager, factory) {
         this.game = game;
-        this.eventManager = eventManager;
+        if (!eventManager || typeof eventManager.subscribe !== 'function') {
+            console.warn('[BattleManager] Provided eventManager is invalid; using a new instance');
+            this.eventManager = new EventManager();
+        } else {
+            this.eventManager = eventManager;
+        }
         this.groupManager = groupManager;
         this.entityManager = entityManager;
         this.factory = factory;
