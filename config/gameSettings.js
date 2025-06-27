@@ -26,6 +26,9 @@ export const SETTINGS = {
     // Aquarium map uses a 3-lane layout with jungle maze by default.
     // Set this to false to revert to a standard dungeon layout.
     ENABLE_AQUARIUM_LANES: false,
+    // Turn-based combat engine toggle. When true, CombatTurnEngine
+    // handles unit turns instead of the real-time CombatEngine.
+    ENABLE_TURN_BASED_COMBAT: false,
     // guideline markdown files will be loaded from this GitHub API path
     // example: 'user/repo/contents/guidelines?ref=main'
     // Remote markdown guidelines are fetched via the GitHub API.
