@@ -238,6 +238,7 @@ class Entity {
         }
         this.hp -= damage;
         if (this.hp < 0) this.hp = 0;
+        console.log(`[Entity] ${this.id}가 ${damage}의 피해를 입음. 현재 HP: ${this.hp}`);
     }
 }
 
