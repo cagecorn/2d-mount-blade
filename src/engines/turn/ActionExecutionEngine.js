@@ -3,7 +3,8 @@
 const TILE_SIZE = 32; // GridManager와 동일한 타일 크기
 
 export class ActionExecutionEngine {
-    constructor(eventManager, vfxManager, soundManager) {
+    constructor(game, eventManager, vfxManager, soundManager) {
+        this.game = game;
         this.eventManager = eventManager;
         this.vfxManager = vfxManager;
         this.soundManager = soundManager;
@@ -57,6 +58,7 @@ export class ActionExecutionEngine {
     }
 
     animateMovement(objectToMove, targetPos, duration) {
+        const game = this.game;
         return new Promise(resolve => {
             const startPos = { ...objectToMove.pos };
             const startTime = performance.now();
@@ -67,6 +69,10 @@ export class ActionExecutionEngine {
 
                 objectToMove.pos.x = startPos.x + (targetPos.x - startPos.x) * progress;
                 objectToMove.pos.y = startPos.y + (targetPos.y - startPos.y) * progress;
+
+                if (game && typeof game.render === 'function') {
+                    game.render();
+                }
 
                 if (progress < 1) {
                     requestAnimationFrame(tick);
