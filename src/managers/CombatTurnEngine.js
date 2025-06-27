@@ -18,7 +18,7 @@ export class CombatTurnEngine {
 
         this.sequencingEngine = new TurnSequencingEngine();
         // ★★★ 행동 실행 엔진을 생성하고 주입받은 매니저들을 넘겨줍니다. ★★★
-        this.executionEngine = new ActionExecutionEngine(vfxManager, soundManager);
+        this.executionEngine = new ActionExecutionEngine(eventManager, vfxManager, soundManager);
 
         // 워커로부터 수신한 행동 계획을 처리합니다.
         this.worker.onmessage = (event) => {

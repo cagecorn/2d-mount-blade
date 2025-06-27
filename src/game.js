@@ -6,7 +6,7 @@ import { InputHandler } from './inputHandler.js';
 import { CharacterFactory, ItemFactory } from './factory.js';
 import { EventManager } from './managers/eventManager.js';
 import { CombatLogManager, SystemLogManager } from './managers/logManager.js';
-import { CombatCalculator } from './combat.js';
+import { CombatCalculator } from './managers/CombatCalculator.js';
 import { TagManager } from './managers/tagManager.js';
 import { WorldEngine } from './worldEngine.js';
 import { MapManager } from './map.js';
@@ -151,7 +151,7 @@ export class Game {
         
         this.statusEffectsManager = new StatusEffectsManager(this.eventManager);
         this.tagManager = new TagManager();
-        this.combatCalculator = new CombatCalculator(this.eventManager, this.tagManager);
+        this.combatCalculator = new CombatCalculator(this.eventManager);
         // Player begins in the Aquarium map for feature testing
         this.mapManager = new AquariumMapManager();
         const mapPixelWidth = this.mapManager.width * this.mapManager.tileSize;

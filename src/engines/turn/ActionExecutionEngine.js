@@ -5,7 +5,8 @@
  * 실제 연출을 순차적으로 실행하는 전문 엔진
  */
 export class ActionExecutionEngine {
-    constructor(vfxManager, soundManager) {
+    constructor(eventManager, vfxManager, soundManager) {
+        this.eventManager = eventManager;
         this.vfxManager = vfxManager;
         this.soundManager = soundManager;
         // 나중에는 애니메이션 매니저도 여기에 추가됩니다.
@@ -52,7 +53,10 @@ export class ActionExecutionEngine {
 
             await this.wait(500); // 연출이 끝난 후 잠시 대기
             console.log('%c[연출 종료]', 'color: #F44336; font-weight: bold;');
-            
+
+            // ★★★ 연출 종료 후 결과 계산을 지시하는 이벤트 발행 ★★★
+            this.eventManager.publish('execute_action_effect', { actionPlan, unitMap });
+
             // 모든 연출이 끝나면 Promise를 완료시켜 다음 턴으로 넘어갈 수 있음을 알림
             resolve();
         });
