@@ -1,4 +1,5 @@
 import { STRATEGY } from './ai-managers.js';
+import { SquadAssignmentEngine } from '../engines/squadAssignmentEngine.js';
 
 export class SquadManager {
     constructor(eventManager, mercenaryManager) {
@@ -15,6 +16,8 @@ export class SquadManager {
         this.unassignedMercs = new Set(
             this.mercenaryManager.getMercenaries().map(m => m.id)
         );
+
+        this.assignmentEngine = new SquadAssignmentEngine(this.squads, this.unassignedMercs, this.mercenaryManager);
         if (this.eventManager) {
             this.eventManager.subscribe('squad_assign_request', d => this.handleSquadAssignment(d));
             this.eventManager.subscribe('squad_strategy_change_request', d => this.setSquadStrategy(d));
@@ -23,28 +26,12 @@ export class SquadManager {
     }
 
     registerMercenary(merc) {
-        if (!merc) return;
-        this.unassignedMercs.add(merc.id);
-        merc.squadId = null;
+        this.assignmentEngine.register(merc);
     }
 
     handleSquadAssignment({ mercId, toSquadId }) {
-        for (const squad of Object.values(this.squads)) {
-            squad.members.delete(mercId);
-        }
-        this.unassignedMercs.delete(mercId);
-        if (toSquadId && this.squads[toSquadId]) {
-            this.squads[toSquadId].members.add(mercId);
-            const merc = this.mercenaryManager.getMercenaries().find(m => m.id === mercId);
-            if (merc) merc.squadId = toSquadId;
-            console.log(`용병 ${mercId}를 ${this.squads[toSquadId].name}에 편성했습니다.`);
-        } else {
-            this.unassignedMercs.add(mercId);
-            const merc = this.mercenaryManager.getMercenaries().find(m => m.id === mercId);
-            if (merc) merc.squadId = null;
-            console.log(`용병 ${mercId}를 미편성 상태로 변경했습니다.`);
-        }
-        this.eventManager?.publish('squad_data_changed', { squads: this.squads });
+        this.assignmentEngine.assign({ mercId, toSquadId });
+        this.eventManager?.publish("squad_data_changed", { squads: this.squads });
     }
 
     setSquadStrategy(squadIdOrObj, maybeStrategy) {
