@@ -1,3 +1,5 @@
+import { GridRenderer } from './renderers/gridRenderer.js';
+
 export class WorldEngine {
     constructor(game, assets) {
         this.game = game;
@@ -12,6 +14,13 @@ export class WorldEngine {
         this.dragStart = { x: 0, y: 0 };
         this.isDragging = false;
         this.followPlayer = true;
+        // 월드맵용 GridRenderer 인스턴스 생성
+        this.gridRenderer = new GridRenderer({
+            mapWidth: this.worldWidth,
+            mapHeight: this.worldHeight,
+            tileSize: this.tileSize,
+            lineColor: 'rgba(255, 255, 255, 0.05)'
+        });
         // 플레이어 정보는 Game 초기화 이후 setPlayer()로 전달된다
         this.player = null;
         this.monsters = [
