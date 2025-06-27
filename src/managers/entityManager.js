@@ -51,4 +51,13 @@ export class EntityManager {
     getMonsters() {
         return this.monsters;
     }
+
+    removeEntityById(id) {
+        if (this.entities.has(id)) {
+            this.entities.delete(id);
+            if (this.eventManager) {
+                this.eventManager.publish('entity_removed', { victimId: id });
+            }
+        }
+    }
 }

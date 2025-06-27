@@ -38,6 +38,7 @@ import { MicroEngine } from './micro/MicroEngine.js';
 import { MicroCombatManager } from './micro/MicroCombatManager.js';
 import { MicroItemAIManager } from './managers/microItemAIManager.js';
 import { BattleManager } from './managers/battleManager.js';
+import { BattleResultManager } from './managers/battleResultManager.js';
 
 import { StatusEffectsManager } from './managers/statusEffectsManager.js';
 import { disarmWorkflow, armorBreakWorkflow } from './workflows.js';
@@ -145,6 +146,12 @@ export class Game {
         this.groupManager = new GroupManager(this.eventManager, this.entityManager.getEntityById.bind(this.entityManager));
         // CommanderManager 초기화
         this.commanderManager = new CommanderManager(this.groupManager);
+        // 전투 후 결과 처리를 담당하는 매니저
+        this.battleResultManager = new BattleResultManager(
+            this.eventManager,
+            this.groupManager,
+            this.entityManager
+        );
         // InputHandler를 생성할 때 game 객체(this)를 전달합니다.
         this.inputHandler = new InputHandler(this);
         this.combatLogManager = new CombatLogManager(this.eventManager);
