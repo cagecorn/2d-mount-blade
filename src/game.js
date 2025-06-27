@@ -59,6 +59,7 @@ import { LaneAssignmentManager } from './managers/laneAssignmentManager.js';
 import { FormationManager } from './managers/formationManager.js';
 import { TooltipManager } from './managers/tooltipManager.js';
 import { CombatEngine } from "./engines/CombatEngine.js";
+import { GridManager } from './managers/GridManager.js';
 
 export class Game {
     constructor() {
@@ -135,6 +136,13 @@ export class Game {
         // InputHandler를 생성할 때 game 객체(this)를 전달합니다.
         this.inputHandler = new InputHandler(this);
         this.combatLogManager = new CombatLogManager(this.eventManager);
+
+        // ★★★ 교살자 나무 패턴의 첫 단계 ★★★
+        // 기존 시스템은 그대로 두는 천수에,
+        // 새로운 'GridManager'를 생성하여 추가합니다.
+        // 이 시점에서는 아직 다른 시스템이
+        // GridManager에 의존하지 않습니다.
+        this.gridManager = new GridManager(50, 30); // 50x30 크기의 그리드
         
         this.statusEffectsManager = new StatusEffectsManager(this.eventManager);
         this.tagManager = new TagManager();
