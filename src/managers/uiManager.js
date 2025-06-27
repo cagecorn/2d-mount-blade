@@ -76,6 +76,12 @@ export class UIManager {
                     if (ent) this.eventManager.publish('stats_changed', { entity: ent });
                 });
             });
+
+            // 용병 고용 시 UI 목록을 즉시 갱신합니다.
+            this.eventManager.subscribe('mercenary_hired', () => {
+                console.log('새 용병 고용 이벤트 수신! UI를 업데이트합니다.');
+                this.renderMercenaryList();
+            });
         }
 
         this.draggables = [];
