@@ -16,6 +16,7 @@ export class TargetingEngine {
         // 지금은 가장 간단한 로직: 가장 가까운 적을 찾습니다.
         // actor와 다른 진영(team)에 속한 유닛만 필터링합니다.
         const enemies = allUnits.filter(u => u.team !== actor.team);
+        // 적이 없을 경우 null을 반환하여 호출 측이 안전하게 처리하도록 합니다.
         if (enemies.length === 0) return null;
 
         let closestEnemy = null;

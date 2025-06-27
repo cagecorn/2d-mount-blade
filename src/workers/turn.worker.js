@@ -5,6 +5,8 @@ console.log("[TurnWorker] 워커 스크립트 로드됨.");
 const aiEngine = new UtilityAI_Engine();
 
 // 메인 스레드로부터 메시지를 받았을 때 실행될 함수
+// 과거에는 aiEngine.decideAction의 반환 Promise를 그대로 postMessage 하면서
+// DataCloneError가 발생했다. async 핸들러로 바꿔 결과 값을 기다린 후 전송한다.
 self.onmessage = async (event) => {
     console.log("[TurnWorker] 메인 스레드로부터 메시지 수신:", event.data);
 
