@@ -64,6 +64,9 @@ import { GridRenderer } from './renderers/GridRenderer.js';
 import { CombatTurnEngine } from './managers/CombatTurnEngine.js';
 import { VFXManager } from './managers/VFXManager.js';
 import { SoundManager } from './managers/SoundManager.js';
+// 새 통합 유닛 시스템에서 사용할 데이터와 클래스
+import { UNIT_TEMPLATES } from './data/legacy_data.js';
+import { Unit } from './entities/Unit.js';
 
 export class Game {
     constructor() {
@@ -179,24 +182,25 @@ export class Game {
         this.combatTurnEngine = new CombatTurnEngine(this.eventManager, turnWorker, vfxManager, soundManager);
 
         // ★★★ 테스트 유닛에 팀과 스킬 정보를 추가합니다. ★★★
-        const unit1 = new Entity({ id: 'Hero_Light', weight: 20, x: 0, y: 0, tileSize: this.mapManager.tileSize, image: assets.player });
-        const unit2 = new Entity({ id: 'Hero_Heavy', weight: 80, x: 0, y: 0, tileSize: this.mapManager.tileSize, image: assets.player });
-        const monster1 = new Entity({ id: 'Goblin', weight: 30, x: 0, y: 0, tileSize: this.mapManager.tileSize, image: assets.monster });
+        const managers = {
+            eventManager: this.eventManager,
+            gridManager: this.gridManager,
+            vfxManager: vfxManager,
+            logManager: this.combatLogManager,
+        };
 
-        unit1.team = 'player';
-        unit2.team = 'player';
-        monster1.team = 'enemy';
-        unit1.skills = [{ id: 'quick_slash' }];
-        unit2.skills = [{ id: 'heavy_smash' }];
-        monster1.skills = [{ id: 'bite' }];
-        this.entityManager.addEntity(unit1);
-        this.entityManager.addEntity(unit2);
-        this.entityManager.addEntity(monster1);
+        const playerTemplates = ['p_knight', 'p_archer'];
+        playerTemplates.forEach((key, i) => {
+            const unit = new Unit(UNIT_TEMPLATES[key], 'player', managers);
+            unit.image = assets.player;
+            this.entityManager.addEntity(unit);
+            this.gridManager.placeUnit(unit, 1, i * 2 + 1);
+        });
 
-        // 그리드에 배치 (렌더링을 위해)
-        this.gridManager.placeUnit(unit1, 5, 4);
-        this.gridManager.placeUnit(unit2, 6, 4);
-        this.gridManager.placeUnit(monster1, 5, 8);
+        const monster = new Unit(UNIT_TEMPLATES['e_warrior'], 'enemy', managers);
+        monster.image = assets.monster;
+        this.entityManager.addEntity(monster);
+        this.gridManager.placeUnit(monster, 5, 8);
 
         const formationSpacing = this.mapManager.tileSize * 2.5;
         const formationAngle = -Math.PI / 4; // align grid with battlefield orientation
