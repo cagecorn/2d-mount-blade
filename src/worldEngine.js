@@ -1,5 +1,7 @@
 import { GridRenderer } from './renderers/gridRenderer.js';
 import { MovementEngine } from './engines/movementEngine.js';
+import { WorldTurnManager } from './managers/worldTurnManager.js';
+import { WalkManager } from './managers/walkManager.js';
 
 export class WorldEngine {
     constructor(game, assets, movementEngine = new MovementEngine({ tileSize: game.mapManager?.tileSize || 192 })) {
@@ -28,14 +30,21 @@ export class WorldEngine {
         this.player = null;
         this.monsters = [
             {
+                tileX: 3,
+                tileY: 2,
                 x: this.tileSize * 3,
-                y: this.tileSize * 1.5,
+                y: this.tileSize * 2,
                 width: this.tileSize,
                 height: this.tileSize,
                 image: this.assets['monster'],
                 troopSize: 10,
             },
         ];
+        this.walkManager = new WalkManager();
+        this.turnManager = new WorldTurnManager({
+            movementEngine: this.movementEngine,
+            entities: [...this.monsters]
+        });
     }
 
     /**
@@ -57,12 +66,33 @@ export class WorldEngine {
         if (this.movementEngine) {
             this.player.movementEngine = this.movementEngine;
         }
+        if (this.turnManager) {
+            this.turnManager.entities = [this.player, ...this.monsters];
+        }
     }
 
     update(deltaTime) {
         if (!this.player) return;
         this.handleResetFollow();
-        this.handlePlayerMovement();
+
+        if (!this.turnManager) {
+            if (this.movementEngine) this.movementEngine.update(deltaTime);
+            this.updateCamera();
+            return;
+        }
+
+        if (this.turnManager.isActionInProgress()) {
+            if (this.movementEngine) this.movementEngine.update(deltaTime);
+            this.updateCamera();
+            return;
+        }
+
+        if (this.turnManager.isPlayerTurn()) {
+            this.handlePlayerTurn();
+        } else {
+            this.handleEnemyTurn();
+        }
+
         if (this.movementEngine) this.movementEngine.update(deltaTime);
         this.updateCamera();
         this.checkCollisions();
@@ -75,22 +105,36 @@ export class WorldEngine {
         }
     }
 
-    handlePlayerMovement() {
+    handlePlayerTurn() {
         const keys = this.game.inputHandler.keysPressed;
         if (this.movementEngine && this.movementEngine.isMoving(this.player)) return;
 
+        let moved = false;
         const target = { x: this.player.tileX, y: this.player.tileY };
-        if (keys['ArrowUp']) target.y -= 1;
-        else if (keys['ArrowDown']) target.y += 1;
-        else if (keys['ArrowLeft']) target.x -= 1;
-        else if (keys['ArrowRight']) target.x += 1;
 
-        if (target.x !== this.player.tileX || target.y !== this.player.tileY) {
+        if (keys['ArrowUp']) { target.y -= 1; moved = true; }
+        else if (keys['ArrowDown']) { target.y += 1; moved = true; }
+        else if (keys['ArrowLeft']) { target.x -= 1; moved = true; }
+        else if (keys['ArrowRight']) { target.x += 1; moved = true; }
+
+        if (moved) {
             if (target.x >= 0 && target.x < this.worldWidth / this.tileSize &&
                 target.y >= 0 && target.y < this.worldHeight / this.tileSize) {
                 this.movementEngine.startMovement(this.player, target);
+                this.turnManager.nextTurn();
             }
         }
+    }
+
+    handleEnemyTurn() {
+        const monster = this.monsters[0];
+        if (!monster) return;
+        const nextStep = this.walkManager.getNextStep(monster, this.player);
+        if (nextStep.x >= 0 && nextStep.x < this.worldWidth / this.tileSize &&
+            nextStep.y >= 0 && nextStep.y < this.worldHeight / this.tileSize) {
+            this.movementEngine.startMovement(monster, nextStep);
+        }
+        this.turnManager.nextTurn();
     }
 
     startDrag(screenX, screenY) {
