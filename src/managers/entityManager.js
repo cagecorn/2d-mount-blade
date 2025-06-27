@@ -52,6 +52,11 @@ export class EntityManager {
         return this.monsters;
     }
 
+    // 현재 관리 중인 모든 엔티티 객체를 배열로 반환합니다.
+    getAllEntities() {
+        return Array.from(this.entities.values());
+    }
+
     /**
      * Render all tracked entities using Y-sorting. Entities with a lower
      * bottom position are drawn first so that taller units naturally overlap

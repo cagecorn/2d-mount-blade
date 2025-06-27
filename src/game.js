@@ -61,6 +61,7 @@ import { TooltipManager } from './managers/tooltipManager.js';
 import { CombatEngine } from "./engines/CombatEngine.js";
 import { GridManager } from './managers/GridManager.js';
 import { GridRenderer } from './renderers/GridRenderer.js';
+import { CombatTurnEngine } from './managers/CombatTurnEngine.js';
 
 export class Game {
     constructor() {
@@ -162,23 +163,22 @@ export class Game {
             this.mapManager.tileSize
         );
 
-        // --- Temporary test units placed on the grid for Y-sorting demo ---
-        const unit1 = new Entity({
-            x: 0,
-            y: 0,
-            tileSize: this.mapManager.tileSize,
-            image: assets.player,
-        });
-        const unit2 = new Entity({
-            x: 0,
-            y: 0,
-            tileSize: this.mapManager.tileSize,
-            image: assets.player,
-        });
+        // ★★★ 새로운 CombatTurnEngine을 생성합니다. ★★★
+        // 아직 AI 워커가 없으므로 eventManager만 넘겨줍니다.
+        this.combatTurnEngine = new CombatTurnEngine(this.eventManager);
+
+        // ★★★ 테스트용 유닛 데이터 수정 ★★★
+        const unit1 = new Entity({ id: 'Hero_LightArmor', weight: 20, x: 0, y: 0, tileSize: this.mapManager.tileSize, image: assets.player });
+        const unit2 = new Entity({ id: 'Hero_HeavyArmor', weight: 80, x: 0, y: 0, tileSize: this.mapManager.tileSize, image: assets.player });
+        const monster1 = new Entity({ id: 'Goblin', weight: 30, x: 0, y: 0, tileSize: this.mapManager.tileSize, image: assets.monster });
         this.entityManager.addEntity(unit1);
         this.entityManager.addEntity(unit2);
+        this.entityManager.addEntity(monster1);
+
+        // 그리드에 배치 (렌더링을 위해)
         this.gridManager.placeUnit(unit1, 5, 4);
-        this.gridManager.placeUnit(unit2, 5, 5);
+        this.gridManager.placeUnit(unit2, 6, 4);
+        this.gridManager.placeUnit(monster1, 5, 8);
 
         const formationSpacing = this.mapManager.tileSize * 2.5;
         const formationAngle = -Math.PI / 4; // align grid with battlefield orientation
@@ -835,6 +835,10 @@ export class Game {
 
         this.gameLoop = new GameLoop(this.update, this.render);
         this.gameLoop.start();
+
+        // ★★★ 게임 시작과 동시에 전투를 개시합니다. ★★★
+        // EntityManager로부터 모든 유닛 목록을 가져와 전투를 시작합니다.
+        this.combatTurnEngine.startCombat(this.entityManager.getAllEntities());
     }
 
     setupEventListeners(assets, canvas) {
