@@ -1,5 +1,3 @@
-import { GridRenderer } from './renderers/gridRenderer.js';
-
 export class WorldEngine {
     constructor(game, assets) {
         this.game = game;
@@ -14,14 +12,6 @@ export class WorldEngine {
         this.dragStart = { x: 0, y: 0 };
         this.isDragging = false;
         this.followPlayer = true;
-        // 월드맵용 GridRenderer 인스턴스 생성
-        this.gridRenderer = new GridRenderer({
-            mapWidth: this.worldWidth,
-            mapHeight: this.worldHeight,
-            tileSize: this.tileSize,
-            lineColor: '#000',
-            lineWidth: 6
-        });
         // 플레이어 정보는 Game 초기화 이후 setPlayer()로 전달된다
         this.player = null;
         this.monsters = [
@@ -146,25 +136,15 @@ export class WorldEngine {
         }
     }
 
-    render(baseCtx, entityCtx) {
+    render(ctx) {
         if (!this.player) return;
         const zoom = this.game.gameState.zoomLevel || 1;
-
-        if (baseCtx) {
-            baseCtx.save();
-            baseCtx.scale(zoom, zoom);
-            baseCtx.translate(-this.camera.x, -this.camera.y);
-            this._drawWorldMap(baseCtx);
-            baseCtx.restore();
-        }
-
-        if (entityCtx) {
-            entityCtx.save();
-            entityCtx.scale(zoom, zoom);
-            entityCtx.translate(-this.camera.x, -this.camera.y);
-            this._drawEntities(entityCtx);
-            entityCtx.restore();
-        }
+        ctx.save();
+        ctx.scale(zoom, zoom);
+        ctx.translate(-this.camera.x, -this.camera.y);
+        this._drawWorldMap(ctx);
+        this._drawEntities(ctx);
+        ctx.restore();
     }
 
     _drawWorldMap(ctx) {

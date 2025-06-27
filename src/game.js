@@ -59,7 +59,6 @@ import { LaneAssignmentManager } from './managers/laneAssignmentManager.js';
 import { FormationManager } from './managers/formationManager.js';
 import { TooltipManager } from './managers/tooltipManager.js';
 import { CombatEngine } from "./engines/CombatEngine.js";
-import { GridRenderer } from './renderers/gridRenderer.js';
 
 export class Game {
     constructor() {
@@ -173,16 +172,6 @@ export class Game {
         // 월드맵 로직을 담당하는 엔진
         this.worldEngine = new WorldEngine(this, assets);
         this.combatEngine = new CombatEngine(this);
-
-        // --- GridRenderer 인스턴스 생성 ---
-        // AquariumMapManager의 정보를 바탕으로 GridRenderer를 초기화합니다.
-        this.gridRenderer = new GridRenderer({
-            mapWidth: this.mapManager.width * this.mapManager.tileSize,
-            mapHeight: this.mapManager.height * this.mapManager.tileSize,
-            tileSize: this.mapManager.tileSize,
-            lineColor: '#000',
-            lineWidth: 6
-        });
 
         // --- 매니저 생성 부분 수정 ---
         this.managers = {};
@@ -1238,30 +1227,9 @@ export class Game {
     render = () => {
         this.layerManager.clear();
         if (this.gameState.currentState === "WORLD") {
-            this.worldEngine.render(
-                this.layerManager.contexts.mapBase,
-                this.layerManager.contexts.entity
-            );
-            // 월드맵에 그리드 렌더링 추가
-            if (this.worldEngine.gridRenderer) {
-                const worldCtx = this.layerManager.contexts.mapDecor;
-                worldCtx.save();
-                worldCtx.scale(this.gameState.zoomLevel, this.gameState.zoomLevel);
-                worldCtx.translate(-this.worldEngine.camera.x, -this.worldEngine.camera.y);
-                this.worldEngine.gridRenderer.render(worldCtx);
-                worldCtx.restore();
-            }
+            this.worldEngine.render(this.layerManager.contexts.entity);
         } else if (this.gameState.currentState === "COMBAT") {
             this.combatEngine.render();
-            // 전투 맵에 그리드 렌더링 추가
-            if (this.gridRenderer) {
-                const combatCtx = this.layerManager.contexts.mapDecor;
-                combatCtx.save();
-                combatCtx.scale(this.gameState.zoomLevel, this.gameState.zoomLevel);
-                combatCtx.translate(-this.gameState.camera.x, -this.gameState.camera.y);
-                this.gridRenderer.render(combatCtx);
-                combatCtx.restore();
-            }
         }
         if (this.uiManager) this.uiManager.updateUI(this.gameState);
     }
