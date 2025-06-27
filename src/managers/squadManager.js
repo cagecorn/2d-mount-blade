@@ -9,7 +9,8 @@ export class SquadManager {
             this.squads[`squad_${i}`] = {
                 name: `${i}\uBD84\uB300`,
                 members: new Set(),
-                strategy: i === 1 ? STRATEGY.AGGRESSIVE : STRATEGY.DEFENSIVE
+                strategy: i === 1 ? STRATEGY.AGGRESSIVE : STRATEGY.DEFENSIVE,
+                commanderId: null
             };
         }
         this.unassignedMercs = new Set(
@@ -19,6 +20,7 @@ export class SquadManager {
             this.eventManager.subscribe('squad_assign_request', d => this.handleSquadAssignment(d));
             this.eventManager.subscribe('squad_strategy_change_request', d => this.setSquadStrategy(d));
             this.eventManager.subscribe('mercenary_hired', ({ mercenary }) => this.registerMercenary(mercenary));
+            this.eventManager.subscribe('commander_assign_request', d => this.setCommander(d));
         }
     }
 
@@ -31,6 +33,7 @@ export class SquadManager {
     handleSquadAssignment({ mercId, toSquadId }) {
         for (const squad of Object.values(this.squads)) {
             squad.members.delete(mercId);
+            if (squad.commanderId === mercId) squad.commanderId = null;
         }
         this.unassignedMercs.delete(mercId);
         if (toSquadId && this.squads[toSquadId]) {
@@ -44,6 +47,19 @@ export class SquadManager {
             if (merc) merc.squadId = null;
             console.log(`용병 ${mercId}를 미편성 상태로 변경했습니다.`);
         }
+        this.eventManager?.publish('squad_data_changed', { squads: this.squads });
+    }
+
+    setCommander({ mercId, squadId }) {
+        if (!this.squads[squadId]) return;
+        // remove merc from other commanders
+        for (const s of Object.values(this.squads)) {
+            if (s.commanderId === mercId) s.commanderId = null;
+        }
+        this.squads[squadId].commanderId = mercId;
+        const merc = this.mercenaryManager.getMercenaries().find(m => m.id === mercId);
+        if (merc) merc.squadId = squadId;
+        this.squads[squadId].members.add(mercId);
         this.eventManager?.publish('squad_data_changed', { squads: this.squads });
     }
 
