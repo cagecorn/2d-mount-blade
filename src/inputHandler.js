@@ -6,6 +6,10 @@ export class InputHandler {
         this._setupListeners();
     }
 
+    isDown(key) {
+        return !!this.keysPressed[key];
+    }
+
     _setupListeners() {
         document.addEventListener('keydown', (event) => this.handleKeyDown(event));
         document.addEventListener('keyup', (event) => {

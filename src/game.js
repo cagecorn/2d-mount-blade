@@ -59,6 +59,7 @@ import { LaneAssignmentManager } from './managers/laneAssignmentManager.js';
 import { FormationManager } from './managers/formationManager.js';
 import { TooltipManager } from './managers/tooltipManager.js';
 import { CombatEngine } from "./engines/CombatEngine.js";
+import { MovementEngine } from './engines/movementEngine.js';
 import { GridRenderer } from './renderers/gridRenderer.js';
 
 export class Game {
@@ -142,6 +143,9 @@ export class Game {
         this.combatCalculator = new CombatCalculator(this.eventManager, this.tagManager);
         // Player begins in the Aquarium map for feature testing
         this.mapManager = new AquariumMapManager();
+        // MovementEngine은 맵의 타일 크기를 기반으로 동작합니다.
+        this.movementEngine = new MovementEngine({ tileSize: this.mapManager.tileSize });
+
         const mapPixelWidth = this.mapManager.width * this.mapManager.tileSize;
         const mapPixelHeight = this.mapManager.height * this.mapManager.tileSize;
         const laneCenters = this.mapManager.getLaneCenters ? this.mapManager.getLaneCenters() : null;
@@ -171,7 +175,7 @@ export class Game {
             entityManager: this.entityManager,
         });
         // 월드맵 로직을 담당하는 엔진
-        this.worldEngine = new WorldEngine(this, assets);
+        this.worldEngine = new WorldEngine(this, assets, this.movementEngine);
         this.combatEngine = new CombatEngine(this);
 
         // --- GridRenderer 인스턴스 생성 ---
@@ -1225,7 +1229,7 @@ export class Game {
 
     update = (deltaTime) => {
         if (this.gameState.currentState === 'WORLD') {
-            this.worldEngine.update();
+            this.worldEngine.update(deltaTime);
             return;
         } else if (this.gameState.currentState === 'FORMATION_SETUP') {
             return;
@@ -1240,32 +1244,14 @@ export class Game {
         if (this.gameState.currentState === "WORLD") {
             this.worldEngine.render(
                 this.layerManager.contexts.mapBase,
+                this.layerManager.contexts.mapDecor,
                 this.layerManager.contexts.entity
             );
-            // 월드맵에 그리드 렌더링 추가
-            if (this.worldEngine.gridRenderer) {
-                const worldCtx = this.layerManager.contexts.mapDecor;
-                worldCtx.save();
-                worldCtx.scale(this.gameState.zoomLevel, this.gameState.zoomLevel);
-                worldCtx.translate(-this.worldEngine.camera.x, -this.worldEngine.camera.y);
-                this.worldEngine.gridRenderer.render(worldCtx);
-                worldCtx.restore();
-            }
         } else if (this.gameState.currentState === "COMBAT") {
             this.combatEngine.render();
-            // 전투 맵에 그리드 렌더링 추가
-            if (this.gridRenderer) {
-                const combatCtx = this.layerManager.contexts.mapDecor;
-                combatCtx.save();
-                combatCtx.scale(this.gameState.zoomLevel, this.gameState.zoomLevel);
-                combatCtx.translate(-this.gameState.camera.x, -this.gameState.camera.y);
-                this.gridRenderer.render(combatCtx);
-                combatCtx.restore();
-            }
         }
         if (this.uiManager) this.uiManager.updateUI(this.gameState);
     }
-
 
     handleAttack(attacker, defender, skill = null) {
         this.eventManager.publish('entity_attack', { attacker, defender, skill });

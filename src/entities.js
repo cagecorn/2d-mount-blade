@@ -244,6 +244,7 @@ export class Player extends Entity {
         this.consumables = [];
         this.consumableCapacity = 4;
         this.autoBattle = false;
+
     }
 
     render(ctx) {
