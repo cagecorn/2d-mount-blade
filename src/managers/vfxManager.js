@@ -14,6 +14,10 @@ export class VFXManager {
         this.itemManager = itemManager;
         this.knockbackEffectDuration = 15;
         console.log("[VFXManager] Initialized with Internal Engines");
+
+        if (this.eventManager) {
+            this.eventManager.subscribe('vfx_request', data => this._handleVfxRequest(data));
+        }
     }
 
     /**
@@ -332,6 +336,21 @@ export class VFXManager {
             alpha: 1.0
         };
         this.textPopupEngine.popups.push(popup);
+    }
+
+    _handleVfxRequest(data) {
+        if (!data) return;
+        if (data.type === 'dash_trail') {
+            this.createDashTrail(data.from.x, data.from.y, data.to.x, data.to.y, data.options || {});
+        } else if (data.type === 'whip_trail') {
+            if (this.createWhipTrail) {
+                this.createWhipTrail(data.from.x, data.from.y, data.to.x, data.to.y);
+            }
+        } else if (data.type === 'text_popup') {
+            this.addTextPopup(data.text, data.target, data.options || {});
+        } else if (data.type === 'knockback_animation') {
+            this.addKnockbackAnimation(data.target, data.fromPos, data.toPos);
+        }
     }
 
     addCinematicText(text, duration = 2000) {
