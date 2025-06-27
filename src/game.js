@@ -166,7 +166,9 @@ export class Game {
             this.uiManager?.createSquadManagementUI();
         });
         this.saveLoadManager = new SaveLoadManager();
-        this.turnManager = new TurnManager();
+        // TurnManager \uC124\uC815: \uBAA8\uB4E0 \uC0DD\uCCB4\uAC00 \uC5C6\uB294 \uCD08\uAE30
+        // \uB370\uC774\uD130\uC640 movementEngine\uB9CC \uC804\uB2EC\uD569\uB2C8\uB2E4.
+        this.turnManager = new TurnManager([], this.movementEngine);
         this.narrativeManager = new NarrativeManager();
         this.supportEngine = new SupportEngine();
         this.factory = new CharacterFactory(assets, this);
