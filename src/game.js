@@ -163,14 +163,23 @@ export class Game {
             this.mapManager.tileSize
         );
 
-        // ★★★ 새로운 CombatTurnEngine을 생성합니다. ★★★
-        // 아직 AI 워커가 없으므로 eventManager만 넘겨줍니다.
-        this.combatTurnEngine = new CombatTurnEngine(this.eventManager);
+        // ★★★ Web Worker를 생성합니다. ★★★
+        const turnWorker = new Worker('./src/workers/turn.worker.js', { type: 'module' });
 
-        // ★★★ 테스트용 유닛 데이터 수정 ★★★
-        const unit1 = new Entity({ id: 'Hero_LightArmor', weight: 20, x: 0, y: 0, tileSize: this.mapManager.tileSize, image: assets.player });
-        const unit2 = new Entity({ id: 'Hero_HeavyArmor', weight: 80, x: 0, y: 0, tileSize: this.mapManager.tileSize, image: assets.player });
+        // CombatTurnEngine에 워커를 주입합니다.
+        this.combatTurnEngine = new CombatTurnEngine(this.eventManager, turnWorker);
+
+        // ★★★ 테스트 유닛에 팀과 스킬 정보를 추가합니다. ★★★
+        const unit1 = new Entity({ id: 'Hero_Light', weight: 20, x: 0, y: 0, tileSize: this.mapManager.tileSize, image: assets.player });
+        const unit2 = new Entity({ id: 'Hero_Heavy', weight: 80, x: 0, y: 0, tileSize: this.mapManager.tileSize, image: assets.player });
         const monster1 = new Entity({ id: 'Goblin', weight: 30, x: 0, y: 0, tileSize: this.mapManager.tileSize, image: assets.monster });
+
+        unit1.team = 'player';
+        unit2.team = 'player';
+        monster1.team = 'enemy';
+        unit1.skills = [{ id: 'quick_slash' }];
+        unit2.skills = [{ id: 'heavy_smash' }];
+        monster1.skills = [{ id: 'bite' }];
         this.entityManager.addEntity(unit1);
         this.entityManager.addEntity(unit2);
         this.entityManager.addEntity(monster1);

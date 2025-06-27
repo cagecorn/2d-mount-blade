@@ -6,8 +6,9 @@ import { TurnSequencingEngine } from '../engines/turn/TurnSequencingEngine.js';
  * TurnManager가 '전투' 국면에서 사용할 전략입니다.
  */
 export class CombatTurnEngine {
-    constructor(eventManager) {
+    constructor(eventManager, worker) {
         this.eventManager = eventManager;
+        this.worker = worker;
         this.units = [];
         this.turnOrder = [];
         this.currentTurnIndex = 0;
@@ -16,7 +17,14 @@ export class CombatTurnEngine {
         // 자신의 전문 엔진을 생성합니다.
         this.sequencingEngine = new TurnSequencingEngine();
 
-        console.log("[CombatTurnEngine] Initialized: 전투 턴 엔진 준비 완료.");
+        // 워커로부터 수신한 행동 계획을 처리합니다.
+        this.worker.onmessage = (event) => {
+            const actionPlan = event.data;
+            console.log("[CombatTurnEngine] 워커로부터 행동 계획 수신:", actionPlan);
+            this.executeAction(actionPlan);
+        };
+
+        console.log("[CombatTurnEngine] Initialized.");
     }
 
     /**
@@ -51,7 +59,7 @@ export class CombatTurnEngine {
     /**
      * 현재 턴을 처리하고, 다음 턴으로 넘어갑니다.
      */
-    async processNextTurn() {
+    processNextTurn() {
         if (this.currentTurnIndex >= this.turnOrder.length) {
             console.log(`[CombatTurnEngine] --- 라운드 ${this.roundCount} 종료 ---`);
             this.roundCount++;
@@ -66,15 +74,25 @@ export class CombatTurnEngine {
         }
 
         const currentUnitId = this.turnOrder[this.currentTurnIndex];
-        console.log(`%c[턴 진행] ${currentUnitId}의 턴입니다.`, 'color: #2196F3; font-weight: bold;');
+        const currentUnit = this.units.find(u => u.id === currentUnitId);
+        console.log(`%c[턴 진행] ${currentUnit.id}의 턴입니다. AI에게 결정을 요청합니다...`, 'color: #2196F3; font-weight: bold;');
 
-        // AI Worker에게 행동 결정을 요청할 위치
-        // const actionPlan = await this.turnWorker.decideAction(...);
-        // await this.executionEngine.execute(actionPlan);
+        // 워커에게 현재 상태를 전송하여 행동 결정을 요청합니다.
+        this.worker.postMessage({
+            actor: currentUnit,
+            allUnits: this.units
+        });
+    }
 
-        // 지금은 AI 결정 과정을 건너뛰고 바로 다음 턴으로 넘어갑니다.
-        // 1초 후 다음 턴 진행 (연출 시간 임시 구현)
+    /**
+     * 워커가 결정한 행동 계획을 받아 실제 연출을 실행합니다.
+     * @param {object} actionPlan
+     */
+    async executeAction(actionPlan) {
+        console.log(`[연출 시작] ${actionPlan.actorId}이(가) ${actionPlan.targetId}에게 ${actionPlan.type} 실행!`);
+
         setTimeout(() => {
+            console.log("[연출 종료]");
             this.currentTurnIndex++;
             this.processNextTurn();
         }, 1000);
