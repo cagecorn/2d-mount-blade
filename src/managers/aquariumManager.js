@@ -20,7 +20,7 @@ export class AquariumManager {
         this._roomIndex = 0;
     }
 
-    _findSpacedPosition(minDist = this.mapManager.tileSize * 4) {
+    _findSpacedPosition(minDist = this.mapManager.tileSize * 2) {
         for (let i = 0; i < 30; i++) {
             const pos = this.mapManager.getRandomFloorPosition();
             if (!pos) continue;
@@ -34,7 +34,7 @@ export class AquariumManager {
         return this.mapManager.getRandomFloorPosition();
     }
 
-    _getRoomBasedPosition(minDist = this.mapManager.tileSize * 6) {
+    _getRoomBasedPosition(minDist = this.mapManager.tileSize * 3) {
         const rooms = this.mapManager.rooms || [];
         if (rooms.length === 0) return this._findSpacedPosition(minDist);
 
@@ -58,10 +58,10 @@ export class AquariumManager {
     }
 
     spawnMonsterGroup(count = 3, opts = {}) {
-        const center = this._getRoomBasedPosition(this.mapManager.tileSize * 8);
+        const center = this._getRoomBasedPosition(this.mapManager.tileSize * 4);
         if (!center) return;
 
-        const radius = opts.radius || this.mapManager.tileSize * 2;
+        const radius = opts.radius || this.mapManager.tileSize;
         let shieldSpawned = false;
 
         for (let i = 0; i < count; i++) {
@@ -123,7 +123,7 @@ export class AquariumManager {
     addTestingFeature(feature) {
         this.features.push(feature);
         if (feature.type === 'monster') {
-            const pos = this._getRoomBasedPosition(this.mapManager.tileSize * 6);
+            const pos = this._getRoomBasedPosition(this.mapManager.tileSize * 3);
             if (pos) {
                 const vision = feature.baseStats?.visionRange ?? this.mapManager.tileSize * 2;
                 const stats = adjustMonsterStatsForAquarium({

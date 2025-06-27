@@ -6,6 +6,11 @@ import { SETTINGS } from '../config/gameSettings.js';
 export class AquariumMapManager extends MapManager {
     constructor(seed) {
         super(seed);
+        // 기본 크기를 절반으로 줄여 수족관 맵을 더 작게 만든다
+        this.width = Math.floor(this.width / 2);
+        this.height = Math.floor(this.height / 2);
+        this.rooms = [];
+
         this.name = 'aquarium';
         this.corridorWidth = 5; // widen lane width
         this.jungleWidth = 3;   // slightly thinner jungle corridors

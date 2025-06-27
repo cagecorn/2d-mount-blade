@@ -379,7 +379,7 @@ export class Game {
         // === 몬스터 부대 생성 ===
         const enemyFormationManager = new FormationManager(5, 5, formationSpacing, 'RIGHT', formationAngle);
         const enemyFormationOrigin = {
-            x: (this.mapManager.width - 8) * this.mapManager.tileSize,
+            x: (this.mapManager.width - 4) * this.mapManager.tileSize,
             y: (this.mapManager.height / 2) * this.mapManager.tileSize,
         };
         const monsterSquad = [];
@@ -422,7 +422,7 @@ export class Game {
 
         // === 2. 플레이어 생성 ===
         let startPos;
-        startPos = { x: this.mapManager.tileSize * 8, y: (this.mapManager.height * this.mapManager.tileSize) / 2 };
+        startPos = { x: this.mapManager.tileSize * 4, y: (this.mapManager.height * this.mapManager.tileSize) / 2 };
         const player = this.factory.create('player', {
             x: startPos.x,
             y: startPos.y,
