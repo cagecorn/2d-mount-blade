@@ -29,7 +29,6 @@ body, html {
     image-rendering: crisp-edges;
 }
 #map-base-canvas    { z-index: 10; }
-#grid-canvas        { z-index: 15; }
 #map-decor-canvas   { z-index: 20; }
 #ground-fx-canvas   { z-index: 30; }
 #entity-canvas      { z-index: 40; }
