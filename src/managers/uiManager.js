@@ -77,8 +77,11 @@ export class UIManager {
         this.troopDetailsList = document.getElementById('troop-details-list');
         this.closeCommanderInfo = document.getElementById('close-commander-info');
 
-        // [추가] 월드맵 캔버스에 클릭 이벤트 리스너를 등록합니다.
-        this.canvas = document.getElementById('map-base-canvas');
+        // [수정] 가장 위에 위치한 캔버스(weather-canvas)에 클릭 이벤트를 연결합니다.
+        // 다른 캔버스가 위에 겹쳐 있을 경우에도 클릭을 정확히 감지하기 위함입니다.
+        this.canvas = document.getElementById('weather-canvas') ||
+                      document.getElementById('entity-canvas') ||
+                      document.getElementById('map-base-canvas');
         if (this.canvas) {
             this.canvas.addEventListener('click', this.handleCanvasClick.bind(this));
         }
