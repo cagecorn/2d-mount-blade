@@ -1,9 +1,11 @@
 import { GridRenderer } from './renderers/gridRenderer.js';
+import { MovementEngine } from './engines/movementEngine.js';
 
 export class WorldEngine {
-    constructor(game, assets) {
+    constructor(game, assets, movementEngine = new MovementEngine({ tileSize: game.mapManager?.tileSize || 192 })) {
         this.game = game;
         this.assets = assets;
+        this.movementEngine = movementEngine;
         this.worldMapImage = this.assets['world-tile'];
         // 전투 맵과 동일한 타일 크기를 사용해 월드맵 크기를 계산
         this.tileSize = this.game.mapManager?.tileSize || 192;
@@ -44,18 +46,24 @@ export class WorldEngine {
         this.player = {
             x: this.tileSize * 2,
             y: this.tileSize * 2,
+            tileX: 2,
+            tileY: 2,
             width: entity?.width || this.tileSize,
             height: entity?.height || this.tileSize,
             speed: 5,
             image: entity?.image || this.assets['player'],
             entity
         };
+        if (this.movementEngine) {
+            this.player.movementEngine = this.movementEngine;
+        }
     }
 
-    update() {
+    update(deltaTime) {
         if (!this.player) return;
         this.handleResetFollow();
         this.handlePlayerMovement();
+        if (this.movementEngine) this.movementEngine.update(deltaTime);
         this.updateCamera();
         this.checkCollisions();
     }
@@ -69,21 +77,19 @@ export class WorldEngine {
 
     handlePlayerMovement() {
         const keys = this.game.inputHandler.keysPressed;
-        let dx = 0;
-        let dy = 0;
-        if (keys['ArrowUp']) dy -= this.player.speed;
-        if (keys['ArrowDown']) dy += this.player.speed;
-        if (keys['ArrowLeft']) dx -= this.player.speed;
-        if (keys['ArrowRight']) dx += this.player.speed;
-        const newX = this.player.x + dx;
-        const newY = this.player.y + dy;
-        const mapWidth = this.worldWidth;
-        const mapHeight = this.worldHeight;
-        if (newX >= 0 && newX <= mapWidth - this.player.width) {
-            this.player.x = newX;
-        }
-        if (newY >= 0 && newY <= mapHeight - this.player.height) {
-            this.player.y = newY;
+        if (this.movementEngine && this.movementEngine.isMoving(this.player)) return;
+
+        const target = { x: this.player.tileX, y: this.player.tileY };
+        if (keys['ArrowUp']) target.y -= 1;
+        else if (keys['ArrowDown']) target.y += 1;
+        else if (keys['ArrowLeft']) target.x -= 1;
+        else if (keys['ArrowRight']) target.x += 1;
+
+        if (target.x !== this.player.tileX || target.y !== this.player.tileY) {
+            if (target.x >= 0 && target.x < this.worldWidth / this.tileSize &&
+                target.y >= 0 && target.y < this.worldHeight / this.tileSize) {
+                this.movementEngine.startMovement(this.player, target);
+            }
         }
     }
 
@@ -146,7 +152,7 @@ export class WorldEngine {
         }
     }
 
-    render(baseCtx, entityCtx) {
+    render(baseCtx, decorCtx, entityCtx) {
         if (!this.player) return;
         const zoom = this.game.gameState.zoomLevel || 1;
 
@@ -156,6 +162,14 @@ export class WorldEngine {
             baseCtx.translate(-this.camera.x, -this.camera.y);
             this._drawWorldMap(baseCtx);
             baseCtx.restore();
+        }
+
+        if (decorCtx) {
+            decorCtx.save();
+            decorCtx.scale(zoom, zoom);
+            decorCtx.translate(-this.camera.x, -this.camera.y);
+            this.gridRenderer.render(decorCtx);
+            decorCtx.restore();
         }
 
         if (entityCtx) {
