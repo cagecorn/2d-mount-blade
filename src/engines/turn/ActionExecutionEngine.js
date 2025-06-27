@@ -1,70 +1,83 @@
 // src/engines/turn/ActionExecutionEngine.js
 
-/**
- * 결정된 행동 계획을 받아 애니메이션, VFX, 사운드 등
- * 실제 연출을 순차적으로 실행하는 전문 엔진
- */
+const TILE_SIZE = 32; // GridManager와 동일한 타일 크기
+
 export class ActionExecutionEngine {
     constructor(eventManager, vfxManager, soundManager) {
         this.eventManager = eventManager;
         this.vfxManager = vfxManager;
         this.soundManager = soundManager;
-        // 나중에는 애니메이션 매니저도 여기에 추가됩니다.
-        // this.animationManager = animationManager;
         console.log("[ActionExecutionEngine] Initialized: 행동 실행 준비 완료.");
     }
 
-    /**
-     * AI로부터 받은 액션 플랜을 받아 연출을 실행합니다.
-     * @param {object} actionPlan - { actorId, type, skillId, targetId }
-     * @param {Map<string, object>} unitMap - ID로 유닛 정보를 찾기 위한 맵
-     * @returns {Promise<void>} - 모든 연출이 끝나면 완료되는 Promise
-     */
     execute(actionPlan, unitMap) {
         return new Promise(async (resolve) => {
             const actor = unitMap.get(actionPlan.actorId);
-            const target = unitMap.get(actionPlan.targetId);
-
-            console.log(`%c[연출 시작] ${actor.id}이(가) ${target.id}에게 ${actionPlan.type} 실행!`, 'color: #4CAF50; font-weight: bold;');
+            console.log('%c[연출 시작]', 'color: #4CAF50; font-weight: bold;', actionPlan);
 
             switch (actionPlan.type) {
-                case 'ATTACK':
-                    // 1. 공격 사운드 재생
-                    this.soundManager.play('sword_swing');
-                    // 2. 공격 애니메이션 (지금은 시간 지연으로 대체)
-                    await this.wait(300);
-                    // 3. 타격 위치에 시각 효과 생성
-                    this.vfxManager.createEffect('slash', target.pos);
-                    await this.wait(200);
+                case 'MOVE': {
+                    await this.moveUnitAlongPath(actor, actionPlan.path);
+                    const target = unitMap.get(actionPlan.targetId);
+                    await this.performAttack(actor, target);
                     break;
-                case 'SKILL':
-                    // 1. 스킬 시전 사운드 재생
-                    this.soundManager.play('magic_cast');
-                    // 2. 스킬 이펙트 (예: 파이어볼)
-                    this.vfxManager.createEffect('fireball', actor.pos);
-                    await this.wait(500);
-                    // 3. 타겟 위치에 폭발 효과
-                    this.vfxManager.createEffect('explosion', target.pos);
+                }
+                case 'ATTACK': {
+                    const target = unitMap.get(actionPlan.targetId);
+                    await this.performAttack(actor, target);
                     break;
-                default:
-                    console.log(`${actor.id}이(가) 대기합니다.`);
-                    break;
+                }
+                // 다른 행동 타입은 추후 추가
             }
 
-            await this.wait(500); // 연출이 끝난 후 잠시 대기
             console.log('%c[연출 종료]', 'color: #F44336; font-weight: bold;');
-
-            // ★★★ 연출 종료 후 결과 계산을 지시하는 이벤트 발행 ★★★
             this.eventManager.publish('execute_action_effect', { actionPlan, unitMap });
-
-            // 모든 연출이 끝나면 Promise를 완료시켜 다음 턴으로 넘어갈 수 있음을 알림
             resolve();
         });
     }
 
-    /**
-     * 지정된 시간(ms)만큼 기다리는 헬퍼 함수
-     */
+    async moveUnitAlongPath(unit, path) {
+        console.log(`${unit.id}이(가) 경로를 따라 이동합니다.`);
+        for (const step of path) {
+            const targetScreenPos = {
+                x: (step.gridX * TILE_SIZE) + (TILE_SIZE / 2),
+                y: (step.gridY * TILE_SIZE) + TILE_SIZE,
+            };
+            await this.animateMovement(unit, targetScreenPos, 200);
+            unit.pos.gridX = step.gridX;
+            unit.pos.gridY = step.gridY;
+        }
+    }
+
+    async performAttack(actor, target) {
+        this.soundManager.play('sword_swing');
+        await this.wait(300);
+        this.vfxManager.createEffect('slash', target.pos);
+        await this.wait(200);
+    }
+
+    animateMovement(objectToMove, targetPos, duration) {
+        return new Promise(resolve => {
+            const startPos = { ...objectToMove.pos };
+            const startTime = performance.now();
+
+            const tick = (currentTime) => {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+
+                objectToMove.pos.x = startPos.x + (targetPos.x - startPos.x) * progress;
+                objectToMove.pos.y = startPos.y + (targetPos.y - startPos.y) * progress;
+
+                if (progress < 1) {
+                    requestAnimationFrame(tick);
+                } else {
+                    resolve();
+                }
+            };
+            requestAnimationFrame(tick);
+        });
+    }
+
     wait(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
