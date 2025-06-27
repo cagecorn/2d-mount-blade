@@ -2,10 +2,22 @@
 import { SETTINGS } from '../../config/gameSettings.js';
 
 export default class GuidelineLoader {
-    constructor(url = SETTINGS.GUIDELINE_REPO_URL, fallbackFile = SETTINGS.DEFAULT_GUIDELINE_FILE, fetchFn = (typeof fetch !== 'undefined' ? fetch : null)) {
+    constructor(
+        url = SETTINGS.GUIDELINE_REPO_URL,
+        fallbackFile = SETTINGS.DEFAULT_GUIDELINE_FILE,
+        fetchFn = (typeof fetch !== 'undefined' ? fetch : null)
+    ) {
         this.url = url;
         this.fallbackFile = fallbackFile;
-        this.fetch = fetchFn;
+        // bind or wrap fetch so that the global context is preserved.
+        if (typeof fetchFn === 'function') {
+            // Using an arrow function avoids "Illegal invocation" errors
+            // when the native fetch implementation expects the global
+            // object as its context.
+            this.fetch = (...args) => fetchFn(...args);
+        } else {
+            this.fetch = null;
+        }
         this.guidelines = {};
     }
 
