@@ -3,8 +3,9 @@
  * 기본 그리드 타일을 렌더링하는 전문 엔진
  */
 export class TileRenderEngine {
-    constructor(context) {
+    constructor(context, tileSize = 32) {
         this.ctx = context;
+        this.tileSize = tileSize;
         console.log("[TileRenderEngine] Initialized.");
     }
 
@@ -13,7 +14,7 @@ export class TileRenderEngine {
      * @param {GridManager} gridManager - 그리드 데이터 제공자
      */
     render(gridManager) {
-        const TILE_SIZE = 32; // 타일 크기 (나중에 설정으로 뺄 수 있음)
+        const TILE_SIZE = this.tileSize; // 타일 크기 (나중에 설정으로 뺄 수 있음)
         this.ctx.strokeStyle = '#555'; // 타일 테두리 색상
 
         for (let y = 0; y < gridManager.height; y++) {
