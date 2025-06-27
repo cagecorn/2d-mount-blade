@@ -31,6 +31,27 @@ export class CombatTurnEngine {
     }
 
     /**
+     * Web Worker에 전달할 수 있도록 유닛 정보를 직렬화합니다.
+     * 이미지 등 DOM 객체는 제외합니다.
+     * @param {object} unit
+     * @returns {object}
+     */
+    serializeUnit(unit) {
+        return {
+            id: unit.id,
+            team: unit.team,
+            x: unit.x,
+            y: unit.y,
+            width: unit.width,
+            height: unit.height,
+            pos: { x: unit.x + unit.width / 2, y: unit.y + unit.height },
+            skills: Array.isArray(unit.skills)
+                ? unit.skills.map(s => ({ id: s.id }))
+                : []
+        };
+    }
+
+    /**
      * 전투를 시작합니다.
      * @param {Array<Unit>} units - 아군과 적군 유닛 배열
      */
@@ -83,9 +104,12 @@ export class CombatTurnEngine {
         console.log(`%c[턴 진행] ${currentUnit.id}의 턴입니다. AI에게 결정을 요청합니다...`, 'color: #2196F3; font-weight: bold;');
 
         // 워커에게 현재 상태를 전송하여 행동 결정을 요청합니다.
+        // HTMLImageElement 등 전송 불가능한 데이터는 제외합니다.
+        const actorData = this.serializeUnit(currentUnit);
+        const unitsData = this.units.map(u => this.serializeUnit(u));
         this.worker.postMessage({
-            actor: currentUnit,
-            allUnits: this.units
+            actor: actorData,
+            allUnits: unitsData
         });
     }
 
