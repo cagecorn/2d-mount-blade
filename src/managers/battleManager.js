@@ -17,10 +17,6 @@ export class BattleManager {
         this.eventManager.subscribe('combat_started', ({ attacker, defender }) => {
             this.prepareAndStartBattle(attacker, defender);
         });
-
-        this.eventManager.subscribe('battle_ended', (result) => {
-            this.endBattle(result);
-        });
     }
 
     prepareAndStartBattle(attacker, defender) {
@@ -51,18 +47,24 @@ export class BattleManager {
         this.battleInstance.start();
     }
 
-    endBattle(result) {
-        console.log('[BattleManager] Battle ended. Result:', result);
+    // cleanup battle instance after result processing
+    cleanupBattle() {
+        if (this.battleInstance) {
+            this.battleInstance.stop();
+            this.battleInstance = null;
+            console.log('[BattleManager] 전투 인스턴스를 정리했습니다.');
+        }
+        this.lastCombatants = null;
+    }
 
+    /* endBattle(result) {
+        console.log('[BattleManager] Battle ended. Result:', result);
         if (this.battleInstance) {
             this.battleInstance.stop();
             this.battleInstance = null;
         }
-
-        // 전투 결과 처리는 BattleResultManager가 담당한다
-
         this.game.showWorldMap();
         this.game.isPaused = false;
         this.lastCombatants = null;
-    }
+    } */
 }

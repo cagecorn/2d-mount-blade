@@ -107,6 +107,29 @@ export class MicroEngine {
         }
     }
 
+    // battle ended due to annihilation
+    endBattleByAnnihilation(isPlayerWiped, isEnemyWiped) {
+        console.log('[MicroEngine] Battle ended due to annihilation.');
+        this.stop();
+
+        let winner = 'draw';
+        if (isPlayerWiped && !isEnemyWiped) winner = 'enemy';
+        if (!isPlayerWiped && isEnemyWiped) winner = 'player';
+
+        const battleResult = {
+            winner,
+            loser: winner === 'player' ? 'enemy' : (winner === 'enemy' ? 'player' : 'draw'),
+            survivors: {
+                player: this.playerUnits.filter(u => u.hp > 0),
+                enemy: this.enemyUnits.filter(u => u.hp > 0)
+            }
+        };
+
+        if (this.eventManager) {
+            this.eventManager.publish('battle_ended', battleResult);
+        }
+    }
+
     gameLoop = (timestamp) => {
         if (!this.isRunning) return;
 
@@ -131,6 +154,15 @@ export class MicroEngine {
 
         this.timerManager.update(deltaTime);
         // TODO: unit movement and combat updates go here
+
+        // --- annihilation check ---
+        const isPlayerArmyWipedOut = this.playerUnits.every(u => u.hp <= 0);
+        const isEnemyArmyWipedOut = this.enemyUnits.every(u => u.hp <= 0);
+
+        if (isPlayerArmyWipedOut || isEnemyArmyWipedOut) {
+            this.endBattleByAnnihilation(isPlayerArmyWipedOut, isEnemyArmyWipedOut);
+            return;
+        }
     }
 
     render() {
