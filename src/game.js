@@ -12,6 +12,8 @@ import { WorldEngine } from './worldEngine.js';
 import { MapManager } from './map.js';
 import { AquariumMapManager } from './aquariumMap.js';
 import { AquariumManager, AquariumInspector } from './managers/aquariumManager.js';
+import { GridManager } from './managers/gridManager.js';
+import { GridRenderer } from './renderers/gridRenderer.js';
 import * as Managers from './managers/index.js'; // managers/index.js에서 모든 매니저를 한 번에 불러옴
 import { ReputationManager } from './managers/ReputationManager.js';
 import { AssetLoader } from './assetLoader.js';
@@ -141,6 +143,9 @@ export class Game {
         this.combatCalculator = new CombatCalculator(this.eventManager, this.tagManager);
         // Player begins in the Aquarium map for feature testing
         this.mapManager = new AquariumMapManager();
+        this.gridManager = new GridManager(this.mapManager);
+        this.gridRenderer = new GridRenderer(document.getElementById('grid-canvas'), this.mapManager.tileSize);
+        this.gridRenderer.render(this.gridManager);
         const mapPixelWidth = this.mapManager.width * this.mapManager.tileSize;
         const mapPixelHeight = this.mapManager.height * this.mapManager.tileSize;
         const laneCenters = this.mapManager.getLaneCenters ? this.mapManager.getLaneCenters() : null;

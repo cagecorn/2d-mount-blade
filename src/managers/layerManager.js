@@ -4,6 +4,7 @@ export class LayerManager {
     constructor(useWebGL = false) {
         this.layers = {
             mapBase: document.getElementById('map-base-canvas'),
+            grid: document.getElementById('grid-canvas'),
             mapDecor: document.getElementById('map-decor-canvas'),
             groundFx: document.getElementById('ground-fx-canvas'),
             entity: document.getElementById('entity-canvas'),
