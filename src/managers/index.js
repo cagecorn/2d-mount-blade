@@ -18,7 +18,6 @@ import { MovementManager } from './movementManager.js';
 import { LaneManager } from './laneManager.js';
 import { LaneRenderManager } from './laneRenderManager.js';
 import { EquipmentRenderManager } from './equipmentRenderManager.js';
-import { GridManager } from './gridManager.js';
 import { ParticleDecoratorManager } from './particleDecoratorManager.js';
 import { TraitManager } from './traitManager.js';
 import { ParasiteManager } from './parasiteManager.js';
@@ -69,7 +68,6 @@ export {
     LaneManager,
     LaneRenderManager,
     EquipmentRenderManager,
-    GridManager,
     ParticleDecoratorManager,
     TraitManager,
     ParasiteManager,
