@@ -138,18 +138,6 @@ export class Game {
         this.inputHandler = new InputHandler(this);
         this.combatLogManager = new CombatLogManager(this.eventManager);
 
-        // ★★★ 교살자 나무 패턴의 첫 단계 ★★★
-        // 기존 시스템은 그대로 두는 천수에,
-        // 새로운 'GridManager'를 생성하여 추가합니다.
-        // 이 시점에서는 아직 다른 시스템이
-        // GridManager에 의존하지 않습니다.
-        this.gridManager = new GridManager(50, 30); // 50x30 크기의 그리드
-
-        // Grid 시각화를 담당하는 GridRenderer를 초기화합니다.
-        this.gridRenderer = new GridRenderer(
-            this.layerManager.contexts.mapDecor,
-            this.eventManager
-        );
         
         this.statusEffectsManager = new StatusEffectsManager(this.eventManager);
         this.tagManager = new TagManager();
@@ -161,6 +149,15 @@ export class Game {
         const laneCenters = this.mapManager.getLaneCenters ? this.mapManager.getLaneCenters() : null;
         this.laneManager = new LaneManager(mapPixelWidth, mapPixelHeight, laneCenters);
         this.laneRenderManager = new LaneRenderManager(this.laneManager, SETTINGS.ENABLE_AQUARIUM_LANES);
+
+        // 전투 맵 크기에 맞춘 그리드 매니저와 렌더러를 초기화합니다.
+        this.gridManager = new GridManager(this.mapManager.width, this.mapManager.height);
+        this.gridRenderer = new GridRenderer(
+            this.layerManager.contexts.mapDecor,
+            this.eventManager,
+            this.mapManager.tileSize
+        );
+
         const formationSpacing = this.mapManager.tileSize * 2.5;
         const formationAngle = -Math.PI / 4; // align grid with battlefield orientation
         this.formationManager = new FormationManager(5, 5, formationSpacing, 'LEFT', formationAngle);
@@ -186,6 +183,14 @@ export class Game {
         });
         // 월드맵 로직을 담당하는 엔진
         this.worldEngine = new WorldEngine(this, assets);
+        const worldGridW = this.worldEngine.worldWidth / this.worldEngine.tileSize;
+        const worldGridH = this.worldEngine.worldHeight / this.worldEngine.tileSize;
+        this.worldGridManager = new GridManager(worldGridW, worldGridH);
+        this.worldGridRenderer = new GridRenderer(
+            this.layerManager.contexts.entity,
+            this.eventManager,
+            this.worldEngine.tileSize
+        );
         this.combatEngine = new CombatEngine(this);
 
         // --- 매니저 생성 부분 수정 ---
@@ -1243,10 +1248,19 @@ export class Game {
         this.layerManager.clear();
         if (this.gameState.currentState === "WORLD") {
             this.worldEngine.render(this.layerManager.contexts.entity);
+            this.worldGridRenderer.render(
+                this.worldGridManager,
+                this.worldEngine.camera,
+                this.gameState.zoomLevel || 1
+            );
         } else if (this.gameState.currentState === "COMBAT") {
-            // 전투 중에는 그리드 시각화 후 전투 엔진 렌더링을 진행합니다.
-            this.gridRenderer.render(this.gridManager, this.gameState.camera);
+            // 전투 중에는 전투 엔진 렌더링 후 그리드를 그려 선이 위에 보이도록 합니다.
             this.combatEngine.render();
+            this.gridRenderer.render(
+                this.gridManager,
+                this.gameState.camera,
+                this.gameState.zoomLevel || 1
+            );
         }
         if (this.uiManager) this.uiManager.updateUI(this.gameState);
     }

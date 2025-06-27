@@ -8,12 +8,12 @@ import { TileRenderEngine } from '../engines/rendering/TileRenderEngine.js';
  * 여러 렌더링 엔진을 지휘합니다.
  */
 export class GridRenderer {
-    constructor(context, eventManager) {
+    constructor(context, eventManager, tileSize = 32) {
         this.ctx = context;
         this.eventManager = eventManager;
 
         // 렌더러가 자신의 전문 엔진들을 생성합니다.
-        this.tileRenderEngine = new TileRenderEngine(this.ctx);
+        this.tileRenderEngine = new TileRenderEngine(this.ctx, tileSize);
         // this.effectRenderEngine = new EffectRenderEngine(this.ctx);
         // this.debugOverlayEngine = new DebugOverlayEngine(this.ctx);
         
@@ -28,8 +28,9 @@ export class GridRenderer {
      * @param {GridManager} gridManager
      * @param {Camera} camera
      */
-    render(gridManager, camera) {
+    render(gridManager, camera, zoom = 1) {
         this.ctx.save();
+        this.ctx.scale(zoom, zoom);
         this.ctx.translate(-camera.x, -camera.y);
 
         // 정해진 순서대로 각 전문 엔진의 render 함수를 호출
