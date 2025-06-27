@@ -61,6 +61,8 @@ import { TooltipManager } from './managers/tooltipManager.js';
 import { CombatEngine } from "./engines/CombatEngine.js";
 import { MovementEngine } from './engines/movementEngine.js';
 import { GridRenderer } from './renderers/gridRenderer.js';
+import { GroupManager } from './managers/groupManager.js';
+import { WorldmapRenderManager } from './rendering/worldMapRenderManager.js';
 
 export class Game {
     constructor() {
@@ -134,6 +136,7 @@ export class Game {
         this.eventManager = new EventManager();
         this.tooltipManager = new TooltipManager();
         this.entityManager = new EntityManager(this.eventManager);
+        this.groupManager = new GroupManager(this.eventManager, this.entityManager.getEntityById.bind(this.entityManager));
         // InputHandler를 생성할 때 game 객체(this)를 전달합니다.
         this.inputHandler = new InputHandler(this);
         this.combatLogManager = new CombatLogManager(this.eventManager);
@@ -177,7 +180,8 @@ export class Game {
             entityManager: this.entityManager,
         });
         // 월드맵 로직을 담당하는 엔진
-        this.worldEngine = new WorldEngine(this, assets, this.movementEngine);
+        this.worldMapRenderManager = new WorldmapRenderManager(this.groupManager);
+        this.worldEngine = new WorldEngine(this, assets, this.movementEngine, this.worldMapRenderManager);
         this.combatEngine = new CombatEngine(this);
 
         // --- GridRenderer 인스턴스 생성 ---
@@ -426,6 +430,7 @@ export class Game {
             if (consumable) monster.consumables.push(consumable);
 
             this.monsterManager.addMonster(monster);
+            this.groupManager.addMember(monster);
             monsterSquad.push(monster);
         }
         const monsterEntityMap = {};
@@ -479,6 +484,7 @@ export class Game {
             followPlayer: true
         };
         this.playerGroup.addMember(player);
+        this.groupManager.addMember(player);
         // Game 인스턴스에서 직접 플레이어에 접근할 수 있도록 참조를 저장합니다.
         this.player = player;
         // 월드 엔진에서도 동일한 플레이어 데이터를 사용하도록 설정
@@ -606,6 +612,7 @@ export class Game {
                         this.laneAssignmentManager.assignMercenaryToLane(newMerc);
                         this.entityManager.addEntity(newMerc);
                         this.playerGroup.addMember(newMerc);
+                        this.groupManager.addMember(newMerc);
                         this.eventManager.publish('mercenary_hired', { mercenary: newMerc });
                     }
                 } else {
@@ -631,6 +638,7 @@ export class Game {
                         this.laneAssignmentManager.assignMercenaryToLane(newMerc);
                         this.entityManager.addEntity(newMerc);
                         this.playerGroup.addMember(newMerc);
+                        this.groupManager.addMember(newMerc);
                         this.eventManager.publish('mercenary_hired', { mercenary: newMerc });
                     }
                 } else {
@@ -656,6 +664,7 @@ export class Game {
                         this.laneAssignmentManager.assignMercenaryToLane(newMerc);
                         this.entityManager.addEntity(newMerc);
                         this.playerGroup.addMember(newMerc);
+                        this.groupManager.addMember(newMerc);
                         this.eventManager.publish('mercenary_hired', { mercenary: newMerc });
                     }
                 } else {
@@ -681,6 +690,7 @@ export class Game {
                         this.laneAssignmentManager.assignMercenaryToLane(newMerc);
                         this.entityManager.addEntity(newMerc);
                         this.playerGroup.addMember(newMerc);
+                        this.groupManager.addMember(newMerc);
                         this.eventManager.publish('mercenary_hired', { mercenary: newMerc });
                     }
                 } else {
@@ -706,6 +716,7 @@ export class Game {
                         this.laneAssignmentManager.assignMercenaryToLane(newMerc);
                         this.entityManager.addEntity(newMerc);
                         this.playerGroup.addMember(newMerc);
+                        this.groupManager.addMember(newMerc);
                         this.eventManager.publish('mercenary_hired', { mercenary: newMerc });
                     }
                 } else {
@@ -731,6 +742,7 @@ export class Game {
                         this.laneAssignmentManager.assignMercenaryToLane(newMerc);
                         this.entityManager.addEntity(newMerc);
                         this.playerGroup.addMember(newMerc);
+                        this.groupManager.addMember(newMerc);
                         this.eventManager.publish('mercenary_hired', { mercenary: newMerc });
                     }
                 } else {
@@ -756,6 +768,7 @@ export class Game {
                         this.laneAssignmentManager.assignMercenaryToLane(newMerc);
                         this.entityManager.addEntity(newMerc);
                         this.playerGroup.addMember(newMerc);
+                        this.groupManager.addMember(newMerc);
                         this.eventManager.publish('mercenary_hired', { mercenary: newMerc });
                     }
                 } else {
