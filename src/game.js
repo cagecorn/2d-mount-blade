@@ -22,6 +22,7 @@ import { LayerManager } from './managers/layerManager.js';
 import { InventoryManager } from './managers/inventoryManager.js';
 import { PathfindingManager } from './managers/pathfindingManager.js';
 import { MovementManager } from './managers/movementManager.js';
+import { WorldMapAIManager } from './managers/worldMapAIManager.js';
 import { FogManager } from './managers/fogManager.js';
 import { NarrativeManager } from './managers/narrativeManager.js';
 import { TurnManager } from './managers/turnManager.js';
@@ -305,6 +306,11 @@ export class Game {
         );
         this.itemAIManager.setEffectManager(this.effectManager);
         this.movementManager = new MovementManager(this.mapManager);
+        this.worldMapAIManager = new WorldMapAIManager(
+            this.entityManager,
+            this.movementManager,
+            this.eventManager
+        );
         this.fogManager = new FogManager(this.mapManager.width, this.mapManager.height);
         this.particleDecoratorManager = new Managers.ParticleDecoratorManager();
         this.particleDecoratorManager.setManagers(this.vfxManager, this.mapManager);
@@ -1263,6 +1269,9 @@ export class Game {
     update = (deltaTime) => {
         if (this.gameState.currentState === 'WORLD') {
             this.worldEngine.update(deltaTime);
+            if (this.worldMapAIManager) {
+                this.worldMapAIManager.update(deltaTime);
+            }
             return;
         } else if (this.gameState.currentState === 'FORMATION_SETUP') {
             return;

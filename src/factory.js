@@ -71,6 +71,12 @@ export class CharacterFactory {
             properties,
         };
 
+        if (type === 'player' || type === 'monster') {
+            finalConfig.isCommander = true;
+            finalConfig.faction = type === 'player' ? 'player_faction' : 'enemy_faction';
+            finalConfig.stats.attackRange = tileSize * 1.5;
+        }
+
         // Reduce vision range for all monsters and mercenaries
         if (type === 'monster' || type === 'mercenary') {
             const baseVision = finalConfig.stats.visionRange ?? 192 * 4;
@@ -78,15 +84,16 @@ export class CharacterFactory {
         }
 
         // 4. 타입에 맞는 캐릭터 생성 및 반환
+        let entity = null;
         switch (type) {
             case 'player':
-                const player = new Player(finalConfig);
-                player.consumables = [];
-                player.consumableCapacity = 4;
-                player.skills.push(SKILLS.fireball.id);
-                player.skills.push(SKILLS.iceball.id);
-                player.skills.push(SKILLS.teleport.id);
-                return player;
+                entity = new Player(finalConfig);
+                entity.consumables = [];
+                entity.consumableCapacity = 4;
+                entity.skills.push(SKILLS.fireball.id);
+                entity.skills.push(SKILLS.iceball.id);
+                entity.skills.push(SKILLS.teleport.id);
+                break;
             case 'mercenary':
                 if (config.jobId && JOBS[config.jobId]) {
                     finalConfig.stats = { ...finalConfig.stats, ...JOBS[config.jobId].stats };
@@ -205,16 +212,26 @@ export class CharacterFactory {
                 if (merc.stats) merc.stats.updateEquipmentStats();
                 if (typeof merc.updateAI === 'function') merc.updateAI();
 
-                return merc;
+                entity = merc;
+                break;
             case 'monster':
-                return new Monster(finalConfig);
+                entity = new Monster(finalConfig);
+                break;
             case 'pet':
                 const petData = PETS[config.petId] || PETS.fox;
                 finalConfig.stats = { ...finalConfig.stats, ...(petData.baseStats || {}) };
                 finalConfig.image = finalConfig.image || this.assets[petData.imageKey];
                 finalConfig.auraSkill = petData.auraSkill;
-                return new Pet(finalConfig);
+                entity = new Pet(finalConfig);
+                break;
         }
+
+        if (entity && (type === 'player' || type === 'monster')) {
+            entity.isCommander = true;
+            entity.faction = type === 'player' ? 'player_faction' : 'enemy_faction';
+        }
+
+        return entity;
     }
     
     // === 아래는 다이스를 굴리는 내부 함수들 (구멍만 파기) ===
