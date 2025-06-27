@@ -3,22 +3,10 @@ import { EFFECTS } from '../data/effects.js';
 export class CombatEngine {
     constructor(game) {
         this.game = game;
-        this.battleContext = null;
-    }
-
-    /**
-     * FormationEngine\uC5D0\uC11C \uC804\uD22C \uC815\uBCF4\uB97C \uBC1B\uC544 \uC2DC\uC791\uD569\uB2C8\uB2E4.
-     * @param {object} context
-     */
-    start(context) {
-        console.log('\uC2E4\uC2DC\uAC04 \uC804\uD22C \uC2DC\uC791!', context);
-        this.battleContext = context;
     }
 
     update(deltaTime) {
         const game = this.game;
-
-        if (!this.battleContext) return;
 
         game.handleCameraReset();
 
@@ -142,16 +130,9 @@ export class CombatEngine {
         ];
         microEngine.update(allItems);
         eventManager.publish('debug', { tag: 'Frame', message: '--- Frame Update End ---' });
-
-        const result = this.checkCombatEnd();
-        if (result) {
-            this.game.endCombat(result);
-            this.battleContext = null;
-        }
     }
 
     render() {
-        if (!this.battleContext) return;
         const game = this.game;
         const { layerManager, gameState, mapManager, itemManager, monsterManager, mercenaryManager, fogManager, uiManager } = game;
         const assets = game.loader.assets;
@@ -243,14 +224,5 @@ export class CombatEngine {
         if (game.uiManager && game.gameState.currentState === 'COMBAT') {
             uiManager.updateUI(gameState);
         }
-    }
-
-    checkCombatEnd() {
-        const { mercenaryManager, monsterManager } = this.game;
-        const allEnemiesDefeated = monsterManager.monsters.every(m => m.hp <= 0);
-        const playerDead = this.game.gameState.player.hp <= 0;
-        if (allEnemiesDefeated) return { result: 'VICTORY', rewards: [] };
-        if (playerDead) return { result: 'DEFEAT' };
-        return null;
     }
 }
