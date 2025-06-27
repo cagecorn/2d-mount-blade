@@ -2,14 +2,18 @@
 import { TerrainAnalysisEngine } from '../engines/grid/TerrainAnalysisEngine.js';
 import { LineOfSightEngine } from '../engines/grid/LineOfSightEngine.js';
 
+// 기본 타일 크기. 별도의 값이 주어지지 않으면 이 크기를 사용한다.
+export const TILE_SIZE = 32;
+
 /**
  * 게임의 그리드 데이터를 총괄하고, 관련 엔진들을 지휘하는 매니저.
  * 데이터의 수호자 역할을 합니다.
  */
 export class GridManager {
-    constructor(width, height) {
+    constructor(width, height, tileSize = TILE_SIZE) {
         this.width = width;
         this.height = height;
+        this.tileSize = tileSize;
         this.grid = [];
         // 1. GridManager는 자신의 '작은 엔진'들을 직접 소유하고 생성합니다.
         this.terrainEngine = new TerrainAnalysisEngine();
@@ -59,6 +63,26 @@ export class GridManager {
     hasClearLineOfSight(start, end) {
         // 3. 시야 계산은 전적으로 시야 엔진에게 위임합니다.
         return this.sightEngine.hasLineOfSight(start, end);
+    }
+
+    /**
+     * Place a unit on the given grid coordinates. The unit's position is
+     * adjusted so that its feet align with the bottom-center of the tile.
+     *
+     * @param {Entity} unit
+     * @param {number} x
+     * @param {number} y
+     */
+    placeUnit(unit, x, y) {
+        const tile = this.getTile(x, y);
+        if (tile && !tile.unitId) {
+            tile.unitId = unit.id;
+            unit.x = (x * this.tileSize) + (this.tileSize / 2) - (unit.width / 2);
+            unit.y = (y * this.tileSize) + this.tileSize - unit.height;
+            console.log(`[GridManager] ${unit.id}를 (${x}, ${y})에 배치했습니다.`);
+        } else {
+            console.error(`[GridManager] (${x}, ${y})에 유닛을 배치할 수 없습니다.`);
+        }
     }
 
     // 앞으로 추가될 메서드들...
