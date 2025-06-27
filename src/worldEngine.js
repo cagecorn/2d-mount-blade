@@ -2,12 +2,14 @@ import { GridRenderer } from './renderers/gridRenderer.js';
 import { MovementEngine } from './engines/movementEngine.js';
 import { WorldTurnManager } from './managers/worldTurnManager.js';
 import { WalkManager } from './managers/walkManager.js';
+import { WorldmapRenderManager } from './rendering/worldMapRenderManager.js';
 
 export class WorldEngine {
-    constructor(game, assets, movementEngine = new MovementEngine({ tileSize: game.mapManager?.tileSize || 192 })) {
+    constructor(game, assets, movementEngine = new MovementEngine({ tileSize: game.mapManager?.tileSize || 192 }), renderManager = new WorldmapRenderManager()) {
         this.game = game;
         this.assets = assets;
         this.movementEngine = movementEngine;
+        this.renderManager = renderManager;
         this.worldMapImage = this.assets['world-tile'];
         // 전투 맵과 동일한 타일 크기를 사용해 월드맵 크기를 계산
         this.tileSize = this.game.mapManager?.tileSize || 192;
@@ -204,7 +206,11 @@ export class WorldEngine {
             baseCtx.save();
             baseCtx.scale(zoom, zoom);
             baseCtx.translate(-this.camera.x, -this.camera.y);
-            this._drawWorldMap(baseCtx);
+            if (this.renderManager && this.renderManager.renderMap) {
+                this.renderManager.renderMap(baseCtx, this);
+            } else {
+                this._drawWorldMap(baseCtx);
+            }
             baseCtx.restore();
         }
 
@@ -220,7 +226,11 @@ export class WorldEngine {
             entityCtx.save();
             entityCtx.scale(zoom, zoom);
             entityCtx.translate(-this.camera.x, -this.camera.y);
-            this._drawEntities(entityCtx);
+            if (this.renderManager && this.renderManager.renderEntities) {
+                this.renderManager.renderEntities(entityCtx, [this.player, ...this.monsters]);
+            } else {
+                this._drawEntities(entityCtx);
+            }
             entityCtx.restore();
         }
     }
