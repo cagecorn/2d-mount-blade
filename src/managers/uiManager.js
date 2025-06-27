@@ -67,6 +67,17 @@ export class UIManager {
         this.vfxManager = null;
         this.getSharedInventory = null;
 
+        if (this.eventManager) {
+            this.eventManager.subscribe('inventory_updated', ({ involvedEntityIds }) => {
+                this.renderSharedInventory();
+                involvedEntityIds.forEach(id => {
+                    this.updateCharacterSheet(id);
+                    const ent = this.getEntityById(id);
+                    if (ent) this.eventManager.publish('stats_changed', { entity: ent });
+                });
+            });
+        }
+
         this.draggables = [];
         this._initDraggables();
 

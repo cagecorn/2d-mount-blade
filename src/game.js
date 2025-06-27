@@ -241,7 +241,9 @@ export class Game {
         this.equipmentManager.setTagManager(this.tagManager);
 
         this.itemFactory = new ItemFactory(assets);
-                // 게임 시작 시 무기 아이템들을 한 개씩 고용 인벤토리에 배치합니다.
+        // ItemManager handles loot drop events.
+        this.itemManager.initEvents(this.eventManager, this.itemFactory, this.vfxManager, this.entityManager);
+        // 게임 시작 시 무기 아이템들을 한 개씩 고용 인벤토리에 배치합니다.
         const weaponIds = Object.keys(ITEMS).filter(id => ITEMS[id].type === 'weapon');
         weaponIds.forEach(id => {
             const weapon = this.itemFactory.create(id, 0, 0, this.mapManager.tileSize);
@@ -975,20 +977,6 @@ export class Game {
             this.gameState.statPoints += data.statPoints;
         });
 
-        eventManager.subscribe('drop_loot', (data) => {
-            const lootTable = getMonsterLootTable(data.monsterType);
-            const droppedId = rollOnTable(lootTable);
-            if (!droppedId) return;
-
-            const startPos = { x: data.position.x, y: data.position.y };
-            const endPos = this.findRandomEmptyAdjacentTile(startPos.x, startPos.y);
-            if (!endPos) return;
-
-            const item = this.itemFactory.create(droppedId, endPos.x, endPos.y, this.mapManager.tileSize);
-            if (!item) return;
-
-            this.vfxManager.addItemPopAnimation(item, startPos, endPos);
-        });
 
         eventManager.subscribe('weapon_disarmed', (data) => {
             if (data.weapon) {
@@ -1028,19 +1016,6 @@ export class Game {
 
         // 스킬 사용 로직은 SkillManager로 이동되었습니다.
 
-        eventManager.subscribe('vfx_request', (data) => {
-            if (data.type === 'dash_trail') {
-                this.vfxManager.createDashTrail(data.from.x, data.from.y, data.to.x, data.to.y, data.options || {});
-            } else if (data.type === 'whip_trail') {
-                if (this.vfxManager.createWhipTrail) {
-                    this.vfxManager.createWhipTrail(data.from.x, data.from.y, data.to.x, data.to.y);
-                }
-            } else if (data.type === 'text_popup') {
-                this.vfxManager.addTextPopup(data.text, data.target, data.options || {});
-            } else if (data.type === 'knockback_animation') {
-                this.vfxManager.addKnockbackAnimation(data.target, data.fromPos, data.toPos);
-            }
-        });
 
         // AI가 성격 특성을 발동했을 때 텍스트 팝업으로 표시
         eventManager.subscribe('ai_mbti_trait_triggered', (data) => {
@@ -1056,15 +1031,6 @@ export class Game {
         });
 
         // 인벤토리 업데이트 시 UI를 새로 고칩니다.
-        eventManager.subscribe('inventory_updated', ({ involvedEntityIds }) => {
-            console.log('Refreshing UI due to inventory update');
-            this.uiManager.renderSharedInventory();
-            involvedEntityIds.forEach(id => {
-                this.uiManager.updateCharacterSheet(id);
-                const ent = this.entityManager.getEntityById(id);
-                if (ent) this.eventManager.publish('stats_changed', { entity: ent });
-            });
-        });
 
         eventManager.subscribe('key_pressed', (data) => {
             const key = data.key;
