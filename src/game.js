@@ -37,6 +37,7 @@ import { getMonsterLootTable } from './data/tables.js';
 import { MicroEngine } from './micro/MicroEngine.js';
 import { MicroCombatManager } from './micro/MicroCombatManager.js';
 import { MicroItemAIManager } from './managers/microItemAIManager.js';
+import { BattleManager } from './managers/battleManager.js';
 
 import { StatusEffectsManager } from './managers/statusEffectsManager.js';
 import { disarmWorkflow, armorBreakWorkflow } from './workflows.js';
@@ -68,6 +69,10 @@ export class Game {
     constructor() {
         this.loader = new AssetLoader();
         this.gameState = { currentState: 'LOADING' };
+        this.battleCanvas = document.getElementById('battleCanvas');
+        this.battleCtx = this.battleCanvas.getContext('2d');
+        this.aquarium = document.getElementById('aquarium');
+        this.isPaused = false;
     }
 
     start() {
@@ -183,6 +188,7 @@ export class Game {
         this.worldMapRenderManager = new WorldmapRenderManager(this.groupManager);
         this.worldEngine = new WorldEngine(this, assets, this.movementEngine, this.worldMapRenderManager);
         this.combatEngine = new CombatEngine(this);
+        this.battleManager = new BattleManager(this, this.eventManager, this.groupManager, this.entityManager, this.factory);
 
         // --- GridRenderer 인스턴스 생성 ---
         // AquariumMapManager의 정보를 바탕으로 GridRenderer를 초기화합니다.
@@ -816,7 +822,7 @@ export class Game {
         });
 
         this.setupEventListeners(assets, canvas);
-
+        this.showWorldMap();
         this.gameLoop = new GameLoop(this.update, this.render);
         this.gameLoop.start();
     }
@@ -1370,5 +1376,23 @@ export class Game {
         if (this.bgmManager && !this.bgmManager.isInitialized) {
             this.bgmManager.start();
         }
+    }
+
+    getBattleCanvasContext() {
+        return this.battleCtx;
+    }
+
+    showWorldMap() {
+        const container = document.getElementById('canvas-container');
+        container.style.display = 'block';
+        this.battleCanvas.style.display = 'none';
+        this.aquarium.style.display = 'none';
+    }
+
+    showBattleMap() {
+        const container = document.getElementById('canvas-container');
+        container.style.display = 'none';
+        this.battleCanvas.style.display = 'block';
+        this.aquarium.style.display = 'none';
     }
 }
