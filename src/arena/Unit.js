@@ -23,6 +23,7 @@ class Unit {
         this.attackPower = this.stats.get('attackPower');
         this.attackCooldown = 0;
         this.onAttack = null; // optional callback for attack handling
+        this.tfController = null;
     }
 
     isAlive() {
@@ -34,6 +35,27 @@ class Unit {
 
         if (this.attackCooldown > 0) {
             this.attackCooldown -= deltaTime;
+        }
+
+        if (this.tfController) {
+            const action = this.tfController.decideAction(this, units);
+            if (!action) return;
+            if (action.type === 'move') {
+                this.x += action.dx * deltaTime;
+                this.y += action.dy * deltaTime;
+            } else if (action.type === 'attack' && this.attackCooldown <= 0) {
+                const target = action.target;
+                if (!target || !target.isAlive()) return;
+                if (this.onAttack) {
+                    this.onAttack({ attacker: this, defender: target, damage: this.attackPower });
+                } else {
+                    const prevHp = target.hp;
+                    target.hp -= this.attackPower;
+                    if (prevHp > 0 && target.hp <= 0) this.kills++;
+                }
+                this.attackCooldown = 1;
+            }
+            return;
         }
 
         const enemies = units.filter(u => u.team !== this.team && u.isAlive());
@@ -81,7 +103,8 @@ class Unit {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         const job = JOBS[this.jobId]?.name || this.jobId;
-        const text = `${job} ${Math.max(0, Math.floor(this.hp))} K:${this.kills}`;
+        const prefix = this.tfController ? '[TF] ' : '';
+        const text = `${prefix}${job} ${Math.max(0, Math.floor(this.hp))} K:${this.kills}`;
         ctx.fillText(text, this.x, this.y);
         ctx.restore();
     }

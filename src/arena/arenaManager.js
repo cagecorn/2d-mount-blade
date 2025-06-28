@@ -84,6 +84,9 @@ class ArenaManager {
         }
         this.spawnRandomTeam('A', 12, 100, 400);
         this.spawnRandomTeam('B', 12, 600, 900);
+        if (this.game.arenaTensorFlowManager) {
+            this.game.arenaTensorFlowManager.assignControllers(this.game.units);
+        }
         if (this.game?.eventManager) {
             const snapshot = this.game.units.map(u => ({
                 id: u.id,
