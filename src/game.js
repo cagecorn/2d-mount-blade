@@ -1325,7 +1325,7 @@ export class Game {
             return;
         }
 
-        if (this.gameState.currentState === 'COMBAT') {
+        if (this.gameState.currentState === 'COMBAT' || this.gameState.currentState === 'ARENA') {
             this.combatEngine.update(deltaTime);
         }
 
@@ -1344,7 +1344,7 @@ export class Game {
         } else if (this.gameState.currentState === "COMBAT") {
             this.combatEngine.render();
         } else if (this.gameState.currentState === "ARENA") {
-            this.arenaManager.render(this.battleCtx);
+            this.arenaManager.render(this.layerManager.contexts, this.mapManager, this.assets);
         }
         if (this.uiManager) this.uiManager.updateUI(this.gameState);
     }
@@ -1469,6 +1469,14 @@ export class Game {
         const container = document.getElementById('canvas-container');
         container.style.display = 'none';
         this.battleCanvas.style.display = 'block';
+        this.aquarium.style.display = 'none';
+        this.arenaUIManager?.onShowBattleMap();
+    }
+
+    showArenaMap() {
+        const container = document.getElementById('canvas-container');
+        container.style.display = 'block';
+        this.battleCanvas.style.display = 'none';
         this.aquarium.style.display = 'none';
         this.arenaUIManager?.onShowBattleMap();
     }
