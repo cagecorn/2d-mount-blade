@@ -19,6 +19,7 @@ class Unit {
         this.attackRange = this.stats.get('attackRange') / 8; // 공격 사거리 축소
         this.attackPower = this.stats.get('attackPower');
         this.attackCooldown = 0;
+        this.onAttack = null; // optional callback for attack handling
     }
 
     isAlive() {
@@ -53,7 +54,11 @@ class Unit {
             this.x += dirX * this.speed * deltaTime;
             this.y += dirY * this.speed * deltaTime;
         } else if (this.attackCooldown <= 0) {
-            nearest.hp -= this.attackPower;
+            if (this.onAttack) {
+                this.onAttack({ attacker: this, defender: nearest, damage: this.attackPower });
+            } else {
+                nearest.hp -= this.attackPower;
+            }
             this.attackCooldown = 1; // 1 second cooldown
         }
     }

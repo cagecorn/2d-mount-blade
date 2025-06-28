@@ -69,6 +69,8 @@ import { GridRenderer } from './renderers/gridRenderer.js';
 import { GroupManager } from './managers/groupManager.js';
 import { CommanderManager } from './managers/commanderManager.js';
 import { WorldmapRenderManager } from './rendering/worldMapRenderManager.js';
+import { ArenaLogStorage } from './logging/arenaLogStorage.js';
+import { TFArenaVisualizer } from './tfArenaVisualizer.js';
 
 export class Game {
     constructor() {
@@ -147,6 +149,8 @@ export class Game {
 
         // === 1. 모든 매니저 및 시스템 생성 ===
         this.eventManager = new EventManager();
+        this.arenaLogStorage = new ArenaLogStorage(this.eventManager);
+        this.tfArenaVisualizer = new TFArenaVisualizer(this.arenaLogStorage);
         this.tooltipManager = new TooltipManager();
         this.entityManager = new EntityManager(this.eventManager);
         this.groupManager = new GroupManager(this.eventManager, this.entityManager.getEntityById.bind(this.entityManager));
@@ -357,6 +361,8 @@ export class Game {
         this.cinematicManager = new CinematicManager(this);
         this.dataRecorder = new DataRecorder(this);
         this.dataRecorder.init();
+        this.arenaLogStorage.init();
+        this.eventManager.subscribe('arena_log', () => this.tfArenaVisualizer.renderCharts());
         this.guidelineLoader = new GuidelineLoader(SETTINGS.GUIDELINE_REPO_URL);
         this.guidelineLoader.load();
         if (SETTINGS.ENABLE_POSSESSION_SYSTEM) {
