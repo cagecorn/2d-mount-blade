@@ -1260,14 +1260,14 @@ export class Game {
         weatherLayer.addEventListener('mousedown', (e) => {
             if (this.gameState.currentState === 'WORLD') {
                 this.worldEngine.startDrag(e.clientX, e.clientY);
-            } else if (this.gameState.currentState === 'COMBAT') {
+            } else if (this.gameState.currentState === 'COMBAT' || this.gameState.currentState === 'ARENA') {
                 this.startDragCamera(e.clientX, e.clientY);
             }
         });
         weatherLayer.addEventListener('mousemove', (e) => {
             if (this.gameState.currentState === 'WORLD') {
                 this.worldEngine.drag(e.clientX, e.clientY);
-            } else if (this.gameState.currentState === 'COMBAT') {
+            } else if (this.gameState.currentState === 'COMBAT' || this.gameState.currentState === 'ARENA') {
                 this.dragCamera(e.clientX, e.clientY);
             }
         });
@@ -1275,7 +1275,7 @@ export class Game {
             weatherLayer.addEventListener(ev, () => {
                 if (this.gameState.currentState === 'WORLD') {
                     this.worldEngine.endDrag();
-                } else if (this.gameState.currentState === 'COMBAT') {
+                } else if (this.gameState.currentState === 'COMBAT' || this.gameState.currentState === 'ARENA') {
                     this.endDragCamera();
                 }
             });
@@ -1306,13 +1306,16 @@ export class Game {
             return;
         } else if (this.gameState.currentState === 'FORMATION_SETUP') {
             return;
-        } else if (this.gameState.currentState !== 'COMBAT') {
+        } else if (this.gameState.currentState !== 'COMBAT' && this.gameState.currentState !== 'ARENA') {
             return;
         }
 
-        this.combatEngine.update(deltaTime);
+        if (this.gameState.currentState === 'COMBAT') {
+            this.combatEngine.update(deltaTime);
+        }
+
         if (this.arenaManager && this.arenaManager.isActive) {
-            this.arenaManager.update();
+            this.arenaManager.update(deltaTime);
         }
     }
     render = () => {
@@ -1325,6 +1328,8 @@ export class Game {
             );
         } else if (this.gameState.currentState === "COMBAT") {
             this.combatEngine.render();
+        } else if (this.gameState.currentState === "ARENA") {
+            this.arenaManager.render(this.battleCtx);
         }
         if (this.uiManager) this.uiManager.updateUI(this.gameState);
     }
