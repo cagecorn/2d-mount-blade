@@ -24,4 +24,13 @@ describe('DataRecorder', () => {
         assert.strictEqual(recorder.data.length, 1);
         assert.deepStrictEqual(recorder.data[0].output, [1,0,0,0,0,0,0]);
     });
+
+    test('records match result with fluctuations', () => {
+        const game = createMockGame();
+        const recorder = new DataRecorder(game);
+        recorder.fluctuationEngine = { getLog: () => [{ timestamp: 1 }] };
+        const result = recorder.recordMatchResult({ matchId: 'm1', winner: 'A', matchDuration: 10 });
+        assert.strictEqual(result.fluctuations.length, 1);
+        assert.strictEqual(recorder.matchResults.length, 1);
+    });
 });

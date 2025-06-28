@@ -37,6 +37,7 @@ import { SpeechBubbleManager } from './speechBubbleManager.js';
 import { AuraManager } from './AuraManager.js';
 import { PossessionAIManager } from './possessionAIManager.js';
 import { CombatDecisionEngine } from './ai/CombatDecisionEngine.js';
+import { FluctuationEngine } from './ai/FluctuationEngine.js';
 import { ReputationManager } from './ReputationManager.js';
 import { EntityManager } from './entityManager.js';
 import { CommanderManager } from './commanderManager.js';
@@ -92,6 +93,7 @@ export {
     ReputationManager,
     EntityManager,
     CombatDecisionEngine,
+    FluctuationEngine,
     GuidelineLoader,
     StatusEffectsManager,
     TooltipManager,

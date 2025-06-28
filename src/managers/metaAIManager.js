@@ -1,12 +1,14 @@
 import { MetaAIManager as BaseMetaAI, STRATEGY } from './ai-managers.js';
 import { FearAI, ConfusionAI, BerserkAI, CharmAI } from '../ai.js';
 import { MistakeEngine } from './ai/MistakeEngine.js';
+import { FluctuationEngine } from './ai/FluctuationEngine.js';
 import { SETTINGS } from '../../config/gameSettings.js';
 
 export class MetaAIManager extends BaseMetaAI {
     constructor(eventManager, squadManager = null) {
         super(eventManager);
         this.squadManager = squadManager;
+        this.fluctuationEngine = new FluctuationEngine();
     }
 
     executeAction(entity, action, context) {
@@ -120,7 +122,22 @@ export class MetaAIManager extends BaseMetaAI {
                         action = member.ai.decideAction(member, ctx);
                     }
 
-                    const finalAction = MistakeEngine.getFinalAction(member, action, ctx, this.mbtiEngine);
+                    let finalAction = MistakeEngine.getFinalAction(member, action, ctx, this.mbtiEngine);
+                    const allUnits = [
+                        ctx.player,
+                        ...(ctx.mercenaryManager?.mercenaries || []),
+                        ...(ctx.monsterManager?.monsters || [])
+                    ];
+                    if (this.fluctuationEngine.shouldInject(0.05)) {
+                        const types = ['TARGET_CHANGE', 'MOVE_TO_RANDOM_POS'];
+                        const rand = types[Math.floor(Math.random() * types.length)];
+                        finalAction = this.fluctuationEngine.injectAndLog({
+                            unit: member,
+                            originalDecision: finalAction,
+                            fluctuationType: rand,
+                            allUnits
+                        });
+                    }
                     this.executeAction(member, finalAction, ctx);
                 }
             }

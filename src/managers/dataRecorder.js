@@ -19,8 +19,10 @@ class DataRecorder {
         this.filePath = filePath;
         this.format = format;
         this.data = [];
+        this.matchResults = [];
         this.isRecording = true;
         this.fs = null;
+        this.fluctuationEngine = game?.metaAIManager?.fluctuationEngine || null;
     }
 
     async init() {
@@ -67,6 +69,18 @@ class DataRecorder {
         } else {
             console.warn(`[DataRecorder] Unknown action type for recording: ${action.type}`);
         }
+    }
+
+    recordMatchResult(result) {
+        const res = { ...result };
+        if (this.fluctuationEngine) {
+            res.fluctuations = this.fluctuationEngine.getLog();
+        }
+        this.matchResults.push(res);
+        if (this.fs) {
+            this.fs.appendFileSync(this.filePath, JSON.stringify(res) + '\n');
+        }
+        return res;
     }
 
     downloadData() {
