@@ -14,10 +14,11 @@ export class TFArenaVisualizer {
         const logs = await this.logStorage.getAllLogs();
         const damages = logs.filter(l => l.eventType === 'attack').map(l => l.damage);
         if (damages.length === 0) return;
-        const tensor = tf.tensor1d(damages);
         const container = document.getElementById('arena-tf-stats');
         if (!container) return;
-        tfvis.render.histogram(container, tensor, { width: 400, height: 300 });
-        tensor.dispose();
+        // tfvis.histogram requires a plain array in some environments, passing a
+        // Tensor can lead to 'input data must be an array' errors. Use the
+        // damages array directly to avoid compatibility issues.
+        tfvis.render.histogram(container, damages, { width: 400, height: 300 });
     }
 }
