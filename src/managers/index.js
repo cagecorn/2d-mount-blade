@@ -46,6 +46,7 @@ import { TooltipManager } from './tooltipManager.js';
 import { BattleManager } from './battleManager.js';
 import { TimerManager } from './timerManager.js';
 import { AgentActionBridge } from './agentActionBridge.js';
+import { BattlePredictionManager } from './battlePredictionManager.js';
 // DataRecorder is only needed in a Node.js environment so we lazy-load it
 let DataRecorder = null;
 if (typeof process !== 'undefined' && process.versions?.node) {
@@ -103,4 +104,5 @@ export {
     BattleManager,
     TimerManager,
     AgentActionBridge,
+    BattlePredictionManager,
 };

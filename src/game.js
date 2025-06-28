@@ -71,6 +71,7 @@ import { CommanderManager } from './managers/commanderManager.js';
 import { WorldmapRenderManager } from './rendering/worldMapRenderManager.js';
 import { ArenaLogStorage } from './logging/arenaLogStorage.js';
 import { TFArenaVisualizer } from './tfArenaVisualizer.js';
+import { BattlePredictionManager } from './managers/battlePredictionManager.js';
 
 export class Game {
     constructor() {
@@ -151,6 +152,7 @@ export class Game {
         this.eventManager = new EventManager();
         this.arenaLogStorage = new ArenaLogStorage(this.eventManager);
         this.tfArenaVisualizer = new TFArenaVisualizer(this.arenaLogStorage);
+        this.battlePredictionManager = new BattlePredictionManager(this.eventManager);
         this.tooltipManager = new TooltipManager();
         this.entityManager = new EntityManager(this.eventManager);
         this.groupManager = new GroupManager(this.eventManager, this.entityManager.getEntityById.bind(this.entityManager));
