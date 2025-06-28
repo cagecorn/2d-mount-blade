@@ -29,7 +29,8 @@ export class CinematicManager {
     }
 
     triggerMicroWorldJudgement(target) {
-        this.triggerCinematic(target, 'MICROWORLD JUDGEMENT!', 2000);
+        const text = `MICROWORLD JUDGEMENT!`;
+        this.triggerCinematic(target, text, 2000);
     }
 
     triggerCinematic(target, text, duration) {
