@@ -74,6 +74,7 @@ import { TFArenaVisualizer } from './tfArenaVisualizer.js';
 import { BattlePredictionManager } from './managers/battlePredictionManager.js';
 import { BattleMemoryManager } from './managers/battleMemoryManager.js';
 import { JOBS } from './data/jobs.js';
+import { ArenaUIManager } from './managers/arenaUIManager.js';
 
 export class Game {
     constructor() {
@@ -156,6 +157,7 @@ export class Game {
         this.tfArenaVisualizer = new TFArenaVisualizer(this.arenaLogStorage);
         this.battlePredictionManager = new BattlePredictionManager(this.eventManager);
         this.battleMemoryManager = new BattleMemoryManager(this.eventManager);
+        this.arenaUIManager = new ArenaUIManager(this.eventManager);
         this.tooltipManager = new TooltipManager();
         this.entityManager = new EntityManager(this.eventManager);
         this.groupManager = new GroupManager(this.eventManager, this.entityManager.getEntityById.bind(this.entityManager));
@@ -368,15 +370,6 @@ export class Game {
         this.dataRecorder.init();
         this.arenaLogStorage.init();
         this.eventManager.subscribe('arena_log', () => this.tfArenaVisualizer.renderCharts());
-        this.eventManager.subscribe('arena_round_end', (data) => {
-            const { bestUnit, worstUnit, bestReason, worstReason } = data;
-            const el = document.getElementById('arena-round-summary');
-            if (el) {
-                const fmt = (u) => u ? `팀 ${u.team} ${JOBS[u.jobId]?.name || u.jobId}` : '없음';
-                el.textContent = `MVP: ${fmt(bestUnit)} (${bestReason}) | 최약체: ${fmt(worstUnit)} (${worstReason})`;
-                el.style.display = 'block';
-            }
-        });
         this.guidelineLoader = new GuidelineLoader(SETTINGS.GUIDELINE_REPO_URL);
         this.guidelineLoader.load();
         if (SETTINGS.ENABLE_POSSESSION_SYSTEM) {
@@ -1467,8 +1460,7 @@ export class Game {
         container.style.display = 'block';
         this.battleCanvas.style.display = 'none';
         this.aquarium.style.display = 'none';
-        const summary = document.getElementById('arena-round-summary');
-        if (summary) summary.style.display = 'none';
+        this.arenaUIManager?.onShowWorldMap();
     }
 
     showBattleMap() {
@@ -1476,8 +1468,7 @@ export class Game {
         container.style.display = 'none';
         this.battleCanvas.style.display = 'block';
         this.aquarium.style.display = 'none';
-        const summary = document.getElementById('arena-round-summary');
-        if (summary) summary.style.display = 'block';
+        this.arenaUIManager?.onShowBattleMap();
     }
 
     clearAllUnits() {
