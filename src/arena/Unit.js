@@ -1,14 +1,23 @@
+import { JOBS } from '../data/jobs.js';
+import { StatManager } from '../stats.js';
+
 class Unit {
-    constructor(id, team, mbti, position = { x: 0, y: 0 }) {
+    constructor(id, team, jobId, position = { x: 0, y: 0 }) {
         this.id = id;
         this.team = team;
-        this.mbti = mbti;
+        this.jobId = jobId;
         this.x = position.x;
         this.y = position.y;
         this.radius = 20;
-        this.hp = 100;
-        this.speed = 40; // px per second
-        this.attackRange = 25;
+
+        const baseStats = JOBS[jobId]?.stats || {};
+        // StatManager를 활용해 게임과 동일한 방식으로 스탯을 계산한다
+        this.stats = new StatManager(this, baseStats);
+
+        this.hp = this.stats.get('maxHp');
+        this.speed = this.stats.get('movementSpeed') * 10; // 간단한 픽셀 환산
+        this.attackRange = this.stats.get('attackRange') / 8; // 공격 사거리 축소
+        this.attackPower = this.stats.get('attackPower');
         this.attackCooldown = 0;
     }
 
@@ -44,7 +53,7 @@ class Unit {
             this.x += dirX * this.speed * deltaTime;
             this.y += dirY * this.speed * deltaTime;
         } else if (this.attackCooldown <= 0) {
-            nearest.hp -= 10;
+            nearest.hp -= this.attackPower;
             this.attackCooldown = 1; // 1 second cooldown
         }
     }
@@ -59,7 +68,9 @@ class Unit {
         ctx.font = '12px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(Math.max(0, Math.floor(this.hp)), this.x, this.y);
+        const job = JOBS[this.jobId]?.name || this.jobId;
+        const text = `${job} ${Math.max(0, Math.floor(this.hp))}`;
+        ctx.fillText(text, this.x, this.y);
         ctx.restore();
     }
 }

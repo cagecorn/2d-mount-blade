@@ -1,7 +1,7 @@
 import { dataRecorder } from '../managers/dataRecorder.js';
 import { fluctuationEngine } from '../managers/ai/FluctuationEngine.js';
 import { Unit } from './Unit.js';
-import { mbtiData } from './mbtiData.js';
+import { JOBS } from '../data/jobs.js';
 
 class ArenaManager {
     constructor(game) {
@@ -37,13 +37,13 @@ class ArenaManager {
     }
 
     spawnRandomTeam(teamName, count, xMin, xMax) {
-        const mbtiKeys = Object.keys(mbtiData);
+        const jobKeys = Object.keys(JOBS).filter(j => j !== 'fire_god');
         for (let i = 0; i < count; i++) {
-            const randomMbti = mbtiKeys[Math.floor(Math.random() * mbtiKeys.length)];
+            const jobId = jobKeys[Math.floor(Math.random() * jobKeys.length)];
             const unit = new Unit(
-                `${teamName}-${randomMbti}-${i}`,
+                `${teamName}-${jobId}-${i}`,
                 teamName,
-                randomMbti,
+                jobId,
                 { x: xMin + Math.random() * (xMax - xMin), y: Math.random() * 600 }
             );
             this.game.addUnit(unit);
