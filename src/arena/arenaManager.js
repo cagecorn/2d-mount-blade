@@ -52,6 +52,19 @@ class ArenaManager {
         fluctuationEngine.reset();
         this.spawnRandomTeam('A', 12, 100, 400);
         this.spawnRandomTeam('B', 12, 600, 900);
+        if (this.game?.eventManager) {
+            const snapshot = this.game.units.map(u => ({
+                id: u.id,
+                team: u.team,
+                hp: u.hp,
+                attackPower: u.attackPower,
+                defense: u.defense,
+            }));
+            this.game.eventManager.publish('arena_round_start', {
+                round: this.roundCount,
+                units: snapshot,
+            });
+        }
         if (this.combatWorker) {
             this.combatWorker.postMessage({ type: 'init', data: this.game.units.map(u => ({ id: u.id, hp: u.hp })) });
         }
@@ -121,6 +134,7 @@ class ArenaManager {
         };
         dataRecorder.recordMatch(matchData);
         if (this.game?.eventManager) {
+            this.game.eventManager.publish('arena_round_end', { round: this.roundCount, winner });
             this.game.eventManager.publish('arena_log', { eventType: 'round_end', data: matchData });
         }
     }
