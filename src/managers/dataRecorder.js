@@ -20,6 +20,7 @@ class DataRecorder {
         this.format = format;
         this.data = [];
         this.matchResults = [];
+        this.recordedData = [];
         this.isRecording = true;
         this.fs = null;
         this.fluctuationEngine = game?.metaAIManager?.fluctuationEngine || null;
@@ -83,14 +84,19 @@ class DataRecorder {
         return res;
     }
 
+    recordMatch(matchData) {
+        this.recordedData.push(matchData);
+        console.log('기록 완료. 현재까지 기록된 라운드 수:', this.recordedData.length);
+    }
+
     downloadData() {
-        if (this.data.length === 0) {
-            console.warn('[DataRecorder] No data to download.');
+        if (this.recordedData.length === 0) {
+            console.log('다운로드할 데이터가 없습니다.');
             return;
         }
 
-        const dataStr = JSON.stringify(this.data, null, 2);
-
+        const dataStr = JSON.stringify(this.recordedData, null, 2);
+        
         // Node 환경에서는 지정된 파일 경로로 저장한다.
         if (this.fs) {
             this.fs.writeFileSync(this.filePath, dataStr);
@@ -103,13 +109,14 @@ class DataRecorder {
         const url = URL.createObjectURL(dataBlob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'training_data.json';
+        a.download = `arena_log_${new Date().toISOString()}.json`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        console.log(`[DataRecorder] Downloaded ${this.data.length} records.`);
+        console.log(`[DataRecorder] Downloaded ${this.recordedData.length} records.`);
     }
 }
 
 export default DataRecorder;
+export const dataRecorder = new DataRecorder({ eventManager: { subscribe(){}, publish(){} } });
