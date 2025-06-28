@@ -2,12 +2,30 @@ import { dataRecorder } from '../managers/dataRecorder.js';
 import { fluctuationEngine } from '../managers/ai/FluctuationEngine.js';
 import { Unit } from './Unit.js';
 import { JOBS } from '../data/jobs.js';
+import { WebGPUArenaRenderer } from '../renderers/webgpuArenaRenderer.js';
 
 class ArenaManager {
     constructor(game) {
         this.game = game;
         this.isActive = false;
         this.roundCount = 0;
+        this.webgpuRenderer = new WebGPUArenaRenderer(this.game.battleCanvas);
+        this.webgpuRenderer.init();
+        try {
+            this.combatWorker = new Worker('src/workers/combatWorker.js', { type: 'module' });
+        } catch (e) {
+            this.combatWorker = null;
+        }
+        if (this.combatWorker) {
+            this.combatWorker.onmessage = (e) => {
+                if (e.data.type === 'attackResult') {
+                    const target = this.game.units.find(u => u.id === e.data.defenderId);
+                    if (target) {
+                        target.hp = e.data.remainingHp;
+                    }
+                }
+            };
+        }
     }
 
     start() {
@@ -34,6 +52,9 @@ class ArenaManager {
         fluctuationEngine.reset();
         this.spawnRandomTeam('A', 12, 100, 400);
         this.spawnRandomTeam('B', 12, 600, 900);
+        if (this.combatWorker) {
+            this.combatWorker.postMessage({ type: 'init', data: this.game.units.map(u => ({ id: u.id, hp: u.hp })) });
+        }
     }
 
     spawnRandomTeam(teamName, count, xMin, xMax) {
@@ -46,6 +67,11 @@ class ArenaManager {
                 jobId,
                 { x: xMin + Math.random() * (xMax - xMin), y: Math.random() * 600 }
             );
+            unit.onAttack = ({ attacker, defender, damage }) => {
+                if (this.combatWorker) {
+                    this.combatWorker.postMessage({ type: 'attack', data: { attackerId: attacker.id, defenderId: defender.id, attackPower: damage } });
+                }
+            };
             this.game.addUnit(unit);
         }
     }
@@ -55,6 +81,9 @@ class ArenaManager {
 
         for (const unit of this.game.units) {
             unit.update(deltaTime, this.game.units);
+        }
+        if (this.combatWorker) {
+            this.combatWorker.postMessage({ type: 'updateUnits', data: this.game.units.map(u => ({ id: u.id, hp: u.hp })) });
         }
 
         const teamA_units = this.game.units.filter(u => u.team === 'A' && u.isAlive());
@@ -74,6 +103,10 @@ class ArenaManager {
 
     render(ctx) {
         if (!this.isActive) return;
+        if (this.webgpuRenderer && this.webgpuRenderer.device) {
+            this.webgpuRenderer.render(this.game.units);
+            return;
+        }
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         for (const unit of this.game.units) {
             unit.render(ctx);
@@ -87,6 +120,9 @@ class ArenaManager {
             fluctuations: fluctuationEngine.getLog(),
         };
         dataRecorder.recordMatch(matchData);
+        if (this.game?.eventManager) {
+            this.game.eventManager.publish('arena_log', { eventType: 'round_end', data: matchData });
+        }
     }
 }
 
