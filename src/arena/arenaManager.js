@@ -14,11 +14,15 @@ class ArenaManager {
         this.isActive = true;
         this.game.clearAllUnits();
         console.log("\u2694\ufe0f \uc544\ub808\ub098\uc5d0 \uc624\uc2e0 \uac83\uc744 \ud658\uc601\ud569\ub2c8\ub2e4! AI \uc790\ub3d9 \ub300\ub825\uc744 \uc2dc\uc791\ud569\ub2c8\ub2e4.");
+        this.game.showBattleMap();
+        this.game.gameState.currentState = 'ARENA';
         this.nextRound();
     }
 
     stop() {
         this.isActive = false;
+        this.game.showWorldMap();
+        this.game.gameState.currentState = 'WORLD';
         console.log(`\ud83d\udc4b \uc544\ub808\ub098\ub97c \ub5a0\ub0a0\uae4c. \ucd1d ${this.roundCount} \ub77c\uc6b4\ub4dc\uc758 \ub370\uc774\ud130\uac00 \uae30\ub85d\ub418\uc5c8\uc2b5\ub2c8\ub2e4.`);
     }
 
@@ -46,8 +50,13 @@ class ArenaManager {
         }
     }
 
-    update() {
+    update(deltaTime) {
         if (!this.isActive) return;
+
+        for (const unit of this.game.units) {
+            unit.update(deltaTime, this.game.units);
+        }
+
         const teamA_units = this.game.units.filter(u => u.team === 'A' && u.isAlive());
         const teamB_units = this.game.units.filter(u => u.team === 'B' && u.isAlive());
         let winner = null;
@@ -60,6 +69,14 @@ class ArenaManager {
             console.log(`\ud83c\udfc6 \ub77c\uc6b4\ub4dc ${this.roundCount} \uc885\ub8cc! \uc2b9\uc790: \ud300 ${winner}`);
             this.recordRoundResult(winner);
             this.nextRound();
+        }
+    }
+
+    render(ctx) {
+        if (!this.isActive) return;
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        for (const unit of this.game.units) {
+            unit.render(ctx);
         }
     }
 
