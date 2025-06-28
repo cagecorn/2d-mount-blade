@@ -132,11 +132,31 @@ class ArenaManager {
             winner: `Team ${winner}`,
             fluctuations: fluctuationEngine.getLog(),
         };
+
+        const { best, worst } = this.getBestAndWorstUnits();
+
         dataRecorder.recordMatch(matchData);
         if (this.game?.eventManager) {
-            this.game.eventManager.publish('arena_round_end', { round: this.roundCount, winner });
+            this.game.eventManager.publish('arena_round_end', {
+                round: this.roundCount,
+                winner,
+                bestUnit: best,
+                worstUnit: worst,
+            });
             this.game.eventManager.publish('arena_log', { eventType: 'round_end', data: matchData });
         }
+    }
+
+    getBestAndWorstUnits() {
+        const alive = this.game.units;
+        if (alive.length === 0) return { best: null, worst: null };
+        let best = alive[0];
+        let worst = alive[0];
+        for (const u of alive) {
+            if (u.hp > best.hp) best = u;
+            if (u.hp < worst.hp) worst = u;
+        }
+        return { best, worst };
     }
 }
 
