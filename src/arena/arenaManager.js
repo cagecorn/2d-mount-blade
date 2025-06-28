@@ -24,9 +24,26 @@ class ArenaManager {
                     if (target) {
                         const wasAlive = target.hp > 0;
                         target.hp = e.data.remainingHp;
+                        const attacker = this.game.units.find(u => u.id === e.data.attackerId);
+                        if (this.game?.eventManager) {
+                            this.game.eventManager.publish('arena_log', {
+                                eventType: 'attack',
+                                attackerId: e.data.attackerId,
+                                defenderId: e.data.defenderId,
+                                damage: e.data.damage,
+                                message: `${attacker?.id || 'unknown'} -> ${target.id} (${e.data.damage})`
+                            });
+                        }
                         if (wasAlive && target.hp <= 0) {
-                            const killer = this.game.units.find(u => u.id === e.data.attackerId);
+                            const killer = attacker;
                             if (killer) killer.kills++;
+                            if (this.game?.eventManager) {
+                                this.game.eventManager.publish('arena_log', {
+                                    eventType: 'unit_death',
+                                    unitId: target.id,
+                                    message: `${target.id} 사망`
+                                });
+                            }
                         }
                     }
                 }
@@ -36,6 +53,7 @@ class ArenaManager {
 
     start() {
         this.isActive = true;
+        if (this.game.gameLoop) this.game.gameLoop.timeScale = 5;
         this.game.clearAllUnits();
         console.log("\u2694\ufe0f \uc544\ub808\ub098\uc5d0 \uc624\uc2e0 \uac83\uc744 \ud658\uc601\ud569\ub2c8\ub2e4! AI \uc790\ub3d9 \ub300\ub825\uc744 \uc2dc\uc791\ud569\ub2c8\ub2e4.");
         this.game.showBattleMap();
@@ -45,6 +63,7 @@ class ArenaManager {
 
     stop() {
         this.isActive = false;
+        if (this.game.gameLoop) this.game.gameLoop.timeScale = 1;
         this.game.showWorldMap();
         this.game.gameState.currentState = 'WORLD';
         console.log(`\ud83d\udc4b \uc544\ub808\ub098\ub97c \ub5a0\ub0a0\uae4c. \ucd1d ${this.roundCount} \ub77c\uc6b4\ub4dc\uc758 \ub370\uc774\ud130\uac00 \uae30\ub85d\ub418\uc5c8\uc2b5\ub2c8\ub2e4.`);
@@ -56,6 +75,13 @@ class ArenaManager {
         console.log(`======== \ub77c\uc6b4\ub4dc ${this.roundCount} \uc2dc\uc791 ========`);
         this.game.clearAllUnits();
         fluctuationEngine.reset();
+        if (this.game?.eventManager) {
+            this.game.eventManager.publish('arena_log', {
+                eventType: 'round_start',
+                round: this.roundCount,
+                message: `Round ${this.roundCount} 시작`
+            });
+        }
         this.spawnRandomTeam('A', 12, 100, 400);
         this.spawnRandomTeam('B', 12, 600, 900);
         if (this.game?.eventManager) {
@@ -110,7 +136,25 @@ class ArenaManager {
                 } else {
                     const prevHp = defender.hp;
                     defender.hp -= damage;
-                    if (prevHp > 0 && defender.hp <= 0) attacker.kills++;
+                    if (this.game?.eventManager) {
+                        this.game.eventManager.publish('arena_log', {
+                            eventType: 'attack',
+                            attackerId: attacker.id,
+                            defenderId: defender.id,
+                            damage,
+                            message: `${attacker.id} -> ${defender.id} (${damage})`
+                        });
+                    }
+                    if (prevHp > 0 && defender.hp <= 0) {
+                        attacker.kills++;
+                        if (this.game?.eventManager) {
+                            this.game.eventManager.publish('arena_log', {
+                                eventType: 'unit_death',
+                                unitId: defender.id,
+                                message: `${defender.id} 사망`
+                            });
+                        }
+                    }
                 }
             };
             this.game.addUnit(unit);
@@ -134,6 +178,8 @@ class ArenaManager {
             winner = 'B';
         } else if (teamB_units.length === 0 && teamA_units.length > 0) {
             winner = 'A';
+        } else if (teamA_units.length === 0 && teamB_units.length === 0) {
+            winner = 'DRAW';
         }
         if (winner) {
             console.log(`\ud83c\udfc6 \ub77c\uc6b4\ub4dc ${this.roundCount} \uc885\ub8cc! \uc2b9\uc790: \ud300 ${winner}`);
@@ -181,7 +227,11 @@ class ArenaManager {
                 worstReason,
                 units: snapshot,
             });
-            this.game.eventManager.publish('arena_log', { eventType: 'round_end', data: matchData });
+            this.game.eventManager.publish('arena_log', {
+                eventType: 'round_end',
+                data: matchData,
+                message: `Round ${this.roundCount} 종료 - 승자: ${winner}`
+            });
         }
     }
 
