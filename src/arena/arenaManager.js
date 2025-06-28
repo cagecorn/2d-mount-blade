@@ -185,8 +185,12 @@ class ArenaManager {
             this.combatWorker.postMessage({ type: 'updateUnits', data: this.game.units.map(u => ({ id: u.id, hp: u.hp })) });
         }
 
-        const teamA_units = this.game.units.filter(u => u.team === 'A' && u.isAlive());
-        const teamB_units = this.game.units.filter(u => u.team === 'B' && u.isAlive());
+        const teamA_units = this.game.units.filter(
+            u => u.team === 'A' && (typeof u.isAlive === 'function' ? u.isAlive() : u.hp > 0)
+        );
+        const teamB_units = this.game.units.filter(
+            u => u.team === 'B' && (typeof u.isAlive === 'function' ? u.isAlive() : u.hp > 0)
+        );
         let winner = null;
         if (teamA_units.length === 0 && teamB_units.length > 0) {
             winner = 'B';

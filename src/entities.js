@@ -222,6 +222,11 @@ class Entity {
         }
     }
 
+    /** 현재 HP가 0 이상인지 확인한다 */
+    isAlive() {
+        return this.hp > 0;
+    }
+
     takeDamage(damage) {
         if (this.shield > 0) {
             const blocked = Math.min(this.shield, damage);
