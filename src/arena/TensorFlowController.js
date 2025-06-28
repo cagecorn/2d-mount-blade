@@ -26,9 +26,10 @@ export class TensorFlowController {
         }
         const dirX = (nearest.x - unit.x) / minD;
         const dirY = (nearest.y - unit.y) / minD;
-        const baseAction = { type: 'move', dx: dirX * unit.speed, dy: dirY * unit.speed };
+        const target = { x: unit.x + dirX * unit.speed, y: unit.y + dirY * unit.speed };
+        const baseAction = { type: 'move', target, dx: dirX * unit.speed, dy: dirY * unit.speed };
         if (hint && hint.type && hint.type !== 'idle') {
-            // follow hint when our base action is idle-like
+            // Use weapon AI hint as guideline
             return hint;
         }
         return baseAction;

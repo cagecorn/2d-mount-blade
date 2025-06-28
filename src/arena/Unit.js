@@ -92,12 +92,17 @@ class Unit {
 
     executeAction(action, deltaTime) {
         if (!action) return;
-        if (action.type === 'move' && action.target) {
-            const dx = action.target.x - this.x;
-            const dy = action.target.y - this.y;
-            const dist = Math.hypot(dx, dy) || 1;
-            this.x += (dx / dist) * this.speed * deltaTime;
-            this.y += (dy / dist) * this.speed * deltaTime;
+        if (action.type === 'move') {
+            if (action.target) {
+                const dx = action.target.x - this.x;
+                const dy = action.target.y - this.y;
+                const dist = Math.hypot(dx, dy) || 1;
+                this.x += (dx / dist) * this.speed * deltaTime;
+                this.y += (dy / dist) * this.speed * deltaTime;
+            } else if (typeof action.dx === 'number' && typeof action.dy === 'number') {
+                this.x += action.dx * deltaTime;
+                this.y += action.dy * deltaTime;
+            }
         } else if (action.type === 'attack' && action.target && this.attackCooldown <= 0) {
             const target = action.target;
             if (!target.isAlive()) return;
