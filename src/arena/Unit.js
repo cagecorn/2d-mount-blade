@@ -10,6 +10,9 @@ class Unit {
         this.y = position.y;
         this.radius = 20;
 
+        this.kills = 0;
+        this.equipment = {};
+
         const baseStats = JOBS[jobId]?.stats || {};
         // StatManager를 활용해 게임과 동일한 방식으로 스탯을 계산한다
         this.stats = new StatManager(this, baseStats);
@@ -57,7 +60,11 @@ class Unit {
             if (this.onAttack) {
                 this.onAttack({ attacker: this, defender: nearest, damage: this.attackPower });
             } else {
+                const prevHp = nearest.hp;
                 nearest.hp -= this.attackPower;
+                if (prevHp > 0 && nearest.hp <= 0) {
+                    this.kills++;
+                }
             }
             this.attackCooldown = 1; // 1 second cooldown
         }
@@ -74,7 +81,7 @@ class Unit {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         const job = JOBS[this.jobId]?.name || this.jobId;
-        const text = `${job} ${Math.max(0, Math.floor(this.hp))}`;
+        const text = `${job} ${Math.max(0, Math.floor(this.hp))} K:${this.kills}`;
         ctx.fillText(text, this.x, this.y);
         ctx.restore();
     }
