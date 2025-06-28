@@ -133,7 +133,14 @@ class ArenaManager {
             fluctuations: fluctuationEngine.getLog(),
         };
 
-        const { best, worst } = this.getBestAndWorstUnits();
+        const { best, worst, bestReason, worstReason } = this.getBestAndWorstUnits();
+        const snapshot = this.game.units.map(u => ({
+            id: u.id,
+            team: u.team,
+            hp: u.hp,
+            attackPower: u.attackPower,
+            defense: u.defense,
+        }));
 
         dataRecorder.recordMatch(matchData);
         if (this.game?.eventManager) {
@@ -142,6 +149,9 @@ class ArenaManager {
                 winner,
                 bestUnit: best,
                 worstUnit: worst,
+                bestReason,
+                worstReason,
+                units: snapshot,
             });
             this.game.eventManager.publish('arena_log', { eventType: 'round_end', data: matchData });
         }
@@ -149,14 +159,19 @@ class ArenaManager {
 
     getBestAndWorstUnits() {
         const alive = this.game.units;
-        if (alive.length === 0) return { best: null, worst: null };
+        if (alive.length === 0) return { best: null, worst: null, bestReason: '', worstReason: '' };
         let best = alive[0];
         let worst = alive[0];
         for (const u of alive) {
             if (u.hp > best.hp) best = u;
             if (u.hp < worst.hp) worst = u;
         }
-        return { best, worst };
+        return {
+            best,
+            worst,
+            bestReason: 'highest HP remaining',
+            worstReason: 'lowest HP remaining'
+        };
     }
 }
 

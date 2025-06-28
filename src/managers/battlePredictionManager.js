@@ -52,6 +52,12 @@ export class BattlePredictionManager {
         this.currentPrediction = predVal >= 0.5 ? 'A' : 'B';
         input.dispose();
         predTensor.dispose();
+        if (this.eventManager) {
+            this.eventManager.publish('battle_prediction_made', {
+                features: feat,
+                prediction: this.currentPrediction,
+            });
+        }
         this.updateDisplay();
     }
 
