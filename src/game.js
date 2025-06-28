@@ -39,6 +39,7 @@ import { getMonsterLootTable } from './data/tables.js';
 import { MicroEngine } from './micro/MicroEngine.js';
 import { MicroCombatManager } from './micro/MicroCombatManager.js';
 import { ArenaManager } from './arena/arenaManager.js';
+import { Unit } from './arena/Unit.js';
 import { MicroItemAIManager } from './managers/microItemAIManager.js';
 import { BattleManager } from './managers/battleManager.js';
 import { BattleResultManager } from './managers/battleResultManager.js';
@@ -87,6 +88,8 @@ export class Game {
         this.loader.loadImage('player', 'assets/player.png');
         this.loader.loadImage('monster', 'assets/monster.png');
         this.loader.loadImage('epic_monster', 'assets/epic_monster.png');
+        this.loader.loadImage('player_unit_sprite', 'assets/player.png');
+        this.loader.loadImage('enemy_unit_sprite', 'assets/monster.png');
         // 병종별 용병 이미지를 로드한다
         this.loader.loadImage('warrior', 'assets/images/warrior.png');
         this.loader.loadImage('archer', 'assets/images/archer.png');
@@ -843,6 +846,16 @@ export class Game {
             };
         }
 
+        // 간단한 자동 전투 아레나 버튼
+        const simpleArenaBtn = document.getElementById('arena-button');
+        if (simpleArenaBtn) {
+            simpleArenaBtn.addEventListener('click', () => {
+                if (this.gameState.currentState !== 'ARENA') {
+                    this.startArenaBattle();
+                }
+            });
+        }
+
         // === 메뉴 버튼 이벤트 리스너 수정 ===
         const playerInfoBtn = document.querySelector('.menu-btn[data-panel-id="character-sheet-panel"]');
         if (playerInfoBtn) {
@@ -1314,8 +1327,25 @@ export class Game {
             this.combatEngine.update(deltaTime);
         }
 
-        if (this.arenaManager && this.arenaManager.isActive) {
-            this.arenaManager.update(deltaTime);
+        if (this.gameState.currentState === 'ARENA') {
+            if (this.arenaManager && this.arenaManager.isActive) {
+                this.arenaManager.update(deltaTime);
+            } else {
+                for (const unit of this.units) {
+                    unit.update(deltaTime, this.units);
+                }
+
+                const teamA_alive = this.units.some(u => u.team === 'A' && u.isAlive());
+                const teamB_alive = this.units.some(u => u.team === 'B' && u.isAlive());
+
+                if (!teamA_alive || !teamB_alive) {
+                    const winner = teamA_alive ? '플레이어' : '적';
+                    console.log(`🏆 전투 종료! 승자: ${winner}`);
+                    this.gameState.currentState = 'WORLD';
+                    this.showWorldMap();
+                    this.units = [];
+                }
+            }
         }
     }
     render = () => {
@@ -1329,7 +1359,16 @@ export class Game {
         } else if (this.gameState.currentState === "COMBAT") {
             this.combatEngine.render();
         } else if (this.gameState.currentState === "ARENA") {
-            this.arenaManager.render(this.battleCtx);
+            if (this.arenaManager && this.arenaManager.isActive) {
+                this.arenaManager.render(this.battleCtx);
+            } else {
+                this.battleCtx.clearRect(0, 0, this.battleCanvas.width, this.battleCanvas.height);
+                this.battleCtx.fillStyle = '#3a542a';
+                this.battleCtx.fillRect(0, 0, this.battleCanvas.width, this.battleCanvas.height);
+                for (const unit of this.units) {
+                    unit.render(this.battleCtx);
+                }
+            }
         }
         if (this.uiManager) this.uiManager.updateUI(this.gameState);
     }
@@ -1440,6 +1479,35 @@ export class Game {
 
     getBattleCanvasContext() {
         return this.battleCtx;
+    }
+
+    // === 아레나 자동 전투를 시작하는 새 메서드 ===
+    startArenaBattle() {
+        console.log("⚔️ 아레나에 입장합니다! 자동 전투를 시작합니다.");
+        this.showBattleMap();
+        this.gameState.currentState = 'ARENA';
+        this.units = [];
+
+        const playerUnitImg = this.assets['player_unit_sprite'];
+        const enemyUnitImg = this.assets['enemy_unit_sprite'];
+
+        for (let i = 0; i < 12; i++) {
+            const unit = new Unit(
+                `player-${i}`, 'A', 'P',
+                { x: 100 + Math.random() * 200, y: Math.random() * 600 },
+                playerUnitImg
+            );
+            this.units.push(unit);
+        }
+
+        for (let i = 0; i < 12; i++) {
+            const unit = new Unit(
+                `enemy-${i}`, 'B', 'E',
+                { x: 700 + Math.random() * 200, y: Math.random() * 600 },
+                enemyUnitImg
+            );
+            this.units.push(unit);
+        }
     }
 
     showWorldMap() {
