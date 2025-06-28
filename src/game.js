@@ -847,11 +847,6 @@ export class Game {
 
         this.setupEventListeners(assets, canvas);
         this.showWorldMap();
-
-        const prepScreen = document.getElementById('prep-screen');
-        if (prepScreen) prepScreen.classList.remove('hidden');
-        this.uiManager.showPanel('squad-management-ui');
-        this.gameState.currentState = 'PREPARE';
         this.gameLoop = new GameLoop(this.update, this.render);
         this.gameLoop.start();
     }
@@ -874,13 +869,7 @@ export class Game {
             const entityMap = { [gameState.player.id]: gameState.player };
             this.mercenaryManager.mercenaries.forEach(m => { entityMap[m.id] = m; });
             this.formationManager.apply(origin, entityMap);
-            if (gameState.currentState === 'PREPARE') {
-                const prepScreen = document.getElementById('prep-screen');
-                if (prepScreen) prepScreen.classList.add('hidden');
-                gameState.currentState = 'WORLD';
-            } else {
-                gameState.currentState = 'COMBAT';
-            }
+            gameState.currentState = 'COMBAT';
         });
 
         eventManager.subscribe('end_combat', (result) => {
