@@ -2,6 +2,7 @@ import { dataRecorder } from '../managers/dataRecorder.js';
 import { fluctuationEngine } from '../managers/ai/FluctuationEngine.js';
 import { Unit } from './Unit.js';
 import { JOBS } from '../data/jobs.js';
+import { ITEMS } from '../data/items.js';
 import { WebGPUArenaRenderer } from '../renderers/webgpuArenaRenderer.js';
 
 class ArenaManager {
@@ -21,7 +22,12 @@ class ArenaManager {
                 if (e.data.type === 'attackResult') {
                     const target = this.game.units.find(u => u.id === e.data.defenderId);
                     if (target) {
+                        const wasAlive = target.hp > 0;
                         target.hp = e.data.remainingHp;
+                        if (wasAlive && target.hp <= 0) {
+                            const killer = this.game.units.find(u => u.id === e.data.attackerId);
+                            if (killer) killer.kills++;
+                        }
                     }
                 }
             };
@@ -72,6 +78,8 @@ class ArenaManager {
 
     spawnRandomTeam(teamName, count, xMin, xMax) {
         const jobKeys = Object.keys(JOBS).filter(j => j !== 'fire_god');
+        const weaponIds = Object.keys(ITEMS).filter(id => ITEMS[id].type === 'weapon');
+        const armorIds = Object.keys(ITEMS).filter(id => ITEMS[id].type === 'armor');
         for (let i = 0; i < count; i++) {
             const jobId = jobKeys[Math.floor(Math.random() * jobKeys.length)];
             const unit = new Unit(
@@ -80,9 +88,29 @@ class ArenaManager {
                 jobId,
                 { x: xMin + Math.random() * (xMax - xMin), y: Math.random() * 600 }
             );
+
+            const wId = weaponIds[Math.floor(Math.random() * weaponIds.length)];
+            const weapon = this.game.itemFactory.create(wId, 0, 0, 1);
+            if (weapon) this.game.equipmentManager.equip(unit, weapon, null);
+
+            const aId = armorIds[Math.floor(Math.random() * armorIds.length)];
+            const armor = this.game.itemFactory.create(aId, 0, 0, 1);
+            if (armor) this.game.equipmentManager.equip(unit, armor, null);
+
+            if (this.game.synergyManager) this.game.synergyManager.updateSynergies(unit);
+
+            unit.hp = unit.stats.get('maxHp');
+            unit.speed = unit.stats.get('movementSpeed') * 10;
+            unit.attackRange = unit.stats.get('attackRange') / 8;
+            unit.attackPower = unit.stats.get('attackPower');
+
             unit.onAttack = ({ attacker, defender, damage }) => {
                 if (this.combatWorker) {
                     this.combatWorker.postMessage({ type: 'attack', data: { attackerId: attacker.id, defenderId: defender.id, attackPower: damage } });
+                } else {
+                    const prevHp = defender.hp;
+                    defender.hp -= damage;
+                    if (prevHp > 0 && defender.hp <= 0) attacker.kills++;
                 }
             };
             this.game.addUnit(unit);
@@ -157,21 +185,48 @@ class ArenaManager {
         }
     }
 
+    calculateSynergy(unit) {
+        const teammates = this.game.units.filter(u => u.team === unit.team && u !== unit);
+        const myKeys = [];
+        for (const item of Object.values(unit.equipment)) {
+            if (item?.synergies) myKeys.push(...item.synergies);
+        }
+        const unique = [...new Set(myKeys)];
+        let score = 0;
+        for (const key of unique) {
+            if (teammates.some(t => Object.values(t.equipment).some(it => it?.synergies?.includes(key)))) {
+                score++;
+            }
+        }
+        return score;
+    }
+
     getBestAndWorstUnits() {
         const alive = this.game.units;
         if (alive.length === 0) return { best: null, worst: null, bestReason: '', worstReason: '' };
         let best = alive[0];
         let worst = alive[0];
+        let bestScore = -Infinity;
+        let worstScore = Infinity;
+        let bestReason = '';
+        let worstReason = '';
+
         for (const u of alive) {
-            if (u.hp > best.hp) best = u;
-            if (u.hp < worst.hp) worst = u;
+            const synergy = this.calculateSynergy(u);
+            const score = u.kills * 10 + synergy;
+            if (score > bestScore) {
+                bestScore = score;
+                best = u;
+                bestReason = `kills:${u.kills}, synergy:${synergy}`;
+            }
+            if (score < worstScore) {
+                worstScore = score;
+                worst = u;
+                worstReason = `kills:${u.kills}, synergy:${synergy}`;
+            }
         }
-        return {
-            best,
-            worst,
-            bestReason: 'highest HP remaining',
-            worstReason: 'lowest HP remaining'
-        };
+
+        return { best, worst, bestReason, worstReason };
     }
 }
 

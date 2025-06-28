@@ -369,11 +369,12 @@ export class Game {
         this.arenaLogStorage.init();
         this.eventManager.subscribe('arena_log', () => this.tfArenaVisualizer.renderCharts());
         this.eventManager.subscribe('arena_round_end', (data) => {
-            const { bestUnit, worstUnit } = data;
+            const { bestUnit, worstUnit, bestReason, worstReason } = data;
             const el = document.getElementById('arena-round-summary');
             if (el) {
                 const fmt = (u) => u ? `팀 ${u.team} ${JOBS[u.jobId]?.name || u.jobId}` : '없음';
-                el.textContent = `MVP: ${fmt(bestUnit)} | 최약체: ${fmt(worstUnit)}`;
+                el.textContent = `MVP: ${fmt(bestUnit)} (${bestReason}) | 최약체: ${fmt(worstUnit)} (${worstReason})`;
+                el.style.display = 'block';
             }
         });
         this.guidelineLoader = new GuidelineLoader(SETTINGS.GUIDELINE_REPO_URL);
