@@ -12,7 +12,7 @@ export class TensorFlowController {
         }
     }
 
-    decideAction(unit, units) {
+    decideAction(unit, units, hint = null) {
         const enemies = units.filter(u => u.team !== unit.team && u.isAlive());
         if (enemies.length === 0) return { type: 'idle' };
         let nearest = enemies[0];
@@ -26,6 +26,11 @@ export class TensorFlowController {
         }
         const dirX = (nearest.x - unit.x) / minD;
         const dirY = (nearest.y - unit.y) / minD;
-        return { type: 'move', dx: dirX * unit.speed, dy: dirY * unit.speed };
+        const baseAction = { type: 'move', dx: dirX * unit.speed, dy: dirY * unit.speed };
+        if (hint && hint.type && hint.type !== 'idle') {
+            // follow hint when our base action is idle-like
+            return hint;
+        }
+        return baseAction;
     }
 }

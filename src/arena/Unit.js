@@ -2,7 +2,7 @@ import { JOBS } from '../data/jobs.js';
 import { StatManager } from '../stats.js';
 
 class Unit {
-    constructor(id, team, jobId, position = { x: 0, y: 0 }) {
+    constructor(id, team, jobId, position = { x: 0, y: 0 }, microItemAIManager = null) {
         this.id = id;
         this.team = team;
         this.jobId = jobId;
@@ -24,6 +24,8 @@ class Unit {
         this.attackCooldown = 0;
         this.onAttack = null; // optional callback for attack handling
         this.tfController = null;
+        this.microItemAIManager = microItemAIManager;
+        this.skillCooldowns = {};
     }
 
     isAlive() {
@@ -36,25 +38,32 @@ class Unit {
         if (this.attackCooldown > 0) {
             this.attackCooldown -= deltaTime;
         }
+        for (const k of Object.keys(this.skillCooldowns)) {
+            if (this.skillCooldowns[k] > 0) this.skillCooldowns[k] -= deltaTime;
+        }
+
+        const enemies = units.filter(u => u.team !== this.team && u.isAlive());
+        if (enemies.length === 0) return;
+
+        const weapon = this.equipment?.weapon;
+        let weaponAction = null;
+        if (weapon && this.microItemAIManager) {
+            const weaponAI = this.microItemAIManager.getWeaponAI(weapon);
+            if (weaponAI) {
+                weaponAction = weaponAI.decideAction(this, weapon, { enemies });
+            }
+        }
 
         if (this.tfController) {
-            const action = this.tfController.decideAction(this, units);
-            if (!action) return;
-            if (action.type === 'move') {
-                this.x += action.dx * deltaTime;
-                this.y += action.dy * deltaTime;
-            } else if (action.type === 'attack' && this.attackCooldown <= 0) {
-                const target = action.target;
-                if (!target || !target.isAlive()) return;
-                if (this.onAttack) {
-                    this.onAttack({ attacker: this, defender: target, damage: this.attackPower });
-                } else {
-                    const prevHp = target.hp;
-                    target.hp -= this.attackPower;
-                    if (prevHp > 0 && target.hp <= 0) this.kills++;
-                }
-                this.attackCooldown = 1;
+            const action = this.tfController.decideAction(this, units, weaponAction);
+            if (action && action.type !== 'idle') {
+                this.executeAction(action, deltaTime);
+                return;
             }
+        }
+
+        if (weaponAction && weaponAction.type !== 'idle') {
+            this.executeAction(weaponAction, deltaTime);
             return;
         }
 
@@ -79,16 +88,41 @@ class Unit {
             this.x += dirX * this.speed * deltaTime;
             this.y += dirY * this.speed * deltaTime;
         } else if (this.attackCooldown <= 0) {
+            this.executeAction({ type: 'attack', target: nearest }, deltaTime);
+        }
+    }
+
+    executeAction(action, deltaTime) {
+        if (!action) return;
+        if (action.type === 'move' && action.target) {
+            const dx = action.target.x - this.x;
+            const dy = action.target.y - this.y;
+            const dist = Math.hypot(dx, dy) || 1;
+            this.x += (dx / dist) * this.speed * deltaTime;
+            this.y += (dy / dist) * this.speed * deltaTime;
+        } else if (action.type === 'attack' && action.target && this.attackCooldown <= 0) {
+            const target = action.target;
+            if (!target.isAlive()) return;
             if (this.onAttack) {
-                this.onAttack({ attacker: this, defender: nearest, damage: this.attackPower });
+                this.onAttack({ attacker: this, defender: target, damage: this.attackPower });
             } else {
-                const prevHp = nearest.hp;
-                nearest.hp -= this.attackPower;
-                if (prevHp > 0 && nearest.hp <= 0) {
-                    this.kills++;
-                }
+                const prevHp = target.hp;
+                target.hp -= this.attackPower;
+                if (prevHp > 0 && target.hp <= 0) this.kills++;
             }
-            this.attackCooldown = 1; // 1 second cooldown
+            this.attackCooldown = 1;
+        } else if (action.type === 'weapon_skill' && action.target && this.attackCooldown <= 0) {
+            const target = action.target;
+            if (!target.isAlive()) return;
+            if (this.onAttack) {
+                this.onAttack({ attacker: this, defender: target, damage: this.attackPower });
+            } else {
+                const prevHp = target.hp;
+                target.hp -= this.attackPower;
+                if (prevHp > 0 && target.hp <= 0) this.kills++;
+            }
+            this.attackCooldown = 1;
+            if (action.skillId) this.skillCooldowns[action.skillId] = 30;
         }
     }
 
