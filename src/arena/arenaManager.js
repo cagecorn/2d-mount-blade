@@ -115,7 +115,8 @@ class ArenaManager {
                 `${teamName}-${jobId}-${i}`,
                 teamName,
                 jobId,
-                { x: xMin + Math.random() * (xMax - xMin), y: Math.random() * 600 }
+                { x: xMin + Math.random() * (xMax - xMin), y: Math.random() * 600 },
+                this.game.microItemAIManager
             );
 
             const wId = weaponIds[Math.floor(Math.random() * weaponIds.length)];
