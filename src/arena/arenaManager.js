@@ -56,7 +56,7 @@ class ArenaManager {
         if (this.game.gameLoop) this.game.gameLoop.timeScale = 5;
         this.game.clearAllUnits();
         console.log("\u2694\ufe0f \uc544\ub808\ub098\uc5d0 \uc624\uc2e0 \uac83\uc744 \ud658\uc601\ud569\ub2c8\ub2e4! AI \uc790\ub3d9 \ub300\ub825\uc744 \uc2dc\uc791\ud569\ub2c8\ub2e4.");
-        this.game.showBattleMap();
+        this.game.showArenaMap();
         this.game.gameState.currentState = 'ARENA';
         this.nextRound();
     }
@@ -107,33 +107,18 @@ class ArenaManager {
 
     spawnRandomTeam(teamName, count, xMin, xMax) {
         const jobKeys = Object.keys(JOBS).filter(j => j !== 'fire_god');
-        const weaponIds = Object.keys(ITEMS).filter(id => ITEMS[id].type === 'weapon');
-        const armorIds = Object.keys(ITEMS).filter(id => ITEMS[id].type === 'armor');
         for (let i = 0; i < count; i++) {
             const jobId = jobKeys[Math.floor(Math.random() * jobKeys.length)];
-            const unit = new Unit(
-                `${teamName}-${jobId}-${i}`,
-                teamName,
+            const unit = this.game.factory.create('mercenary', {
+                x: xMin + Math.random() * (xMax - xMin),
+                y: Math.random() * 600,
+                tileSize: this.game.mapManager.tileSize,
+                groupId: teamName,
                 jobId,
-                { x: xMin + Math.random() * (xMax - xMin), y: Math.random() * 600 },
-                this.game.microItemAIManager
-            );
-
-            const wId = weaponIds[Math.floor(Math.random() * weaponIds.length)];
-            const weapon = this.game.itemFactory.create(wId, 0, 0, 1);
-            if (weapon) this.game.equipmentManager.equip(unit, weapon, null);
-
-            const aId = armorIds[Math.floor(Math.random() * armorIds.length)];
-            const armor = this.game.itemFactory.create(aId, 0, 0, 1);
-            if (armor) this.game.equipmentManager.equip(unit, armor, null);
-
-            if (this.game.synergyManager) this.game.synergyManager.updateSynergies(unit);
-
+                image: this.game.assets[jobId] || this.game.assets.mercenary,
+            });
+            unit.team = teamName;
             unit.hp = unit.stats.get('maxHp');
-            unit.speed = unit.stats.get('movementSpeed') * 10;
-            unit.attackRange = unit.stats.get('attackRange') / 8;
-            unit.attackPower = unit.stats.get('attackPower');
-
             unit.onAttack = ({ attacker, defender, damage }) => {
                 if (this.combatWorker) {
                     this.combatWorker.postMessage({ type: 'attack', data: { attackerId: attacker.id, defenderId: defender.id, attackPower: damage } });
@@ -192,15 +177,15 @@ class ArenaManager {
         }
     }
 
-    render(ctx) {
+    render(contexts, mapManager, assets) {
         if (!this.isActive) return;
         if (this.webgpuRenderer && this.webgpuRenderer.device) {
             this.webgpuRenderer.render(this.game.units);
             return;
         }
-        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        mapManager.render(contexts.mapBase, contexts.mapDecor, assets);
         for (const unit of this.game.units) {
-            unit.render(ctx);
+            unit.render(contexts.entity);
         }
     }
 
