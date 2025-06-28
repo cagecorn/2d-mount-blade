@@ -67,8 +67,6 @@ class Unit {
             return;
         }
 
-        const enemies = units.filter(u => u.team !== this.team && u.isAlive());
-        if (enemies.length === 0) return;
 
         let nearest = enemies[0];
         let minDist = Number.MAX_VALUE;
