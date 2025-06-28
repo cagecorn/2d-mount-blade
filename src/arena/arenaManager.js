@@ -4,6 +4,7 @@ import { Unit } from './Unit.js';
 import { JOBS } from '../data/jobs.js';
 import { ITEMS } from '../data/items.js';
 import { WebGPUArenaRenderer } from '../renderers/webgpuArenaRenderer.js';
+import { ArenaMapManager } from '../arenaMap.js';
 
 class ArenaManager {
     constructor(game) {
@@ -54,6 +55,17 @@ class ArenaManager {
     start() {
         this.isActive = true;
         if (this.game.gameLoop) this.game.gameLoop.timeScale = 5;
+        this.prevMapManager = this.game.mapManager;
+        this.game.mapManager = new ArenaMapManager();
+        if (this.game.pathfindingManager) {
+            this.game.pathfindingManager.mapManager = this.game.mapManager;
+        }
+        if (this.game.motionManager) {
+            this.game.motionManager.mapManager = this.game.mapManager;
+        }
+        if (this.game.movementManager) {
+            this.game.movementManager.mapManager = this.game.mapManager;
+        }
         this.game.clearAllUnits();
         console.log("\u2694\ufe0f \uc544\ub808\ub098\uc5d0 \uc624\uc2e0 \uac83\uc744 \ud658\uc601\ud569\ub2c8\ub2e4! AI \uc790\ub3d9 \ub300\ub825\uc744 \uc2dc\uc791\ud569\ub2c8\ub2e4.");
         this.game.showArenaMap();
@@ -64,6 +76,19 @@ class ArenaManager {
     stop() {
         this.isActive = false;
         if (this.game.gameLoop) this.game.gameLoop.timeScale = 1;
+        if (this.prevMapManager) {
+            this.game.mapManager = this.prevMapManager;
+            if (this.game.pathfindingManager) {
+                this.game.pathfindingManager.mapManager = this.game.mapManager;
+            }
+            if (this.game.motionManager) {
+                this.game.motionManager.mapManager = this.game.mapManager;
+            }
+            if (this.game.movementManager) {
+                this.game.movementManager.mapManager = this.game.mapManager;
+            }
+            this.prevMapManager = null;
+        }
         this.game.showWorldMap();
         this.game.gameState.currentState = 'WORLD';
         console.log(`\ud83d\udc4b \uc544\ub808\ub098\ub97c \ub5a0\ub0a0\uae4c. \ucd1d ${this.roundCount} \ub77c\uc6b4\ub4dc\uc758 \ub370\uc774\ud130\uac00 \uae30\ub85d\ub418\uc5c8\uc2b5\ub2c8\ub2e4.`);
