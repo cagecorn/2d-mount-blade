@@ -1051,7 +1051,30 @@ export class UIManager {
             const panel = document.createElement('div');
             panel.className = 'squad-panel';
             panel.dataset.squadId = sq.id === 'unassigned' ? '' : sq.id;
-            panel.textContent = sq.name;
+
+            const nameLabel = document.createElement('span');
+            nameLabel.textContent = sq.name;
+            panel.appendChild(nameLabel);
+
+            if (sq.id !== 'unassigned') {
+                const commanderSlot = document.createElement('div');
+                commanderSlot.className = 'commander-slot';
+                commanderSlot.dataset.squadId = sq.id;
+                commanderSlot.addEventListener('dragover', e => e.preventDefault());
+                commanderSlot.addEventListener('drop', e => {
+                    e.preventDefault();
+                    const mercId = e.dataTransfer.getData('text/plain');
+                    this.eventManager?.publish('commander_assign_request', { mercId, squadId: sq.id });
+                });
+                const cmdId = this.squadManager?.getSquads?.()[sq.id]?.commanderId;
+                if (cmdId) {
+                    const portrait = document.createElement('div');
+                    portrait.className = 'merc-portrait';
+                    portrait.textContent = cmdId;
+                    commanderSlot.appendChild(portrait);
+                }
+                panel.appendChild(commanderSlot);
+            }
             if (sq.id !== 'unassigned') {
                 panel.draggable = true;
                 panel.addEventListener('dragstart', e => {
@@ -1109,7 +1132,10 @@ export class UIManager {
             });
             const squadId = merc.squadId || 'unassigned';
             const parent = panelMap[squadId] || content;
-            parent.appendChild(el);
+            const squadInfo = this.squadManager?.getSquads?.()[squadId];
+            if (!squadInfo || squadInfo.commanderId !== merc.id) {
+                parent.appendChild(el);
+            }
         });
 
         const grid = document.getElementById('formation-grid');

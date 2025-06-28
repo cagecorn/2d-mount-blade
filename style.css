@@ -523,6 +523,8 @@ body, html {
     margin: 4px;
     min-height: 64px;
     background-color: rgba(0,0,0,0.3);
+    display: flex;
+    align-items: center;
 }
 
 .merc-portrait {
@@ -536,6 +538,16 @@ body, html {
     align-items: center;
     justify-content: center;
     font-size: 12px;
+}
+
+.commander-slot {
+    border: 2px dashed #777;
+    width: 36px;
+    height: 36px;
+    margin-right: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 
@@ -602,3 +614,15 @@ body, html {
 }
 .details-list li:last-child { border-bottom: none; }
 .details-list li strong { text-transform: capitalize; }
+
+/* Battle preparation overlay */
+.prep-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: black;
+    z-index: 70;
+}
+.prep-screen.hidden { display: none; }
