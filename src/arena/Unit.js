@@ -1,10 +1,11 @@
 class Unit {
-    constructor(id, team, mbti, position = { x: 0, y: 0 }) {
+    constructor(id, team, mbti, position = { x: 0, y: 0 }, image = null) {
         this.id = id;
         this.team = team;
         this.mbti = mbti;
         this.x = position.x;
         this.y = position.y;
+        this.image = image;
         this.radius = 20;
         this.hp = 100;
         this.speed = 40; // px per second
@@ -51,15 +52,24 @@ class Unit {
 
     render(ctx) {
         ctx.save();
-        ctx.fillStyle = this.team === 'A' ? 'red' : 'blue';
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = 'white';
-        ctx.font = '12px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(Math.max(0, Math.floor(this.hp)), this.x, this.y);
+        if (this.image) {
+            ctx.drawImage(this.image, this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2);
+            ctx.fillStyle = 'white';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            ctx.fillText(Math.max(0, Math.floor(this.hp)), this.x, this.y + this.radius + 4);
+        } else {
+            ctx.fillStyle = this.team === 'A' ? 'red' : 'blue';
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = 'white';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(Math.max(0, Math.floor(this.hp)), this.x, this.y);
+        }
         ctx.restore();
     }
 }
