@@ -38,6 +38,7 @@ import { rollOnTable } from './utils/random.js';
 import { getMonsterLootTable } from './data/tables.js';
 import { MicroEngine } from './micro/MicroEngine.js';
 import { MicroCombatManager } from './micro/MicroCombatManager.js';
+import { ArenaManager } from './arena/arenaManager.js';
 import { MicroItemAIManager } from './managers/microItemAIManager.js';
 import { BattleManager } from './managers/battleManager.js';
 import { BattleResultManager } from './managers/battleResultManager.js';
@@ -77,6 +78,9 @@ export class Game {
         this.battleCtx = this.battleCanvas.getContext('2d');
         this.aquarium = document.getElementById('aquarium');
         this.isPaused = false;
+        this.units = [];
+        this.arenaManager = new ArenaManager(this);
+        this.currentMapId = null;
     }
 
     start() {
@@ -832,6 +836,13 @@ export class Game {
             };
         }
 
+        const arenaBtn = document.getElementById('enter-arena-btn');
+        if (arenaBtn) {
+            arenaBtn.onclick = () => {
+                this.loadMap('arena');
+            };
+        }
+
         // === 메뉴 버튼 이벤트 리스너 수정 ===
         const playerInfoBtn = document.querySelector('.menu-btn[data-panel-id="character-sheet-panel"]');
         if (playerInfoBtn) {
@@ -1300,6 +1311,9 @@ export class Game {
         }
 
         this.combatEngine.update(deltaTime);
+        if (this.arenaManager && this.arenaManager.isActive) {
+            this.arenaManager.update();
+        }
     }
     render = () => {
         this.layerManager.clear();
@@ -1435,5 +1449,23 @@ export class Game {
         container.style.display = 'none';
         this.battleCanvas.style.display = 'block';
         this.aquarium.style.display = 'none';
+    }
+
+    clearAllUnits() {
+        this.units = [];
+    }
+
+    addUnit(unit) {
+        this.units.push(unit);
+    }
+
+    loadMap(mapId) {
+        this.currentMapId = mapId;
+        console.log(`맵 로딩: ${mapId}`);
+        if (mapId === 'arena') {
+            this.arenaManager.start();
+        } else {
+            this.arenaManager.stop();
+        }
     }
 }
