@@ -75,6 +75,7 @@ import { BattlePredictionManager } from './managers/battlePredictionManager.js';
 import { BattleMemoryManager } from './managers/battleMemoryManager.js';
 import { JOBS } from './data/jobs.js';
 import { ArenaUIManager } from './managers/arenaUIManager.js';
+import { ArenaTensorFlowManager } from './managers/arenaTensorFlowManager.js';
 
 export class Game {
     constructor() {
@@ -158,6 +159,7 @@ export class Game {
         this.battlePredictionManager = new BattlePredictionManager(this.eventManager);
         this.battleMemoryManager = new BattleMemoryManager(this.eventManager);
         this.arenaUIManager = new ArenaUIManager(this.eventManager);
+        this.arenaTensorFlowManager = new ArenaTensorFlowManager(this.eventManager);
         this.tooltipManager = new TooltipManager();
         this.entityManager = new EntityManager(this.eventManager);
         this.groupManager = new GroupManager(this.eventManager, this.entityManager.getEntityById.bind(this.entityManager));
