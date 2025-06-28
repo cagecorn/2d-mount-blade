@@ -602,3 +602,14 @@ body, html {
 }
 .details-list li:last-child { border-bottom: none; }
 .details-list li strong { text-transform: capitalize; }
+
+#arena-round-summary {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    font-size: 20px;
+    text-shadow: 0 0 5px black;
+    pointer-events: none;
+}

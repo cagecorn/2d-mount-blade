@@ -72,6 +72,7 @@ import { WorldmapRenderManager } from './rendering/worldMapRenderManager.js';
 import { ArenaLogStorage } from './logging/arenaLogStorage.js';
 import { TFArenaVisualizer } from './tfArenaVisualizer.js';
 import { BattlePredictionManager } from './managers/battlePredictionManager.js';
+import { JOBS } from './data/jobs.js';
 
 export class Game {
     constructor() {
@@ -365,6 +366,12 @@ export class Game {
         this.dataRecorder.init();
         this.arenaLogStorage.init();
         this.eventManager.subscribe('arena_log', () => this.tfArenaVisualizer.renderCharts());
+        this.eventManager.subscribe('arena_round_end', ({ bestUnit, worstUnit }) => {
+            const el = document.getElementById('arena-round-summary');
+            if (!el) return;
+            const fmt = (u) => u ? `팀 ${u.team} ${JOBS[u.jobId]?.name || u.jobId}` : '없음';
+            el.textContent = `MVP: ${fmt(bestUnit)} | 최약체: ${fmt(worstUnit)}`;
+        });
         this.guidelineLoader = new GuidelineLoader(SETTINGS.GUIDELINE_REPO_URL);
         this.guidelineLoader.load();
         if (SETTINGS.ENABLE_POSSESSION_SYSTEM) {
@@ -1455,6 +1462,8 @@ export class Game {
         container.style.display = 'block';
         this.battleCanvas.style.display = 'none';
         this.aquarium.style.display = 'none';
+        const summary = document.getElementById('arena-round-summary');
+        if (summary) summary.style.display = 'none';
     }
 
     showBattleMap() {
@@ -1462,6 +1471,8 @@ export class Game {
         container.style.display = 'none';
         this.battleCanvas.style.display = 'block';
         this.aquarium.style.display = 'none';
+        const summary = document.getElementById('arena-round-summary');
+        if (summary) summary.style.display = 'block';
     }
 
     clearAllUnits() {
