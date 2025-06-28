@@ -877,6 +877,7 @@ export class Game {
             gameState.currentState = 'WORLD';
             if (result.outcome === 'victory') {
                 this.worldEngine.monsters = this.worldEngine.monsters.filter(m => m.isActive === false);
+                alert('Victory!');
             }
             this.worldEngine.monsters.forEach(m => m.isActive = true);
         });
@@ -1018,6 +1019,14 @@ export class Game {
                 corpse.bobbingAmount = 0;
                 corpse.baseY = victim.y;
                 this.itemManager.addItem(corpse);
+            }
+
+            if (victim.unitType === 'monster') {
+                const remaining = this.monsterManager.monsters.filter(m => m.hp > 0 && !m.isDying);
+                if (remaining.length === 0) {
+                    this.eventManager.publish('log', { message: 'victory', color: 'green' });
+                    this.eventManager.publish('end_combat', { outcome: 'victory' });
+                }
             }
         });
 
