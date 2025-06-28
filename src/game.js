@@ -72,6 +72,7 @@ import { WorldmapRenderManager } from './rendering/worldMapRenderManager.js';
 import { ArenaLogStorage } from './logging/arenaLogStorage.js';
 import { TFArenaVisualizer } from './tfArenaVisualizer.js';
 import { BattlePredictionManager } from './managers/battlePredictionManager.js';
+import { BattleMemoryManager } from './managers/battleMemoryManager.js';
 import { JOBS } from './data/jobs.js';
 
 export class Game {
@@ -154,6 +155,7 @@ export class Game {
         this.arenaLogStorage = new ArenaLogStorage(this.eventManager);
         this.tfArenaVisualizer = new TFArenaVisualizer(this.arenaLogStorage);
         this.battlePredictionManager = new BattlePredictionManager(this.eventManager);
+        this.battleMemoryManager = new BattleMemoryManager(this.eventManager);
         this.tooltipManager = new TooltipManager();
         this.entityManager = new EntityManager(this.eventManager);
         this.groupManager = new GroupManager(this.eventManager, this.entityManager.getEntityById.bind(this.entityManager));
@@ -366,11 +368,13 @@ export class Game {
         this.dataRecorder.init();
         this.arenaLogStorage.init();
         this.eventManager.subscribe('arena_log', () => this.tfArenaVisualizer.renderCharts());
-        this.eventManager.subscribe('arena_round_end', ({ bestUnit, worstUnit }) => {
+        this.eventManager.subscribe('arena_round_end', (data) => {
+            const { bestUnit, worstUnit } = data;
             const el = document.getElementById('arena-round-summary');
-            if (!el) return;
-            const fmt = (u) => u ? `팀 ${u.team} ${JOBS[u.jobId]?.name || u.jobId}` : '없음';
-            el.textContent = `MVP: ${fmt(bestUnit)} | 최약체: ${fmt(worstUnit)}`;
+            if (el) {
+                const fmt = (u) => u ? `팀 ${u.team} ${JOBS[u.jobId]?.name || u.jobId}` : '없음';
+                el.textContent = `MVP: ${fmt(bestUnit)} | 최약체: ${fmt(worstUnit)}`;
+            }
         });
         this.guidelineLoader = new GuidelineLoader(SETTINGS.GUIDELINE_REPO_URL);
         this.guidelineLoader.load();

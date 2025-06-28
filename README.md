@@ -20,6 +20,7 @@
 * **3-Lane 오버레이:** 전장에 세 갈래 길이 표시되어 라인 전투 실험에 활용할 수 있습니다.
 * **전투 맵 드래그 지원:** 마우스로 전장을 드래그하여 자유롭게 카메라를 이동할 수 있으며, 키보드를 누르면 다시 플레이어를 따라갑니다.
 * **포그 오브 워 토글:** `config/gameSettings.js`의 `ENABLE_FOG_OF_WAR` 값을 통해 안개 효과를 켜거나 끌 수 있습니다. 게임 도중 값을 변경하면 즉시 반영됩니다.
+* **예측 메모리 시스템:** TensorFlow 연산을 전용 Web Worker가 처리하며, 각 전투의 승부 예측과 MVP 정보를 IndexedDB에 저장합니다.
 * **TensorFlow 길찾기 토글:** `config/gameSettings.js`의 `ENABLE_TENSORFLOW_PATHING`을 활성화하면 학습된 모델을 이용해 보다 자연스러운 경로를 계산합니다. 기본값은 꺼져 있으며, 모델 파일이 없을 경우 자동으로 기존 BFS 로직을 사용합니다.
 * **평판 시스템 토글:** `config/gameSettings.js`의 `ENABLE_REPUTATION_SYSTEM` 값을 false로 설정하면 평판 기록과 모델 로드를 생략하여 성능을 높일 수 있습니다.
 
