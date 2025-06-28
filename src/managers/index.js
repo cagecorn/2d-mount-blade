@@ -44,6 +44,7 @@ import GuidelineLoader from './guidelineLoader.js';
 import { TooltipManager } from './tooltipManager.js';
 import { BattleManager } from './battleManager.js';
 import { TimerManager } from './timerManager.js';
+import { AgentActionBridge } from './agentActionBridge.js';
 // DataRecorder is only needed in a Node.js environment so we lazy-load it
 let DataRecorder = null;
 if (typeof process !== 'undefined' && process.versions?.node) {
@@ -99,4 +100,5 @@ export {
     DataRecorder,
     BattleManager,
     TimerManager,
+    AgentActionBridge,
 };

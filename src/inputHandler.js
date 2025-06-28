@@ -19,6 +19,18 @@ export class InputHandler {
         document.addEventListener('wheel', (e) => this.handleMouseWheel(e), { passive: false });
     }
 
+    // 강화학습 에이전트가 키 입력을 흉내 낼 수 있도록 하는 유틸리티
+    simulateKeyPress(key) {
+        const event = { key, preventDefault() {} };
+        this.handleKeyDown(event);
+    }
+
+    // 에이전트가 마우스 휠 동작을 전달할 수 있도록 지원
+    simulateMouseWheel(deltaY) {
+        const event = { deltaY, preventDefault() {} };
+        this.handleMouseWheel(event);
+    }
+
     handleKeyDown(e) {
         this.keysPressed[e.key] = true;
         switch (e.key) {

@@ -3,6 +3,7 @@
 import { SETTINGS } from '../config/gameSettings.js';
 import { GameLoop } from './gameLoop.js';
 import { InputHandler } from './inputHandler.js';
+import { AgentActionBridge } from './managers/agentActionBridge.js';
 import { CharacterFactory, ItemFactory } from './factory.js';
 import { EventManager } from './managers/eventManager.js';
 import { CombatLogManager, SystemLogManager } from './managers/logManager.js';
@@ -156,6 +157,10 @@ export class Game {
         );
         // InputHandler를 생성할 때 game 객체(this)를 전달합니다.
         this.inputHandler = new InputHandler(this);
+        this.agentBridge = new AgentActionBridge(this);
+        if (typeof window !== 'undefined') {
+            window.agentBridge = this.agentBridge;
+        }
         this.combatLogManager = new CombatLogManager(this.eventManager);
         
         this.statusEffectsManager = new StatusEffectsManager(this.eventManager);
