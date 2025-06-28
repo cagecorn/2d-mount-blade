@@ -1,5 +1,8 @@
-import * as tf from '@tensorflow/tfjs';
-import * as tfvis from '@tensorflow/tfjs-vis';
+// These libraries are loaded via <script> tags in index.html.
+// Access them from the global window object to avoid module resolution issues
+// when running directly in the browser without a bundler.
+const tf = (typeof window !== 'undefined') ? window.tf : null;
+const tfvis = (typeof window !== 'undefined') ? window.tfvis : null;
 
 export class TFArenaVisualizer {
     constructor(logStorage) {
@@ -7,7 +10,7 @@ export class TFArenaVisualizer {
     }
 
     async renderCharts() {
-        if (!this.logStorage) return;
+        if (!this.logStorage || !tf || !tfvis) return;
         const logs = await this.logStorage.getAllLogs();
         const damages = logs.filter(l => l.eventType === 'attack').map(l => l.damage);
         if (damages.length === 0) return;
