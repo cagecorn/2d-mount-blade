@@ -1,4 +1,4 @@
-import { ArenaManager } from '../arena/arenaManager.js';
+// ArenaEngine \uc0ac\uc6a9\uc744 \uc704\ud574 ArenaManager \uc778\ud130\ud398\uc774\uc2a4\ub97c \uc81c\uac70\ud569\ub2c8\uB2E4.
 import { FishManager } from '../fish/fishManager.js';
 import { BattleLog } from '../systems/battleLog.js';
 
@@ -23,8 +23,8 @@ export class MapManager {
             this.game.battleLog.destroy();
             this.game.battleLog = null;
         }
-        if (this.game.arenaManager) {
-            this.game.arenaManager = null;
+        if (this.game.arenaEngine && this.game.arenaEngine.isActive) {
+            this.game.arenaEngine.stop();
         }
         if (this.game.fishManager) {
             this.game.fishManager.stop();
@@ -45,9 +45,11 @@ export class MapManager {
         this.game.clearAllUnits();
 
         if (mapKey === 'arena') {
-            this.setupArenaSystems();
+            // ArenaEngine\uc744 \uc2dc\uc791\ud569\ub2c8\ub2e4.
+            this.game.arenaEngine.start();
         } else if (mapKey === 'aquarium') {
             this.setupAquariumSystems();
+            this.game.gameState.currentState = 'WORLD';
         }
 
         if (this.game.eventManager) {
@@ -58,13 +60,7 @@ export class MapManager {
     }
 
     setupArenaSystems() {
-        console.log("아레나 시스템 설정 중...");
-        this.game.arenaManager = new ArenaManager(this.game);
-        if (this.game.arenaTensorFlowManager) {
-            console.log('Arena TensorFlow Manager가 이미 활성화되어 있습니다.');
-        } else {
-            // 필요하다면 여기서 생성
-        }
+        // \uc774 \ud568\uc218\uc758 \ub0b4\uc6a9\uc740 loadMap \ub0b4\ub85c \ud569\uce58\ub418\uc5c8\uc73c\ubbc0\ub85c \ubd88\uc73c\uc2dc\uc9c0 \uc54a\uc74c\ub2e4.
     }
 
     setupAquariumSystems() {

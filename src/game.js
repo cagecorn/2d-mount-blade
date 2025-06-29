@@ -38,7 +38,7 @@ import { rollOnTable } from './utils/random.js';
 import { getMonsterLootTable } from './data/tables.js';
 import { MicroEngine } from './micro/MicroEngine.js';
 import { MicroCombatManager } from './micro/MicroCombatManager.js';
-import { ArenaManager } from './arena/arenaManager.js';
+import { ArenaEngine } from './engines/arenaEngine.js';
 import { MicroItemAIManager } from './managers/microItemAIManager.js';
 import { BattleManager } from './managers/battleManager.js';
 import { BattleResultManager } from './managers/battleResultManager.js';
@@ -86,7 +86,7 @@ export class Game {
         this.aquarium = document.getElementById('aquarium');
         this.isPaused = false;
         this.units = [];
-        this.arenaManager = new ArenaManager(this);
+        this.arenaEngine = new ArenaEngine(this);
         this.currentMapId = null;
     }
 
@@ -1326,12 +1326,10 @@ export class Game {
             return;
         }
 
-        if (this.gameState.currentState === 'COMBAT' || this.gameState.currentState === 'ARENA') {
+        if (this.gameState.currentState === 'COMBAT') {
             this.combatEngine.update(deltaTime);
-        }
-
-        if (this.arenaManager && this.arenaManager.isActive) {
-            this.arenaManager.update(deltaTime);
+        } else if (this.gameState.currentState === 'ARENA') {
+            this.arenaEngine.update(deltaTime);
         }
     }
     render = () => {
@@ -1345,7 +1343,7 @@ export class Game {
         } else if (this.gameState.currentState === "COMBAT") {
             this.combatEngine.render();
         } else if (this.gameState.currentState === "ARENA") {
-            this.arenaManager.render(this.layerManager.contexts, this.mapManager, this.assets);
+            this.arenaEngine.render();
         }
         if (this.uiManager) this.uiManager.updateUI(this.gameState);
     }
@@ -1494,9 +1492,9 @@ export class Game {
         this.currentMapId = mapId;
         console.log(`맵 로딩: ${mapId}`);
         if (mapId === 'arena') {
-            this.arenaManager.start();
+            this.arenaEngine.start();
         } else {
-            this.arenaManager.stop();
+            this.arenaEngine.stop();
         }
     }
 }

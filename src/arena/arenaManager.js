@@ -72,7 +72,6 @@ class ArenaManager {
         }
         console.log("\u2694\ufe0f \uc544\ub808\ub098\uc5d0 \uc624\uc2e0 \uac83\uc744 \ud658\uc601\ud569\ub2c8\ub2e4! AI \uc790\ub3d9 \ub300\ub825\uc744 \uc2dc\uc791\ud569\ub2c8\ub2e4.");
         this.game.showArenaMap();
-        this.game.gameState.currentState = 'ARENA';
         this.nextRound();
     }
 
@@ -93,7 +92,6 @@ class ArenaManager {
             this.prevMapManager = null;
         }
         this.game.showWorldMap();
-        this.game.gameState.currentState = 'WORLD';
         console.log(`\ud83d\udc4b \uc544\ub808\ub098\ub97c \ub5a0\ub0a0\uae4c. \ucd1d ${this.roundCount} \ub77c\uc6b4\ub4dc\uc758 \ub370\uc774\ud130\uac00 \uae30\ub85d\ub418\uc5c8\uc2b5\ub2c8\ub2e4.`);
     }
 
