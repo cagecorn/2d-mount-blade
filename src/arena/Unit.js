@@ -3,6 +3,8 @@ import { SKILLS } from '../data/skills.js';
 import { StatManager } from '../stats.js';
 import { isImageLoaded } from '../utils/imageUtils.js';
 import { MeleeAI, RangedAI, HealerAI, WizardAI } from '../ai.js';
+import { DecisionEngine } from '../ai/engines/DecisionEngine.js';
+import { fluctuationEngine } from '../managers/ai/FluctuationEngine.js';
 
 class Unit {
     constructor(
@@ -49,6 +51,7 @@ class Unit {
         this.combatCalculator = combatCalculator;
         this.movementManager = movementManager;
         this.motionManager = motionManager;
+        this.decisionEngine = new DecisionEngine(eventManager);
         this.skillCooldowns = {};
         this.skills = skills;
         this.mp = 100;
@@ -106,6 +109,7 @@ class Unit {
         } else {
             this.roleAI = new MeleeAI();
         }
+        this.ai = this.roleAI;
     }
 
     getSkillAction(enemies) {
@@ -189,42 +193,58 @@ class Unit {
             }
         }
 
+        let action = null;
         if (aiAction && aiAction.type !== 'idle') {
-            this.executeAction(aiAction, deltaTime);
-            return;
-        }
-
-        const skillAction = this.getSkillAction(enemies);
-        if (skillAction) {
-            this.executeAction(skillAction, deltaTime);
-            return;
-        }
-
-        if (weaponAction && weaponAction.type !== 'idle') {
-            this.executeAction(weaponAction, deltaTime);
-            return;
-        }
-
-
-        let nearest = enemies[0];
-        let minDist = Number.MAX_VALUE;
-        for (const e of enemies) {
-            const dx = e.x - this.x;
-            const dy = e.y - this.y;
-            const dist = Math.hypot(dx, dy);
-            if (dist < minDist) {
-                minDist = dist;
-                nearest = e;
+            action = aiAction;
+        } else {
+            const skillAction = this.getSkillAction(enemies);
+            if (skillAction) {
+                action = skillAction;
+            } else if (weaponAction && weaponAction.type !== 'idle') {
+                action = weaponAction;
+            } else {
+                let nearest = enemies[0];
+                let minDist = Number.MAX_VALUE;
+                for (const e of enemies) {
+                    const dx = e.x - this.x;
+                    const dy = e.y - this.y;
+                    const dist = Math.hypot(dx, dy);
+                    if (dist < minDist) {
+                        minDist = dist;
+                        nearest = e;
+                    }
+                }
+                if (minDist > this.attackRange) {
+                    const dirX = (nearest.x - this.x) / minDist;
+                    const dirY = (nearest.y - this.y) / minDist;
+                    action = { type: 'move', target: { x: this.x + dirX * this.speed * deltaTime, y: this.y + dirY * this.speed * deltaTime } };
+                } else if (this.attackCooldown <= 0) {
+                    action = { type: 'attack', target: nearest };
+                }
             }
         }
 
-        if (minDist > this.attackRange) {
-            const dirX = (nearest.x - this.x) / minDist;
-            const dirY = (nearest.y - this.y) / minDist;
-            this.x += dirX * this.speed * deltaTime;
-            this.y += dirY * this.speed * deltaTime;
-        } else if (this.attackCooldown <= 0) {
-            this.executeAction({ type: 'attack', target: nearest }, deltaTime);
+        if (action) {
+            if (this.decisionEngine) {
+                const mbtiEngine = this.decisionEngine.mbtiEngine;
+                if (mbtiEngine?.influenceAction) {
+                    action = mbtiEngine.influenceAction(this, action, context);
+                }
+                if (this.decisionEngine.mistakeEngine?.getFinalAction) {
+                    action = this.decisionEngine.mistakeEngine.getFinalAction(this, action, context, mbtiEngine);
+                }
+                if (fluctuationEngine.shouldInject(0.05)) {
+                    const types = ['TARGET_CHANGE', 'MOVE_TO_RANDOM_POS'];
+                    const rand = types[Math.floor(Math.random() * types.length)];
+                    action = fluctuationEngine.injectAndLog({
+                        unit: this,
+                        originalDecision: action,
+                        fluctuationType: rand,
+                        allUnits: units,
+                    });
+                }
+            }
+            this.executeAction(action, deltaTime);
         }
     }
 
