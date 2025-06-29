@@ -1345,7 +1345,10 @@ export class Game {
         } else if (this.gameState.currentState === "COMBAT") {
             this.combatEngine.render();
         } else if (this.gameState.currentState === "ARENA") {
-            this.arenaManager.render(this.layerManager.contexts, this.mapManager, this.assets);
+            // arenaManager.render 호출 방식을 패치에 맞게 수정
+            if (this.arenaManager) {
+                this.arenaManager.render(this.layerManager.contexts, this.mapManager, this.assets);
+            }
         }
         if (this.uiManager) this.uiManager.updateUI(this.gameState);
     }
@@ -1491,12 +1494,7 @@ export class Game {
     }
 
     loadMap(mapId) {
-        this.currentMapId = mapId;
-        console.log(`맵 로딩: ${mapId}`);
-        if (mapId === 'arena') {
-            this.arenaManager.start();
-        } else {
-            this.arenaManager.stop();
-        }
+        // 기존의 game.loadMap은 mapManager를 호출하는 역할만 하도록 단순화합니다.
+        this.mapManager.loadMap(mapId);
     }
 }
