@@ -3,6 +3,7 @@ import { fluctuationEngine } from '../managers/ai/FluctuationEngine.js';
 import { Unit } from './Unit.js';
 import { JOBS } from '../data/jobs.js';
 import { ITEMS } from '../data/items.js';
+import { SKILLS } from '../data/skills.js';
 import { WebGPUArenaRenderer } from '../renderers/webgpuArenaRenderer.js';
 import { ArenaMapManager } from '../arenaMap.js';
 
@@ -148,12 +149,14 @@ class ArenaManager {
 
     spawnRandomTeam(teamName, count, xMin, xMax) {
         const jobKeys = Object.keys(JOBS).filter(j => j !== 'fire_god');
+        const skillKeys = Object.keys(SKILLS);
         for (let i = 0; i < count; i++) {
             const jobId = jobKeys[Math.floor(Math.random() * jobKeys.length)];
             const id = (typeof crypto !== 'undefined' && crypto.randomUUID)
                 ? crypto.randomUUID()
                 : Math.random().toString(36).slice(2);
             const image = this.game.assets?.[jobId] || null;
+            const skillId = skillKeys[Math.floor(Math.random() * skillKeys.length)];
             const unit = new Unit(
                 id,
                 teamName,
@@ -164,8 +167,10 @@ class ArenaManager {
                 },
                 this.game.microItemAIManager,
                 image,
-                this.game.mapManager?.tileSize ? this.game.mapManager.tileSize / 2 : 20
+                this.game.mapManager?.tileSize ? this.game.mapManager.tileSize / 2 : 20,
+                [skillId]
             );
+            unit.skillCooldowns[skillId] = 0;
             unit.onAttack = ({ attacker, defender, damage }) => {
                 if (this.combatWorker) {
                     this.combatWorker.postMessage({ type: 'attack', data: { attackerId: attacker.id, defenderId: defender.id, attackPower: damage } });
