@@ -3,7 +3,7 @@ import { fluctuationEngine } from '../managers/ai/FluctuationEngine.js';
 import { Unit } from './Unit.js';
 import { JOBS } from '../data/jobs.js';
 import { ITEMS } from '../data/items.js';
-import { CanvasArenaRenderer } from '../renderers/canvasArenaRenderer.js';
+import { WebGPUArenaRenderer } from '../renderers/webgpuArenaRenderer.js';
 import { ArenaMapManager } from '../arenaMap.js';
 
 class ArenaManager {
@@ -11,7 +11,8 @@ class ArenaManager {
         this.game = game;
         this.isActive = false;
         this.roundCount = 0;
-        this.renderer = new CanvasArenaRenderer();
+        this.webgpuRenderer = new WebGPUArenaRenderer(this.game.battleCanvas);
+        this.webgpuRenderer.init();
         try {
             this.combatWorker = new Worker('src/workers/combatWorker.js', { type: 'module' });
         } catch (e) {
@@ -211,13 +212,13 @@ class ArenaManager {
 
     render(contexts, mapManager, assets) {
         if (!this.isActive) return;
-        if (this.renderer) {
-            this.renderer.render(contexts, mapManager, assets, this.game.units);
-        } else {
-            mapManager.render(contexts.mapBase, contexts.mapDecor, assets);
-            for (const unit of this.game.units) {
-                unit.render(contexts.entity);
-            }
+        if (this.webgpuRenderer && this.webgpuRenderer.device) {
+            this.webgpuRenderer.render(this.game.units);
+            return;
+        }
+        mapManager.render(contexts.mapBase, contexts.mapDecor, assets);
+        for (const unit of this.game.units) {
+            unit.render(contexts.entity);
         }
     }
 
