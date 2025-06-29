@@ -9,6 +9,15 @@ export class EventManager {
         }
         this.listeners[eventName].push(callback);
     }
+    unsubscribe(eventName, callback) {
+        const listeners = this.listeners[eventName];
+        if (listeners) {
+            const index = listeners.indexOf(callback);
+            if (index !== -1) {
+                listeners.splice(index, 1);
+            }
+        }
+    }
     publish(eventName, data) {
         if (this.listeners[eventName]) {
             this.listeners[eventName].forEach(callback => {
