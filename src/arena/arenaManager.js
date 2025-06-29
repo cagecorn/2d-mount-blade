@@ -109,8 +109,11 @@ class ArenaManager {
             });
         }
         // 1. 양 팀 유닛을 먼저 생성합니다.
-        this.spawnRandomTeam('A', 12, 100, 400);
-        this.spawnRandomTeam('B', 12, 600, 900);
+        const spawnCount = 12;
+        const zoneA = { min: 100, max: 400 };
+        const zoneB = { min: 600, max: 900 };
+        this.spawnRandomTeam('A', spawnCount, zoneA.min, zoneA.max);
+        this.spawnRandomTeam('B', spawnCount, zoneB.min, zoneB.max);
 
         // ✅ 2. requestAnimationFrame을 제거하고 컨트롤러를 즉시 할당합니다.
         if (this.game.arenaTensorFlowManager) {
