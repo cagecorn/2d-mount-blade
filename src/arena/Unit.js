@@ -9,14 +9,16 @@ class Unit {
         jobId,
         position = { x: 0, y: 0 },
         microItemAIManager = null,
-        image = null
+        image = null,
+        radius = 20
     ) {
         this.id = id;
         this.team = team;
         this.jobId = jobId;
         this.x = position.x;
         this.y = position.y;
-        this.radius = 20;
+        // radius determines both the body circle and dotted sprite size
+        this.radius = radius;
         this.image = image;
 
         this.kills = 0;
