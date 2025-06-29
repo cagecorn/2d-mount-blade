@@ -93,6 +93,11 @@ export class AquariumSpectatorManager {
             clearInterval(this._interval);
             this._interval = null;
         }
+        // Reset any lingering ghost possessions between battles
+        if (this.possessionAIManager) {
+            this.possessionAIManager.ghosts = [];
+            this.possessionAIManager.possessedEntities.clear();
+        }
         this.vfxManager?.clear?.();
         this.projectileManager?.clear?.();
         this.groupManager?.removeGroup(this.playerGroupId);
@@ -135,6 +140,8 @@ export class AquariumSpectatorManager {
         // watch for annihilation since battle_ended may not fire automatically
         if (this._interval) clearInterval(this._interval);
         this._interval = setInterval(() => {
+            // Prevent the game from pausing in spectator mode
+            if (this.game) this.game.isPaused = false;
             const playerAlive = (this.currentBattle.playerUnits || []).filter(u => u.hp > 0);
             const enemyAlive = (this.currentBattle.enemyUnits || []).filter(u => u.hp > 0);
             if (playerAlive.length === 0 || enemyAlive.length === 0) {
