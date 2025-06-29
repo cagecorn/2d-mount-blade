@@ -1,4 +1,5 @@
 import tfLoader from '../utils/tf-loader.js';
+import { SKILLS } from '../data/skills.js';
 
 export class TensorFlowController {
     constructor(tf = null) {
@@ -20,6 +21,22 @@ export class TensorFlowController {
         for (const e of enemies) {
             const d = Math.hypot(e.x - unit.x, e.y - unit.y);
             if (d < minD) { minD = d; nearest = e; }
+        }
+        // attempt skill usage
+        if (Array.isArray(unit.skills)) {
+            for (const id of unit.skills) {
+                const skill = SKILLS[id];
+                if (!skill) continue;
+                if ((unit.skillCooldowns[id] || 0) > 0) continue;
+                if (skill.tags?.includes('attack')) {
+                    const range = (skill.range || unit.attackRange) / 8;
+                    if (minD <= range) {
+                        return { type: 'skill', skillId: id, target: nearest };
+                    }
+                } else if (skill.id === 'heal' && unit.hp < unit.stats.get('maxHp')) {
+                    return { type: 'skill', skillId: id, target: unit };
+                }
+            }
         }
         if (minD <= unit.attackRange) {
             return { type: 'attack', target: nearest };

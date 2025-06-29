@@ -1,4 +1,5 @@
 import { JOBS } from '../data/jobs.js';
+import { SKILLS } from '../data/skills.js';
 import { StatManager } from '../stats.js';
 import { isImageLoaded } from '../utils/imageUtils.js';
 
@@ -10,7 +11,8 @@ class Unit {
         position = { x: 0, y: 0 },
         microItemAIManager = null,
         image = null,
-        radius = 20
+        radius = 20,
+        skills = []
     ) {
         this.id = id;
         this.team = team;
@@ -37,6 +39,40 @@ class Unit {
         this.tfController = null;
         this.microItemAIManager = microItemAIManager;
         this.skillCooldowns = {};
+        this.skills = skills;
+        this.mp = 100;
+        this.displayText = '';
+        this.textTimer = 0;
+    }
+
+    getSkillAction(enemies) {
+        if (!Array.isArray(this.skills)) return null;
+        let nearest = null;
+        let minDist = Infinity;
+        for (const e of enemies) {
+            const d = Math.hypot(e.x - this.x, e.y - this.y);
+            if (d < minDist) { minDist = d; nearest = e; }
+        }
+
+        for (const id of this.skills) {
+            const skill = SKILLS[id];
+            if (!skill) continue;
+            if ((this.skillCooldowns[id] || 0) > 0) continue;
+
+            if (skill.tags?.includes('attack')) {
+                const range = (skill.range || this.attackRange) / 8;
+                if (nearest && minDist <= range) {
+                    return { type: 'skill', skillId: id, target: nearest };
+                }
+            }
+
+            if (skill.id === 'heal') {
+                if (this.hp < this.stats.get('maxHp')) {
+                    return { type: 'skill', skillId: id, target: this };
+                }
+            }
+        }
+        return null;
     }
 
     isAlive() {
@@ -45,6 +81,8 @@ class Unit {
 
     update(deltaTime, units) {
         if (!this.isAlive()) return;
+
+        if (this.textTimer > 0) this.textTimer -= deltaTime;
 
         if (this.attackCooldown > 0) {
             this.attackCooldown -= deltaTime;
@@ -71,6 +109,12 @@ class Unit {
                 this.executeAction(action, deltaTime);
                 return;
             }
+        }
+
+        const skillAction = this.getSkillAction(enemies);
+        if (skillAction) {
+            this.executeAction(skillAction, deltaTime);
+            return;
         }
 
         if (weaponAction && weaponAction.type !== 'idle') {
@@ -137,6 +181,21 @@ class Unit {
             }
             this.attackCooldown = 1;
             if (action.skillId) this.skillCooldowns[action.skillId] = 30;
+        } else if (action.type === 'skill') {
+            const skill = SKILLS[action.skillId];
+            if (!skill) return;
+            this.skillCooldowns[action.skillId] = skill.cooldown || 30;
+            this.displayText = skill.name;
+            this.textTimer = 60;
+            const target = action.target || this;
+            if (skill.tags?.includes('attack') && target) {
+                const prevHp = target.hp;
+                target.hp -= skill.damage || this.attackPower;
+                if (prevHp > 0 && target.hp <= 0) this.kills++;
+            } else if (skill.id === 'heal') {
+                const amount = skill.healAmount || 10;
+                target.hp = Math.min(target.hp + amount, target.stats?.get?.('maxHp') || target.hp + amount);
+            }
         }
     }
 
@@ -164,6 +223,10 @@ class Unit {
         const prefix = this.tfController ? '[TF] ' : '';
         const text = `${prefix}${job} ${Math.max(0, Math.floor(this.hp))} K:${this.kills}`;
         ctx.fillText(text, this.x, this.y);
+        if (this.textTimer > 0 && this.displayText) {
+            ctx.fillStyle = 'yellow';
+            ctx.fillText(this.displayText, this.x, this.y - this.radius - 10);
+        }
         ctx.restore();
     }
 }
