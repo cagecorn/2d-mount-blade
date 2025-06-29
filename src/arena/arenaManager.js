@@ -108,31 +108,34 @@ class ArenaManager {
                 message: `Round ${this.roundCount} 시작`
             });
         }
+        // 1. 양 팀 유닛을 먼저 생성합니다.
         this.spawnRandomTeam('A', 12, 100, 400);
         this.spawnRandomTeam('B', 12, 600, 900);
 
-        // requestAnimationFrame을 사용하여 유닛 위치 업데이트 후 컨트롤러 할당
-        requestAnimationFrame(() => {
-            if (this.game.arenaTensorFlowManager) {
-                this.game.arenaTensorFlowManager.assignControllers(this.game.units);
-            }
-            if (this.game?.eventManager) {
-                const snapshot = this.game.units.map(u => ({
-                    id: u.id,
-                    team: u.team,
-                    hp: u.hp,
-                    attackPower: u.attackPower,
-                    defense: u.defense,
-                }));
-                this.game.eventManager.publish('arena_round_start', {
-                    round: this.roundCount,
-                    units: snapshot,
-                });
-            }
-            if (this.combatWorker) {
-                this.combatWorker.postMessage({ type: 'init', data: this.game.units.map(u => ({ id: u.id, hp: u.hp })) });
-            }
-        });
+        // ✅ 2. requestAnimationFrame을 제거하고 컨트롤러를 즉시 할당합니다.
+        if (this.game.arenaTensorFlowManager) {
+            this.game.arenaTensorFlowManager.assignControllers(this.game.units);
+            console.log("유닛들에게 AI 컨트롤러를 직접 할당했습니다.");
+        }
+
+        // 3. 나머지 라운드 시작 로직을 실행합니다.
+        if (this.game?.eventManager) {
+            const snapshot = this.game.units.map(u => ({
+                id: u.id,
+                team: u.team,
+                hp: u.hp,
+                attackPower: u.attackPower,
+                defense: u.defense,
+            }));
+            this.game.eventManager.publish('arena_round_start', {
+                round: this.roundCount,
+                units: snapshot,
+            });
+        }
+
+        if (this.combatWorker) {
+            this.combatWorker.postMessage({ type: 'init', data: this.game.units.map(u => ({ id: u.id, hp: u.hp })) });
+        }
     }
 
     spawnRandomTeam(teamName, count, xMin, xMax) {
