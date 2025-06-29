@@ -120,7 +120,7 @@ export function aquariumSpectatorWorkflow(context) {
         eventManager
     } = context;
 
-    const jobKeys = Object.keys(JOBS);
+    const jobKeys = Object.keys(JOBS).filter(id => id !== 'fire_god');
 
     const makeMerc = (groupId) => {
         const jobId = jobKeys[Math.floor(Math.random() * jobKeys.length)];
@@ -158,9 +158,17 @@ export function aquariumSpectatorWorkflow(context) {
         enemyFormationManager.assign(slot, u.id);
     });
 
-    const friendlyOrigin = mapManager.getPlayerStartingPosition();
+    // introduce slight random rotation to diversify formations
+    formationManager.rotation = (Math.random() - 0.5) * 0.2;
+    enemyFormationManager.rotation = (Math.random() - 0.5) * 0.2;
+
+    // spawn units closer to the center to avoid wall collisions
+    const friendlyOrigin = {
+        x: (mapManager.width * mapManager.tileSize) / 3,
+        y: (mapManager.height / 2) * mapManager.tileSize
+    };
     const enemyOrigin = {
-        x: (mapManager.width - 4) * mapManager.tileSize,
+        x: (mapManager.width * mapManager.tileSize) * 2 / 3,
         y: (mapManager.height / 2) * mapManager.tileSize
     };
     formationManager.apply(friendlyOrigin, allMap);
