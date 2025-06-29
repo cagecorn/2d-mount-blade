@@ -257,7 +257,8 @@ export class Game {
                 name !== 'SkillManager' &&
                 name !== 'ProjectileManager' &&
                 name !== 'SquadManager' &&
-                name !== 'DataRecorder'
+                name !== 'DataRecorder' &&
+                name !== 'AquariumSpectatorManager'
         );
         for (const managerName of otherManagerNames) {
             if (managerName === 'UIManager') {
