@@ -142,16 +142,19 @@ class ArenaManager {
         const jobKeys = Object.keys(JOBS).filter(j => j !== 'fire_god');
         for (let i = 0; i < count; i++) {
             const jobId = jobKeys[Math.floor(Math.random() * jobKeys.length)];
-            const unit = this.game.factory.create('mercenary', {
-                x: xMin + Math.random() * (xMax - xMin),
-                y: Math.random() * 600,
-                tileSize: this.game.mapManager.tileSize,
-                groupId: teamName,
+            const id = (typeof crypto !== 'undefined' && crypto.randomUUID)
+                ? crypto.randomUUID()
+                : Math.random().toString(36).slice(2);
+            const unit = new Unit(
+                id,
+                teamName,
                 jobId,
-                image: this.game.assets[jobId] || this.game.assets.mercenary,
-            });
-            unit.team = teamName;
-            unit.hp = unit.stats.get('maxHp');
+                {
+                    x: xMin + Math.random() * (xMax - xMin),
+                    y: Math.random() * 600,
+                },
+                this.game.microItemAIManager
+            );
             unit.onAttack = ({ attacker, defender, damage }) => {
                 if (this.combatWorker) {
                     this.combatWorker.postMessage({ type: 'attack', data: { attackerId: attacker.id, defenderId: defender.id, attackPower: damage } });
