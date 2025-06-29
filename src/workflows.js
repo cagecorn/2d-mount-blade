@@ -113,6 +113,7 @@ export function aquariumSpectatorWorkflow(context) {
         enemyFormationManager,
         entityManager,
         groupManager,
+        metaAIManager,
         assets = {},
         playerGroupId = 'player_party',
         enemyGroupId = 'dungeon_monsters',
@@ -130,10 +131,14 @@ export function aquariumSpectatorWorkflow(context) {
             tileSize: mapManager.tileSize,
             groupId,
             jobId,
-            image: assets[jobId]
+            image: assets[jobId] || assets.mercenary
         });
         entityManager?.addEntity(merc);
         groupManager?.addMember(merc);
+        if (metaAIManager) {
+            const group = metaAIManager.groups[groupId] || metaAIManager.createGroup(groupId);
+            group.addMember(merc);
+        }
         return merc;
     };
 

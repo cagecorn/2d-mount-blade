@@ -558,6 +558,7 @@ export class Game {
                 factory: this.factory,
                 entityManager: this.entityManager,
                 groupManager: this.groupManager,
+                metaAIManager: this.metaAIManager,
                 mercenaryManager: this.mercenaryManager,
                 monsterManager: this.monsterManager,
                 assets,
