@@ -121,4 +121,8 @@ export class ProjectileManager {
             proj.render(ctx);
         }
     }
+
+    clear() {
+        this.projectiles.length = 0;
+    }
 }

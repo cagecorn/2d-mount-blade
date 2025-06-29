@@ -750,6 +750,12 @@ export class VFXManager {
 
     }
 
+    clear() {
+        this.effects.length = 0;
+        this.particleEngine.clear();
+        this.textPopupEngine.popups.length = 0;
+    }
+
     render(ctx) {
         for (const effect of this.effects) {
             if (effect.type === 'death_animation') {

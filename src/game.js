@@ -561,6 +561,8 @@ export class Game {
                 metaAIManager: this.metaAIManager,
                 mercenaryManager: this.mercenaryManager,
                 monsterManager: this.monsterManager,
+                projectileManager: this.projectileManager,
+                vfxManager: this.vfxManager,
                 assets,
                 playerGroupId: this.playerGroup.id,
                 enemyGroupId: this.monsterGroup.id
