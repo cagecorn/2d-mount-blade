@@ -46,6 +46,7 @@ import { BattleResultManager } from './managers/battleResultManager.js';
 import { StatusEffectsManager } from './managers/statusEffectsManager.js';
 import { disarmWorkflow, armorBreakWorkflow } from './workflows.js';
 import { PossessionAIManager } from './managers/possessionAIManager.js';
+import { AquariumSpectatorManager } from './managers/aquariumSpectatorManager.js';
 import { Ghost } from './entities.js';
 import { TankerGhostAI, RangedGhostAI, SupporterGhostAI, CCGhostAI } from './ai.js';
 import { EMBLEMS } from './data/emblems.js';
@@ -545,6 +546,25 @@ export class Game {
         this.player = player;
         // 월드 엔진에서도 동일한 플레이어 데이터를 사용하도록 설정
         this.worldEngine.setPlayer(player);
+
+        if (SETTINGS.ENABLE_AQUARIUM_SPECTATOR_MODE) {
+            const enemyFormationManager = new FormationManager(5, 5, formationSpacing, 'RIGHT', formationAngle);
+            this.spectatorManager = new AquariumSpectatorManager({
+                eventManager: this.eventManager,
+                mapManager: this.mapManager,
+                formationManager: this.formationManager,
+                enemyFormationManager,
+                factory: this.factory,
+                entityManager: this.entityManager,
+                groupManager: this.groupManager,
+                mercenaryManager: this.mercenaryManager,
+                monsterManager: this.monsterManager,
+                assets,
+                playerGroupId: this.playerGroup.id,
+                enemyGroupId: this.monsterGroup.id
+            });
+            this.spectatorManager.start();
+        }
 
         // 초기 아이템 배치
         if (this.mapManager.name !== 'aquarium') {
