@@ -19,16 +19,23 @@ export class MapManager {
         }
 
         console.log("이전 맵의 시스템을 정리합니다.");
+        // ArenaManager가 존재하면 비활성화하고 제거
+        if (this.game.arenaManager) {
+            this.game.arenaManager.stop();
+            this.game.arenaManager = null;
+            console.log('ArenaManager가 정리되었습니다.');
+        }
+        // BattleLog가 존재하면 파괴하고 제거
         if (this.game.battleLog) {
             this.game.battleLog.destroy();
             this.game.battleLog = null;
+            console.log('BattleLog가 정리되었습니다.');
         }
-        if (this.game.arenaManager) {
-            this.game.arenaManager = null;
-        }
+        // FishManager가 존재하면 중지하고 제거
         if (this.game.fishManager) {
             this.game.fishManager.stop();
             this.game.fishManager = null;
+            console.log('FishManager가 정리되었습니다.');
         }
 
         this.currentMapKey = mapKey;
@@ -46,8 +53,11 @@ export class MapManager {
 
         if (mapKey === 'arena') {
             this.setupArenaSystems();
+            // 아레나 매니저가 스스로 게임 상태를 변경하고 시작하므로 여기서 start()를 호출합니다.
+            if (this.game.arenaManager) this.game.arenaManager.start();
         } else if (mapKey === 'aquarium') {
             this.setupAquariumSystems();
+            this.game.gameState.currentState = 'WORLD'; // 수족관은 월드 상태로 간주
         }
 
         if (this.game.eventManager) {
@@ -59,7 +69,9 @@ export class MapManager {
 
     setupArenaSystems() {
         console.log("아레나 시스템 설정 중...");
-        this.game.arenaManager = new ArenaManager(this.game);
+        if (!this.game.arenaManager) {
+            this.game.arenaManager = new ArenaManager(this.game);
+        }
         if (this.game.arenaTensorFlowManager) {
             console.log('Arena TensorFlow Manager가 이미 활성화되어 있습니다.');
         } else {
