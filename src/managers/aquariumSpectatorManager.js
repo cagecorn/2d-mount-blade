@@ -85,6 +85,10 @@ export class AquariumSpectatorManager {
     }
 
     startNewBattle() {
+        if (this._interval) {
+            clearInterval(this._interval);
+            this._interval = null;
+        }
         this.groupManager?.removeGroup(this.playerGroupId);
         this.groupManager?.removeGroup(this.enemyGroupId);
         if (this.entityManager?.entities) {
@@ -121,6 +125,24 @@ export class AquariumSpectatorManager {
 
         this.currentBattle = result;
         this.updateUI();
+
+        // watch for annihilation since battle_ended may not fire automatically
+        if (this._interval) clearInterval(this._interval);
+        this._interval = setInterval(() => {
+            const playerAlive = (this.currentBattle.playerUnits || []).filter(u => u.hp > 0);
+            const enemyAlive = (this.currentBattle.enemyUnits || []).filter(u => u.hp > 0);
+            if (playerAlive.length === 0 || enemyAlive.length === 0) {
+                clearInterval(this._interval);
+                this._interval = null;
+                const winner = playerAlive.length > 0 ? 'player' : (enemyAlive.length > 0 ? 'enemy' : 'draw');
+                const battleResult = {
+                    winner,
+                    loser: winner === 'player' ? 'enemy' : (winner === 'enemy' ? 'player' : 'draw'),
+                    survivors: { player: playerAlive, enemy: enemyAlive }
+                };
+                this.eventManager?.publish('battle_ended', battleResult);
+            }
+        }, 1000);
     }
 
     onBattleEnded(result) {
