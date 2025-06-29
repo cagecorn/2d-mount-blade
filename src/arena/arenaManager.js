@@ -13,6 +13,9 @@ class ArenaManager {
         this.game = game;
         this.isActive = false;
         this.roundCount = 0;
+        this.combatCalculator = game.combatCalculator;
+        this.movementManager = game.movementManager;
+        this.motionManager = game.motionManager;
         this.webgpuRenderer = new WebGPUArenaRenderer(this.game.battleCanvas);
         this.webgpuRenderer.init();
         this.projectileManager = null;
@@ -202,34 +205,25 @@ class ArenaManager {
                 image,
                 this.game.mapManager?.tileSize ? this.game.mapManager.tileSize / 2 : 20,
                 [skillId],
-                this.projectileManager
+                this.projectileManager,
+                this.game.eventManager,
+                this.combatCalculator,
+                this.movementManager,
+                this.motionManager
             );
             unit.skillCooldowns[skillId] = 0;
             unit.onAttack = ({ attacker, defender, damage }) => {
                 if (this.combatWorker) {
                     this.combatWorker.postMessage({ type: 'attack', data: { attackerId: attacker.id, defenderId: defender.id, attackPower: damage } });
-                } else {
-                    const prevHp = defender.hp;
-                    defender.hp -= damage;
-                    if (this.game?.eventManager) {
-                        this.game.eventManager.publish('arena_log', {
-                            eventType: 'attack',
-                            attackerId: attacker.id,
-                            defenderId: defender.id,
-                            damage,
-                            message: `${attacker.id} -> ${defender.id} (${damage})`
-                        });
-                    }
-                    if (prevHp > 0 && defender.hp <= 0) {
-                        attacker.kills++;
-                        if (this.game?.eventManager) {
-                            this.game.eventManager.publish('arena_log', {
-                                eventType: 'unit_death',
-                                unitId: defender.id,
-                                message: `${defender.id} 사망`
-                            });
-                        }
-                    }
+                }
+                if (this.game?.eventManager) {
+                    this.game.eventManager.publish('arena_log', {
+                        eventType: 'attack',
+                        attackerId: attacker.id,
+                        defenderId: defender.id,
+                        damage,
+                        message: `${attacker.id} -> ${defender.id} (${damage})`
+                    });
                 }
             };
             this.game.addUnit(unit);

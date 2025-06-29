@@ -90,3 +90,4 @@
 
 ## 세션 20
 - 아레나 전투 로직 통합을 위한 단계별 계획(arena-integration-plan.md) 작성.
+\n## 세션 21\n- 아레나 통합 1단계 진행. CombatCalculator와 Movement/MotionManager를 아레나에서 사용하도록 수정.\n- damage_calculated 이벤트를 통해 체력 감소와 킬 카운트를 처리하도록 Unit 로직 개선.\n- 작업 내역은 arena-integration-log.md에 기록.

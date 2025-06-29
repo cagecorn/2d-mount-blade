@@ -14,7 +14,11 @@ class Unit {
         image = null,
         radius = 20,
         skills = [],
-        projectileManager = null
+        projectileManager = null,
+        eventManager = null,
+        combatCalculator = null,
+        movementManager = null,
+        motionManager = null
     ) {
         this.id = id;
         this.team = team;
@@ -41,6 +45,10 @@ class Unit {
         this.tfController = null;
         this.projectileManager = projectileManager;
         this.microItemAIManager = microItemAIManager;
+        this.eventManager = eventManager;
+        this.combatCalculator = combatCalculator;
+        this.movementManager = movementManager;
+        this.motionManager = motionManager;
         this.skillCooldowns = {};
         this.skills = skills;
         this.mp = 100;
@@ -49,6 +57,33 @@ class Unit {
         this.tileSize = this.radius * 2;
         this.roleAI = null;
         this.assignRoleAI();
+
+        if (this.eventManager) {
+            this._damageHandler = (data) => {
+                if (data.attacker === this && this.eventManager) {
+                    this.eventManager.publish('arena_log', {
+                        eventType: 'attack',
+                        attackerId: data.attacker.id,
+                        defenderId: data.defender.id,
+                        damage: data.damage,
+                        message: `${data.attacker.id} -> ${data.defender.id} (${data.damage})`
+                    });
+                }
+                if (data.defender === this) {
+                    const prevHp = this.hp;
+                    this.hp = Math.max(0, this.hp - data.damage);
+                    if (prevHp > 0 && this.hp <= 0 && data.attacker) {
+                        data.attacker.kills++;
+                        this.eventManager.publish('arena_log', {
+                            eventType: 'unit_death',
+                            unitId: this.id,
+                            message: `${this.id} 사망`
+                        });
+                    }
+                }
+            };
+            this.eventManager.subscribe('damage_calculated', this._damageHandler);
+        }
     }
 
     assignRoleAI() {
@@ -109,6 +144,8 @@ class Unit {
 
     update(deltaTime, units) {
         if (!this.isAlive()) return;
+
+        this.currentUnits = units;
 
         if (this.textTimer > 0) this.textTimer -= deltaTime;
 
@@ -194,7 +231,14 @@ class Unit {
     executeAction(action, deltaTime) {
         if (!action) return;
         if (action.type === 'move') {
-            if (action.target) {
+            if (action.target && this.movementManager) {
+                const context = {
+                    player: this,
+                    mercenaryManager: { mercenaries: [] },
+                    monsterManager: { monsters: this.currentUnits?.filter(u => u !== this) || [] }
+                };
+                this.movementManager.moveEntityTowards(this, action.target, context);
+            } else if (action.target) {
                 const dx = action.target.x - this.x;
                 const dy = action.target.y - this.y;
                 const dist = Math.hypot(dx, dy) || 1;
@@ -209,6 +253,9 @@ class Unit {
             if (!target.isAlive()) return;
             if (this.projectileManager && this.jobId === 'archer') {
                 this.projectileManager.create(this, target, { projectile: 'arrow', damage: this.attackPower });
+            }
+            if (this.combatCalculator) {
+                this.combatCalculator.handleAttack({ attacker: this, defender: target, skill: null });
             } else if (this.onAttack) {
                 this.onAttack({ attacker: this, defender: target, damage: this.attackPower });
             } else {
@@ -220,7 +267,9 @@ class Unit {
         } else if (action.type === 'weapon_skill' && action.target && this.attackCooldown <= 0) {
             const target = action.target;
             if (!target.isAlive()) return;
-            if (this.onAttack) {
+            if (this.combatCalculator) {
+                this.combatCalculator.handleAttack({ attacker: this, defender: target, skill: null });
+            } else if (this.onAttack) {
                 this.onAttack({ attacker: this, defender: target, damage: this.attackPower });
             } else {
                 const prevHp = target.hp;
