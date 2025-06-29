@@ -57,6 +57,14 @@ class ArenaManager {
         if (this.game.gameLoop) this.game.gameLoop.timeScale = 5;
         this.prevMapManager = this.game.mapManager;
         this.game.mapManager = new ArenaMapManager();
+        // reset camera for arena
+        if (this.game.gameState) {
+            this.game.gameState.camera = { x: 0, y: 0 };
+            this.game.gameState.zoomLevel = 1;
+        }
+        if (this.game.cameraDrag) {
+            this.game.cameraDrag.followPlayer = false;
+        }
         if (this.game.pathfindingManager) {
             this.game.pathfindingManager.mapManager = this.game.mapManager;
         }
@@ -155,7 +163,8 @@ class ArenaManager {
                     y: Math.random() * 600,
                 },
                 this.game.microItemAIManager,
-                image
+                image,
+                this.game.mapManager?.tileSize ? this.game.mapManager.tileSize / 2 : 20
             );
             unit.onAttack = ({ attacker, defender, damage }) => {
                 if (this.combatWorker) {
