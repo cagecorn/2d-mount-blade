@@ -1,5 +1,6 @@
 import { ParticleEngine } from './vfx/ParticleEngine.js';
 import { TextPopupEngine } from './vfx/TextPopupEngine.js';
+import { isImageLoaded } from '../utils/imageUtils.js';
 
 export class VFXManager {
     constructor(eventManager = null, itemManager = null) {
@@ -533,8 +534,8 @@ export class VFXManager {
             image,
             x,
             y,
-            width: options.width || image.width,
-            height: options.height || image.height,
+            width: options.width || (isImageLoaded(image) ? image.width : 0),
+            height: options.height || (isImageLoaded(image) ? image.height : 0),
             duration: options.duration || 20,
             alpha: options.alpha || 1.0,
             fade: options.fade || 0.05,
@@ -784,7 +785,7 @@ export class VFXManager {
                 const alpha = effect.life / effect.duration;
                 ctx.save();
                 ctx.globalAlpha = alpha;
-                if (effect.image) {
+                if (isImageLoaded(effect.image)) {
                     const d = currentRadius * 2;
                     ctx.drawImage(effect.image, effect.x - currentRadius, effect.y - currentRadius, d, d);
                 } else {
@@ -800,7 +801,7 @@ export class VFXManager {
                 const currentX = startPos.x + (endPos.x - startPos.x) * progress;
                 const currentY = startPos.y + (endPos.y - startPos.y) * progress;
                 const arc = Math.sin(progress * Math.PI) * popHeight;
-                if (item.image && item.image.width) {
+                if (isImageLoaded(item.image)) {
                     ctx.drawImage(item.image, currentX, currentY - arc, item.width, item.height);
                 }
             } else if (effect.type === 'eject_item') {
@@ -809,16 +810,18 @@ export class VFXManager {
                 const currentX = effect.startPos.x + Math.cos(effect.angle) * currentDist;
                 const currentY = effect.startPos.y + Math.sin(effect.angle) * currentDist;
                 const arc = Math.sin(progress * Math.PI) * effect.height;
-                if (effect.image && effect.image.width) {
+                if (isImageLoaded(effect.image)) {
                     ctx.drawImage(effect.image, currentX, currentY - arc, effect.item.width, effect.item.height);
                 }
             } else if (effect.type === 'item_use') {
-                const w = effect.image.width * effect.scale;
-                const h = effect.image.height * effect.scale;
-                ctx.save();
-                ctx.globalAlpha = effect.alpha;
-                ctx.drawImage(effect.image, effect.x - w / 2, effect.y - h / 2, w, h);
-                ctx.restore();
+                if (isImageLoaded(effect.image)) {
+                    const w = effect.image.width * effect.scale;
+                    const h = effect.image.height * effect.scale;
+                    ctx.save();
+                    ctx.globalAlpha = effect.alpha;
+                    ctx.drawImage(effect.image, effect.x - w / 2, effect.y - h / 2, w, h);
+                    ctx.restore();
+                }
             } else if (effect.type === 'glow') {
                 const { x, y, radius } = effect;
                 const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
@@ -833,25 +836,29 @@ export class VFXManager {
                 ctx.fill();
                 ctx.restore();
             } else if (effect.type === 'sprite') {
-                ctx.save();
-                ctx.globalCompositeOperation = effect.blendMode;
-                ctx.globalAlpha = effect.alpha;
-                ctx.drawImage(
-                    effect.image,
-                    effect.x - effect.width / 2,
-                    effect.y - effect.height / 2,
-                    effect.width,
-                    effect.height
-                );
-                ctx.restore();
+                if (isImageLoaded(effect.image)) {
+                    ctx.save();
+                    ctx.globalCompositeOperation = effect.blendMode;
+                    ctx.globalAlpha = effect.alpha;
+                    ctx.drawImage(
+                        effect.image,
+                        effect.x - effect.width / 2,
+                        effect.y - effect.height / 2,
+                        effect.width,
+                        effect.height
+                    );
+                    ctx.restore();
+                }
             } else if (effect.type === 'flash') {
                 const { entity } = effect;
-                ctx.save();
-                ctx.drawImage(entity.image, entity.x, entity.y, entity.width, entity.height);
-                ctx.globalCompositeOperation = 'source-atop';
-                ctx.fillStyle = effect.color;
-                ctx.fillRect(entity.x, entity.y, entity.width, entity.height);
-                ctx.restore();
+                if (isImageLoaded(entity.image)) {
+                    ctx.save();
+                    ctx.drawImage(entity.image, entity.x, entity.y, entity.width, entity.height);
+                    ctx.globalCompositeOperation = 'source-atop';
+                    ctx.fillStyle = effect.color;
+                    ctx.fillRect(entity.x, entity.y, entity.width, entity.height);
+                    ctx.restore();
+                }
             } else if (effect.type === 'armor_break') {
                 const { rect } = effect;
                 const progress = 1 - effect.life / effect.duration;
@@ -862,28 +869,30 @@ export class VFXManager {
                 const centerY = rect.y + rect.height / 2;
                 const moveAmount = progress * 20;
 
-                ctx.drawImage(
-                    effect.image,
-                    0,
-                    0,
-                    effect.image.width / 2,
-                    effect.image.height,
-                    centerX - rect.width / 2 - moveAmount,
-                    centerY - rect.height / 2,
-                    rect.width / 2,
-                    rect.height
-                );
-                ctx.drawImage(
-                    effect.image,
-                    effect.image.width / 2,
-                    0,
-                    effect.image.width / 2,
-                    effect.image.height,
-                    centerX + moveAmount,
-                    centerY - rect.height / 2,
-                    rect.width / 2,
-                    rect.height
-                );
+                if (isImageLoaded(effect.image)) {
+                    ctx.drawImage(
+                        effect.image,
+                        0,
+                        0,
+                        effect.image.width / 2,
+                        effect.image.height,
+                        centerX - rect.width / 2 - moveAmount,
+                        centerY - rect.height / 2,
+                        rect.width / 2,
+                        rect.height
+                    );
+                    ctx.drawImage(
+                        effect.image,
+                        effect.image.width / 2,
+                        0,
+                        effect.image.width / 2,
+                        effect.image.height,
+                        centerX + moveAmount,
+                        centerY - rect.height / 2,
+                        rect.width / 2,
+                        rect.height
+                    );
+                }
                 ctx.restore();
             } else if (effect.type === 'arrow_trail') {
                 const p = effect.projectile;
@@ -907,7 +916,9 @@ export class VFXManager {
                 ctx.translate(centerX, centerY);
                 ctx.globalCompositeOperation = 'lighter';
                 ctx.globalAlpha = shine;
-                ctx.drawImage(effect.image, -effect.image.width / 2, -effect.image.height / 2);
+                if (isImageLoaded(effect.image)) {
+                    ctx.drawImage(effect.image, -effect.image.width / 2, -effect.image.height / 2);
+                }
                 ctx.restore();
             }
         }

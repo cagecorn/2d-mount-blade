@@ -2,6 +2,7 @@
 
 import { MeleeAI, RangedAI, PlayerCombatAI } from './ai.js';
 import { StatManager } from './stats.js';
+import { isImageLoaded } from './utils/imageUtils.js';
 
 class Entity {
     constructor(config) {
@@ -153,7 +154,7 @@ class Entity {
         ctx.scale(this.direction || 1, 1);
         if (this.statusEffects.isTwisted) {
             this.drawTwistedAnimation(ctx);
-        } else if (this.image) {
+        } else if (isImageLoaded(this.image)) {
             ctx.drawImage(this.image, -this.width / 2, -this.height, this.width, this.height);
         }
 
@@ -181,7 +182,7 @@ class Entity {
         const flip = (phase === 1 || phase === 2) ? -1 : 1;
         ctx.scale(flip, 1);
         const scaleX = 0.5;
-        if (this.image) {
+        if (isImageLoaded(this.image)) {
             ctx.drawImage(this.image, (-this.width * scaleX) / 2, -this.height, this.width * scaleX, this.height);
         }
         ctx.restore();
@@ -411,7 +412,7 @@ export class Item {
     }
 
     render(ctx) {
-        if (this.image) {
+        if (isImageLoaded(this.image)) {
             ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
         }
     }
@@ -490,7 +491,7 @@ export class Projectile {
             ctx.globalCompositeOperation = this.blendMode;
         }
 
-        if (this.image) {
+        if (isImageLoaded(this.image)) {
             ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
             ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
             ctx.rotate(this.rotation);

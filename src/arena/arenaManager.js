@@ -145,6 +145,7 @@ class ArenaManager {
             const id = (typeof crypto !== 'undefined' && crypto.randomUUID)
                 ? crypto.randomUUID()
                 : Math.random().toString(36).slice(2);
+            const image = this.game.assets?.[jobId] || null;
             const unit = new Unit(
                 id,
                 teamName,
@@ -153,7 +154,8 @@ class ArenaManager {
                     x: xMin + Math.random() * (xMax - xMin),
                     y: Math.random() * 600,
                 },
-                this.game.microItemAIManager
+                this.game.microItemAIManager,
+                image
             );
             unit.onAttack = ({ attacker, defender, damage }) => {
                 if (this.combatWorker) {
