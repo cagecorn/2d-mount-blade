@@ -39,7 +39,6 @@ import { getMonsterLootTable } from './data/tables.js';
 import { MicroEngine } from './micro/MicroEngine.js';
 import { MicroCombatManager } from './micro/MicroCombatManager.js';
 import { ArenaEngine } from './engines/arenaEngine.js';
-import { AmusementParkEngine } from './engines/amusementParkEngine.js';
 import { MicroItemAIManager } from './managers/microItemAIManager.js';
 import { BattleManager } from './managers/battleManager.js';
 import { BattleResultManager } from './managers/battleResultManager.js';
@@ -90,7 +89,6 @@ export class Game {
         this.isPaused = false;
         this.units = [];
         this.arenaEngine = new ArenaEngine(this);
-        this.amusementParkEngine = new AmusementParkEngine(this);
         this.currentMapId = null;
     }
 
@@ -886,13 +884,6 @@ export class Game {
             };
         }
 
-        const amusementBtn = document.getElementById('enter-amusement-btn');
-        if (amusementBtn) {
-            amusementBtn.onclick = () => {
-                this.loadMap('amusement');
-            };
-        }
-
         const randomLoopBtn = document.getElementById('random-loop-btn');
         if (randomLoopBtn && this.spectatorManager) {
             randomLoopBtn.onclick = () => {
@@ -1535,13 +1526,8 @@ export class Game {
         console.log(`맵 로딩: ${mapId}`);
         if (mapId === 'arena') {
             this.arenaEngine.start();
-            this.amusementParkEngine.stop();
-        } else if (mapId === 'amusement') {
-            this.amusementParkEngine.start();
-            this.arenaEngine.stop();
         } else {
             this.arenaEngine.stop();
-            this.amusementParkEngine.stop();
         }
     }
 }
