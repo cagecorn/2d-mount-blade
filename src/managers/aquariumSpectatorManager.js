@@ -22,6 +22,7 @@ export class AquariumSpectatorManager {
             factory,
             entityManager,
             groupManager,
+            metaAIManager = null,
             mercenaryManager = null,
             monsterManager = null,
             assets = {},
@@ -38,6 +39,7 @@ export class AquariumSpectatorManager {
         this.groupManager = groupManager;
         this.mercenaryManager = mercenaryManager;
         this.monsterManager = monsterManager;
+        this.metaAIManager = metaAIManager;
         this.assets = assets;
         this.playerGroupId = playerGroupId;
         this.enemyGroupId = enemyGroupId;
@@ -104,6 +106,7 @@ export class AquariumSpectatorManager {
             enemyFormationManager: this.enemyFormationManager,
             entityManager: this.entityManager,
             groupManager: this.groupManager,
+            metaAIManager: this.metaAIManager,
             assets: this.assets,
             playerGroupId: this.playerGroupId,
             enemyGroupId: this.enemyGroupId,
