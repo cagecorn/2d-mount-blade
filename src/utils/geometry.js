@@ -11,19 +11,27 @@ export function hasLineOfSight(x0, y0, x1, y1, mapManager) {
         x0 = Math.floor(x0.x / mapManager.tileSize);
     }
 
+    if (
+        !mapManager ||
+        typeof mapManager.isWallAt !== 'function' ||
+        [x0, y0, x1, y1].some(v => typeof v !== 'number' || Number.isNaN(v))
+    ) {
+        return false;
+    }
+
     const dx = Math.abs(x1 - x0);
     const dy = -Math.abs(y1 - y0);
-    let sx = x0 < x1 ? 1 : -1;
-    let sy = y0 < y1 ? 1 : -1;
+    const sx = x0 < x1 ? 1 : -1;
+    const sy = y0 < y1 ? 1 : -1;
     let err = dx + dy;
+    const maxSteps = dx + Math.abs(dy) + 1;
 
-    while (true) {
-        if (x0 === x1 && y0 === y1) break;
-        // 시야를 가로막는 벽이 있다면 false 반환
+    for (let step = 0; step < maxSteps; step++) {
+        if (x0 === x1 && y0 === y1) return true;
         if (mapManager.isWallAt(x0 * mapManager.tileSize, y0 * mapManager.tileSize)) {
             return false;
         }
-        let e2 = 2 * err;
+        const e2 = 2 * err;
         if (e2 >= dy) {
             err += dy;
             x0 += sx;
@@ -33,7 +41,8 @@ export function hasLineOfSight(x0, y0, x1, y1, mapManager) {
             y0 += sy;
         }
     }
-    return true;
+
+    return false;
 }
 
 // 두 엔티티 간의 중심 거리 계산
