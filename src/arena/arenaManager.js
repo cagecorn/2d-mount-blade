@@ -109,25 +109,29 @@ class ArenaManager {
         }
         this.spawnRandomTeam('A', 12, 100, 400);
         this.spawnRandomTeam('B', 12, 600, 900);
-        if (this.game.arenaTensorFlowManager) {
-            this.game.arenaTensorFlowManager.assignControllers(this.game.units);
-        }
-        if (this.game?.eventManager) {
-            const snapshot = this.game.units.map(u => ({
-                id: u.id,
-                team: u.team,
-                hp: u.hp,
-                attackPower: u.attackPower,
-                defense: u.defense,
-            }));
-            this.game.eventManager.publish('arena_round_start', {
-                round: this.roundCount,
-                units: snapshot,
-            });
-        }
-        if (this.combatWorker) {
-            this.combatWorker.postMessage({ type: 'init', data: this.game.units.map(u => ({ id: u.id, hp: u.hp })) });
-        }
+
+        // requestAnimationFrame을 사용하여 유닛 위치 업데이트 후 컨트롤러 할당
+        requestAnimationFrame(() => {
+            if (this.game.arenaTensorFlowManager) {
+                this.game.arenaTensorFlowManager.assignControllers(this.game.units);
+            }
+            if (this.game?.eventManager) {
+                const snapshot = this.game.units.map(u => ({
+                    id: u.id,
+                    team: u.team,
+                    hp: u.hp,
+                    attackPower: u.attackPower,
+                    defense: u.defense,
+                }));
+                this.game.eventManager.publish('arena_round_start', {
+                    round: this.roundCount,
+                    units: snapshot,
+                });
+            }
+            if (this.combatWorker) {
+                this.combatWorker.postMessage({ type: 'init', data: this.game.units.map(u => ({ id: u.id, hp: u.hp })) });
+            }
+        });
     }
 
     spawnRandomTeam(teamName, count, xMin, xMax) {
