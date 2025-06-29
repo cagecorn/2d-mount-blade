@@ -67,6 +67,9 @@ class ArenaManager {
             this.game.movementManager.mapManager = this.game.mapManager;
         }
         this.game.clearAllUnits();
+        if (this.game.uiManager?.hidePanel) {
+            this.game.uiManager.hidePanel('squad-management-ui');
+        }
         console.log("\u2694\ufe0f \uc544\ub808\ub098\uc5d0 \uc624\uc2e0 \uac83\uc744 \ud658\uc601\ud569\ub2c8\ub2e4! AI \uc790\ub3d9 \ub300\ub825\uc744 \uc2dc\uc791\ud569\ub2c8\ub2e4.");
         this.game.showArenaMap();
         this.game.gameState.currentState = 'ARENA';

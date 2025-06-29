@@ -888,6 +888,7 @@ export class Game {
 
         // 월드맵과 전투 상태 전환 이벤트 처리
         eventManager.subscribe('start_combat', (data) => {
+            if (gameState.currentState !== 'WORLD') return;
             console.log(`전투 준비! 상대 부대 규모: ${data.monsterParty.troopSize}`);
             gameState.currentState = 'FORMATION_SETUP';
             this.pendingMonsterParty = data.monsterParty;
