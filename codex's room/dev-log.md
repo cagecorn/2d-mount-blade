@@ -87,3 +87,6 @@
 - `arena-simulation.mjs`에 양자 요동(공격력 ±10% 변동) 기능 추가.
 - `--count`와 `--quantum` 옵션으로 여러 번 실행 가능하도록 개선.
 - 10회 시뮬레이션 결과를 `arena-quantum-results.md`에 기록.
+
+## 세션 20
+- 아레나 전투 로직 통합을 위한 단계별 계획(arena-integration-plan.md) 작성.
