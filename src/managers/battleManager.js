@@ -6,11 +6,15 @@ import { EventManager } from './eventManager.js';
 export class BattleManager {
     constructor(game, eventManager, groupManager, entityManager, factory) {
         this.game = game;
-        if (!eventManager || typeof eventManager.subscribe !== 'function') {
+        const valid = (em) => em && typeof em.subscribe === 'function' && typeof em.publish === 'function';
+        if (valid(eventManager)) {
+            this.eventManager = eventManager;
+        } else if (valid(game?.eventManager)) {
+            console.warn('[BattleManager] Provided eventManager is invalid; falling back to game.eventManager');
+            this.eventManager = game.eventManager;
+        } else {
             console.warn('[BattleManager] Provided eventManager is invalid; using a new instance');
             this.eventManager = new EventManager();
-        } else {
-            this.eventManager = eventManager;
         }
         this.groupManager = groupManager;
         this.entityManager = entityManager;
