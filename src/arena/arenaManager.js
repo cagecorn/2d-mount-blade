@@ -6,6 +6,7 @@ import { ITEMS } from '../data/items.js';
 import { SKILLS } from '../data/skills.js';
 import { WebGPUArenaRenderer } from '../renderers/webgpuArenaRenderer.js';
 import { ArenaMapManager } from '../arenaMap.js';
+import { ProjectileManager } from '../managers/projectileManager.js';
 
 class ArenaManager {
     constructor(game) {
@@ -14,6 +15,7 @@ class ArenaManager {
         this.roundCount = 0;
         this.webgpuRenderer = new WebGPUArenaRenderer(this.game.battleCanvas);
         this.webgpuRenderer.init();
+        this.projectileManager = null;
         try {
             this.combatWorker = new Worker('src/workers/combatWorker.js', { type: 'module' });
         } catch (e) {
@@ -75,6 +77,12 @@ class ArenaManager {
         if (this.game.movementManager) {
             this.game.movementManager.mapManager = this.game.mapManager;
         }
+        this.projectileManager = new ProjectileManager(
+            this.game.eventManager,
+            this.game.assets,
+            this.game.vfxManager,
+            this.game.knockbackEngine
+        );
         this.game.clearAllUnits();
         if (this.game.uiManager?.hidePanel) {
             this.game.uiManager.hidePanel('squad-management-ui');
@@ -100,6 +108,7 @@ class ArenaManager {
             }
             this.prevMapManager = null;
         }
+        this.projectileManager = null;
         this.game.showWorldMap();
         console.log(`\ud83d\udc4b \uc544\ub808\ub098\ub97c \ub5a0\ub0a0\uae4c. \ucd1d ${this.roundCount} \ub77c\uc6b4\ub4dc\uc758 \ub370\uc774\ud130\uac00 \uae30\ub85d\ub418\uc5c8\uc2b5\ub2c8\ub2e4.`);
     }
@@ -155,7 +164,7 @@ class ArenaManager {
         const skillKeys = Object.keys(SKILLS);
         const units = this.game.units;
         const tileSize = this.game.mapManager?.tileSize || 40;
-        const spacing = tileSize * 1.5; // 최소 간격 확보
+        const spacing = tileSize; // 패치 전보다 넓고 최근 패치보다 좁은 간격
 
         for (let i = 0; i < count; i++) {
             const jobId = jobKeys[Math.floor(Math.random() * jobKeys.length)];
@@ -187,7 +196,8 @@ class ArenaManager {
                 this.game.microItemAIManager,
                 image,
                 this.game.mapManager?.tileSize ? this.game.mapManager.tileSize / 2 : 20,
-                [skillId]
+                [skillId],
+                this.projectileManager
             );
             unit.skillCooldowns[skillId] = 0;
             unit.onAttack = ({ attacker, defender, damage }) => {
@@ -226,6 +236,9 @@ class ArenaManager {
 
         for (const unit of this.game.units) {
             unit.update(deltaTime, this.game.units);
+        }
+        if (this.projectileManager) {
+            this.projectileManager.update(this.game.units);
         }
         if (this.combatWorker) {
             this.combatWorker.postMessage({ type: 'updateUnits', data: this.game.units.map(u => ({ id: u.id, hp: u.hp })) });
@@ -271,6 +284,9 @@ class ArenaManager {
         mapManager.render(contexts.mapBase, contexts.mapDecor, assets);
         for (const unit of this.game.units) {
             unit.render(contexts.entity);
+        }
+        if (this.projectileManager) {
+            this.projectileManager.render(contexts.vfx || contexts.entity);
         }
 
         for (const key in contexts) {
