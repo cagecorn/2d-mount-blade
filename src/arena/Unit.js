@@ -1,14 +1,23 @@
 import { JOBS } from '../data/jobs.js';
 import { StatManager } from '../stats.js';
+import { isImageLoaded } from '../utils/imageUtils.js';
 
 class Unit {
-    constructor(id, team, jobId, position = { x: 0, y: 0 }, microItemAIManager = null) {
+    constructor(
+        id,
+        team,
+        jobId,
+        position = { x: 0, y: 0 },
+        microItemAIManager = null,
+        image = null
+    ) {
         this.id = id;
         this.team = team;
         this.jobId = jobId;
         this.x = position.x;
         this.y = position.y;
         this.radius = 20;
+        this.image = image;
 
         this.kills = 0;
         this.equipment = {};
@@ -131,10 +140,20 @@ class Unit {
 
     render(ctx) {
         ctx.save();
-        ctx.fillStyle = this.team === 'A' ? 'red' : 'blue';
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fill();
+        if (isImageLoaded(this.image)) {
+            ctx.drawImage(
+                this.image,
+                this.x - this.radius,
+                this.y - this.radius,
+                this.radius * 2,
+                this.radius * 2
+            );
+        } else {
+            ctx.fillStyle = this.team === 'A' ? 'red' : 'blue';
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fill();
+        }
         ctx.fillStyle = 'white';
         ctx.font = '12px Arial';
         ctx.textAlign = 'center';
