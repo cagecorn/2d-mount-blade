@@ -13,18 +13,20 @@ export class ArenaTensorFlowManager {
         this.controllers = [];
         const teams = {};
         for (const u of units) {
-            if (!teams[u.team]) teams[u.team] = u;
+            if (!teams[u.team]) teams[u.team] = [];
+            if (teams[u.team].length < 3) teams[u.team].push(u);
         }
         for (const team in teams) {
-            const unit = teams[team];
-            const controller = new TensorFlowController(tf);
-            unit.tfController = controller;
-            this.controllers.push({ unit, controller });
-            if (this.eventManager) {
-                this.eventManager.publish('arena_log', {
-                    eventType: 'tf_control_assigned',
-                    message: `TensorFlow가 ${unit.id}을(를) 조종합니다`
-                });
+            for (const unit of teams[team]) {
+                const controller = new TensorFlowController(tf);
+                unit.tfController = controller;
+                this.controllers.push({ unit, controller });
+                if (this.eventManager) {
+                    this.eventManager.publish('arena_log', {
+                        eventType: 'tf_control_assigned',
+                        message: `TensorFlow가 ${unit.id}을(를) 조종합니다`
+                    });
+                }
             }
         }
     }

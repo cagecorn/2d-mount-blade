@@ -636,3 +636,13 @@ body, html {
     padding: 6px 10px;
     z-index: 1000;
 }
+
+#arena-tf-reward {
+    position: absolute;
+    bottom: 40px;
+    left: 10px;
+    color: white;
+    background: rgba(0,0,0,0.6);
+    padding: 6px 10px;
+    z-index: 1000;
+}
