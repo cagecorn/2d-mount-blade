@@ -1,5 +1,6 @@
 import { SKILLS } from '../../src/data/skills.js';
 import { ITEMS } from '../../src/data/items.js';
+import { JOBS } from '../../src/data/jobs.js';
 import { describe, test, assert } from '../helpers.js';
 
 describe('Data Integrity', () => {
@@ -23,6 +24,13 @@ describe('Data Integrity', () => {
         }
         for (const item of Object.values(ITEMS)) {
             assert.ok(Array.isArray(item.tags) && item.tags.length > 0);
+        }
+    });
+
+    test('모든 직업은 이름과 스탯을 가진다', () => {
+        for (const job of Object.values(JOBS)) {
+            assert.strictEqual(typeof job.name, 'string');
+            assert.ok(job.stats && typeof job.stats.attackPower === 'number');
         }
     });
 });
