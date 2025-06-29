@@ -13,7 +13,8 @@ class Unit {
         microItemAIManager = null,
         image = null,
         radius = 20,
-        skills = []
+        skills = [],
+        projectileManager = null
     ) {
         this.id = id;
         this.team = team;
@@ -38,6 +39,7 @@ class Unit {
         this.attackCooldown = 0;
         this.onAttack = null; // optional callback for attack handling
         this.tfController = null;
+        this.projectileManager = projectileManager;
         this.microItemAIManager = microItemAIManager;
         this.skillCooldowns = {};
         this.skills = skills;
@@ -205,7 +207,9 @@ class Unit {
         } else if (action.type === 'attack' && action.target && this.attackCooldown <= 0) {
             const target = action.target;
             if (!target.isAlive()) return;
-            if (this.onAttack) {
+            if (this.projectileManager && this.jobId === 'archer') {
+                this.projectileManager.create(this, target, { projectile: 'arrow', damage: this.attackPower });
+            } else if (this.onAttack) {
                 this.onAttack({ attacker: this, defender: target, damage: this.attackPower });
             } else {
                 const prevHp = target.hp;
@@ -233,9 +237,13 @@ class Unit {
             this.textTimer = 60;
             const target = action.target || this;
             if (skill.tags?.includes('attack') && target) {
-                const prevHp = target.hp;
-                target.hp -= skill.damage || this.attackPower;
-                if (prevHp > 0 && target.hp <= 0) this.kills++;
+                if (skill.projectile && this.projectileManager) {
+                    this.projectileManager.create(this, target, skill);
+                } else {
+                    const prevHp = target.hp;
+                    target.hp -= skill.damage || this.attackPower;
+                    if (prevHp > 0 && target.hp <= 0) this.kills++;
+                }
             } else if (skill.id === 'heal') {
                 const amount = skill.healAmount || 10;
                 target.hp = Math.min(target.hp + amount, target.stats?.get?.('maxHp') || target.hp + amount);
