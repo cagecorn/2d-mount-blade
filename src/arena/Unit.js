@@ -2,6 +2,7 @@ import { JOBS } from '../data/jobs.js';
 import { SKILLS } from '../data/skills.js';
 import { StatManager } from '../stats.js';
 import { isImageLoaded } from '../utils/imageUtils.js';
+import { MeleeAI, RangedAI, HealerAI, WizardAI } from '../ai.js';
 
 class Unit {
     constructor(
@@ -43,6 +44,31 @@ class Unit {
         this.mp = 100;
         this.displayText = '';
         this.textTimer = 0;
+        this.tileSize = this.radius * 2;
+        this.roleAI = null;
+        this.assignRoleAI();
+    }
+
+    assignRoleAI() {
+        const skillTags = this.skills
+            .map(id => SKILLS[id]?.tags || [])
+            .flat();
+
+        if (this.jobId === 'wizard') {
+            this.roleAI = new WizardAI();
+        } else if (
+            this.jobId === 'healer' ||
+            skillTags.includes('healing')
+        ) {
+            this.roleAI = new HealerAI();
+        } else if (
+            this.jobId === 'archer' ||
+            skillTags.includes('ranged')
+        ) {
+            this.roleAI = new RangedAI();
+        } else {
+            this.roleAI = new MeleeAI();
+        }
     }
 
     getSkillAction(enemies) {
@@ -93,6 +119,13 @@ class Unit {
 
         const enemies = units.filter(u => u.team !== this.team && u.isAlive());
         if (enemies.length === 0) return;
+        const allies = units.filter(u => u.team === this.team && u.isAlive() && u !== this);
+        const context = {
+            player: allies[0] || this,
+            allies,
+            enemies,
+            mapManager: { tileSize: this.tileSize, isWallAt: () => false },
+        };
 
         const weapon = this.equipment?.weapon;
         let weaponAction = null;
@@ -103,12 +136,23 @@ class Unit {
             }
         }
 
+        let aiAction = null;
+        if (this.roleAI && typeof this.roleAI.decideAction === 'function') {
+            aiAction = this.roleAI.decideAction(this, context);
+        }
+
         if (this.tfController) {
-            const action = this.tfController.decideAction(this, units, weaponAction);
+            const hint = aiAction || weaponAction || this.getSkillAction(enemies);
+            const action = this.tfController.decideAction(this, units, hint);
             if (action && action.type !== 'idle') {
                 this.executeAction(action, deltaTime);
                 return;
             }
+        }
+
+        if (aiAction && aiAction.type !== 'idle') {
+            this.executeAction(aiAction, deltaTime);
+            return;
         }
 
         const skillAction = this.getSkillAction(enemies);
