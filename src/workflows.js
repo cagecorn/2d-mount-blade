@@ -139,6 +139,7 @@ export function aquariumSpectatorWorkflow(context) {
 
     const playerUnits = Array.from({ length: 12 }, () => makeMerc(playerGroupId));
     const enemyUnits = Array.from({ length: 12 }, () => makeMerc(enemyGroupId));
+    if (entityManager?.mercenaries) entityManager.mercenaries.push(...enemyUnits);
 
     const allMap = {};
     [...playerUnits, ...enemyUnits].forEach(m => { allMap[m.id] = m; });
