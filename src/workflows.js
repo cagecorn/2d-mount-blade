@@ -1,4 +1,5 @@
 // src/workflows.js
+import { JOBS } from './data/jobs.js';
 
 // === 몬스터 사망 워크플로우 ('코드 1') ===
 export function monsterDeathWorkflow(context) {
@@ -100,4 +101,65 @@ export function armorBreakWorkflow(context) {
     // MicroCombatManager already emitted 'armor_broken' when the armor's
     // durability reached zero. Emitting it again here triggered a recursive
     // workflow with incomplete data, so avoid re-publishing the event.
+}
+
+// === 수족관 관람 워크플로우 ===
+// 12명씩 양 진영을 무작위 용병으로 채우고 임의의 위치에 배치한다
+export function aquariumSpectatorWorkflow(context) {
+    const {
+        factory,
+        mapManager,
+        formationManager,
+        enemyFormationManager,
+        entityManager,
+        groupManager,
+        assets = {},
+        playerGroupId = 'player_party',
+        enemyGroupId = 'dungeon_monsters',
+        eventManager
+    } = context;
+
+    const jobKeys = Object.keys(JOBS);
+
+    const makeMerc = (groupId) => {
+        const jobId = jobKeys[Math.floor(Math.random() * jobKeys.length)];
+        const pos = mapManager.getRandomFloorPosition() || { x: 0, y: 0 };
+        const merc = factory.create('mercenary', {
+            x: pos.x,
+            y: pos.y,
+            tileSize: mapManager.tileSize,
+            groupId,
+            jobId,
+            image: assets[jobId]
+        });
+        entityManager?.addEntity(merc);
+        groupManager?.addMember(merc);
+        return merc;
+    };
+
+    const playerUnits = Array.from({ length: 12 }, () => makeMerc(playerGroupId));
+    const enemyUnits = Array.from({ length: 12 }, () => makeMerc(enemyGroupId));
+
+    const allMap = {};
+    [...playerUnits, ...enemyUnits].forEach(m => { allMap[m.id] = m; });
+
+    playerUnits.forEach(u => {
+        const slot = Math.floor(Math.random() * formationManager.slots.length);
+        formationManager.assign(slot, u.id);
+    });
+    enemyUnits.forEach(u => {
+        const slot = Math.floor(Math.random() * enemyFormationManager.slots.length);
+        enemyFormationManager.assign(slot, u.id);
+    });
+
+    const friendlyOrigin = mapManager.getPlayerStartingPosition();
+    const enemyOrigin = {
+        x: (mapManager.width - 4) * mapManager.tileSize,
+        y: (mapManager.height / 2) * mapManager.tileSize
+    };
+    formationManager.apply(friendlyOrigin, allMap);
+    enemyFormationManager.apply(enemyOrigin, allMap);
+
+    eventManager?.publish('aquarium_spectator_ready', { playerUnits, enemyUnits });
+    return { playerUnits, enemyUnits };
 }

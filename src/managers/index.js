@@ -32,6 +32,7 @@ import { EnemyFormationManager } from './enemyFormationManager.js';
 import { MetaAIManager } from './metaAIManager.js';
 import { WorldMapAIManager } from './worldMapAIManager.js';
 import { AIManager } from './AIManager.js';
+import { AquariumSpectatorManager } from './aquariumSpectatorManager.js';
 import { SynergyManager } from '../micro/SynergyManager.js';
 import { SpeechBubbleManager } from './speechBubbleManager.js';
 import { AuraManager } from './AuraManager.js';
@@ -113,4 +114,5 @@ export {
     ArenaUIManager,
     ArenaTensorFlowManager,
     ArenaRewardManager,
+    AquariumSpectatorManager,
 };
