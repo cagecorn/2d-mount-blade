@@ -2,6 +2,8 @@ export class ArenaCombatLogManager {
     constructor(eventManager) {
         this.logs = [];
         this.logElement = document.getElementById('arena-log-content');
+        this.dirty = false;
+        this._scheduleRender = this._scheduleRender.bind(this);
         eventManager.subscribe('arena_log', data => {
             if (data && data.message) this.add(data.message);
         });
@@ -10,11 +12,21 @@ export class ArenaCombatLogManager {
     add(message) {
         this.logs.push(message);
         if (this.logs.length > 30) this.logs.shift();
-        this.render();
+        if (!this.dirty) {
+            this.dirty = true;
+            if (typeof window !== 'undefined') {
+                requestAnimationFrame(this._scheduleRender);
+            }
+        }
     }
 
     clear() {
         this.logs = [];
+        this.render();
+    }
+
+    _scheduleRender() {
+        this.dirty = false;
         this.render();
     }
 
