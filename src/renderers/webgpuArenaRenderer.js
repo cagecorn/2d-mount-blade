@@ -17,6 +17,10 @@ export class WebGPUArenaRenderer {
         }
         this.device = await adapter.requestDevice();
         this.context = this.canvas.getContext('webgpu');
+        if (!this.context) {
+            console.warn('[WebGPUArenaRenderer] Failed to acquire WebGPU context');
+            return;
+        }
         const format = navigator.gpu.getPreferredCanvasFormat();
         this.context.configure({ device: this.device, format });
     }
