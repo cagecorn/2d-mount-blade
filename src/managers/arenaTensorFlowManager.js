@@ -5,10 +5,14 @@ export class ArenaTensorFlowManager {
     constructor(eventManager) {
         this.eventManager = eventManager;
         this.controllers = [];
+        this.tfInitialized = false; // TensorFlow init flag
     }
 
     async assignControllers(units = []) {
-        await tfLoader.init();
+        if (!this.tfInitialized) {
+            await tfLoader.init();
+            this.tfInitialized = true;
+        }
         const tf = tfLoader.getTf();
         this.controllers = [];
         const teams = {};
