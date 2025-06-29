@@ -255,6 +255,17 @@ body, html {
     opacity: 0.7;
 }
 
+#tf-placeholder-panel {
+    bottom: 20px;
+    right: 20px;
+    width: 400px;
+    height: 150px;
+    background: rgba(0, 0, 0, 0.5);
+    color: #fff;
+    padding: 10px;
+    overflow-y: auto;
+}
+
 .log-title {
     font-weight: bold;
     color: #ffc107;

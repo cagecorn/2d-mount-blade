@@ -882,6 +882,13 @@ export class Game {
             };
         }
 
+        const randomLoopBtn = document.getElementById('random-loop-btn');
+        if (randomLoopBtn && this.spectatorManager) {
+            randomLoopBtn.onclick = () => {
+                this.spectatorManager.startNewBattle();
+            };
+        }
+
         // === 메뉴 버튼 이벤트 리스너 수정 ===
         const playerInfoBtn = document.querySelector('.menu-btn[data-panel-id="character-sheet-panel"]');
         if (playerInfoBtn) {
