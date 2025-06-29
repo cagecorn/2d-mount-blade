@@ -118,8 +118,11 @@ class ArenaManager {
             });
         }
         // 1. 양 팀 유닛을 먼저 생성합니다.
-        this.spawnRandomTeam('A', 12, 100, 400);
-        this.spawnRandomTeam('B', 12, 600, 900);
+        const mapWidth = this.game.mapManager.width * this.game.mapManager.tileSize;
+        const buffer = this.game.mapManager.tileSize * 2;
+        const mid = mapWidth / 2;
+        this.spawnRandomTeam('A', 12, buffer, mid - buffer);
+        this.spawnRandomTeam('B', 12, mid + buffer, mapWidth - buffer);
 
         // ✅ 2. requestAnimationFrame을 제거하고 컨트롤러를 즉시 할당합니다.
         if (this.game.arenaTensorFlowManager) {
@@ -150,6 +153,10 @@ class ArenaManager {
     spawnRandomTeam(teamName, count, xMin, xMax) {
         const jobKeys = Object.keys(JOBS).filter(j => j !== 'fire_god');
         const skillKeys = Object.keys(SKILLS);
+        const units = this.game.units;
+        const tileSize = this.game.mapManager?.tileSize || 40;
+        const spacing = tileSize * 1.5; // 최소 간격 확보
+
         for (let i = 0; i < count; i++) {
             const jobId = jobKeys[Math.floor(Math.random() * jobKeys.length)];
             const id = (typeof crypto !== 'undefined' && crypto.randomUUID)
@@ -157,14 +164,26 @@ class ArenaManager {
                 : Math.random().toString(36).slice(2);
             const image = this.game.assets?.[jobId] || null;
             const skillId = skillKeys[Math.floor(Math.random() * skillKeys.length)];
+
+            let x, y, attempts = 0;
+            const maxAttempts = 30;
+            do {
+                x = xMin + Math.random() * (xMax - xMin);
+                const mapHeight = this.game.mapManager.height * this.game.mapManager.tileSize;
+                const yMin = spacing;
+                const yMax = mapHeight - spacing;
+                y = yMin + Math.random() * (yMax - yMin);
+                attempts++;
+            } while (
+                attempts < maxAttempts &&
+                units.some(u => Math.hypot(u.x - x, u.y - y) < spacing)
+            );
+
             const unit = new Unit(
                 id,
                 teamName,
                 jobId,
-                {
-                    x: xMin + Math.random() * (xMax - xMin),
-                    y: Math.random() * 600,
-                },
+                { x, y },
                 this.game.microItemAIManager,
                 image,
                 this.game.mapManager?.tileSize ? this.game.mapManager.tileSize / 2 : 20,
@@ -239,9 +258,24 @@ class ArenaManager {
             this.webgpuRenderer.render(this.game.units);
             return;
         }
+        const { camera, zoomLevel } = this.game.gameState;
+        for (const key in contexts) {
+            const ctx = contexts[key];
+            if (ctx.save) {
+                ctx.save();
+                ctx.scale(zoomLevel, zoomLevel);
+                ctx.translate(-camera.x, -camera.y);
+            }
+        }
+
         mapManager.render(contexts.mapBase, contexts.mapDecor, assets);
         for (const unit of this.game.units) {
             unit.render(contexts.entity);
+        }
+
+        for (const key in contexts) {
+            const ctx = contexts[key];
+            if (ctx.restore) ctx.restore();
         }
     }
 
