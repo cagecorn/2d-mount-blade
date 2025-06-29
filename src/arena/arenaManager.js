@@ -113,7 +113,7 @@ class ArenaManager {
         console.log(`\ud83d\udc4b \uc544\ub808\ub098\ub97c \ub5a0\ub0a0\uae4c. \ucd1d ${this.roundCount} \ub77c\uc6b4\ub4dc\uc758 \ub370\uc774\ud130\uac00 \uae30\ub85d\ub418\uc5c8\uc2b5\ub2c8\ub2e4.`);
     }
 
-    nextRound() {
+    async nextRound() {
         if (!this.isActive) return;
         this.roundCount++;
         console.log(`======== \ub77c\uc6b4\ub4dc ${this.roundCount} \uc2dc\uc791 ========`);
@@ -135,8 +135,13 @@ class ArenaManager {
 
         // ✅ 2. requestAnimationFrame을 제거하고 컨트롤러를 즉시 할당합니다.
         if (this.game.arenaTensorFlowManager) {
-            this.game.arenaTensorFlowManager.assignControllers(this.game.units);
-            console.log("유닛들에게 AI 컨트롤러를 직접 할당했습니다.");
+            try {
+                console.log("TensorFlow 컨트롤러 할당을 시작합니다...");
+                await this.game.arenaTensorFlowManager.assignControllers(this.game.units);
+                console.log("유닛들에게 AI 컨트롤러를 직접 할당했습니다.");
+            } catch (error) {
+                console.error("TensorFlow 컨트롤러 할당 중 오류 발생:", error);
+            }
         }
 
         // 3. 나머지 라운드 시작 로직을 실행합니다.
