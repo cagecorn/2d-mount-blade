@@ -147,5 +147,10 @@ export class ParticleEngine {
             p.render(ctx);
         }
     }
+
+    clear() {
+        this.emitters.length = 0;
+        this.particles.length = 0;
+    }
 }
 

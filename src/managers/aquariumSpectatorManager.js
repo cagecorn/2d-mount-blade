@@ -25,6 +25,8 @@ export class AquariumSpectatorManager {
             metaAIManager = null,
             mercenaryManager = null,
             monsterManager = null,
+            projectileManager = null,
+            vfxManager = null,
             assets = {},
             playerGroupId = 'player_party',
             enemyGroupId = 'dungeon_monsters',
@@ -40,6 +42,8 @@ export class AquariumSpectatorManager {
         this.mercenaryManager = mercenaryManager;
         this.monsterManager = monsterManager;
         this.metaAIManager = metaAIManager;
+        this.projectileManager = projectileManager;
+        this.vfxManager = vfxManager;
         this.assets = assets;
         this.playerGroupId = playerGroupId;
         this.enemyGroupId = enemyGroupId;
@@ -89,6 +93,8 @@ export class AquariumSpectatorManager {
             clearInterval(this._interval);
             this._interval = null;
         }
+        this.vfxManager?.clear?.();
+        this.projectileManager?.clear?.();
         this.groupManager?.removeGroup(this.playerGroupId);
         this.groupManager?.removeGroup(this.enemyGroupId);
         if (this.entityManager?.entities) {
