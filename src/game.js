@@ -489,16 +489,56 @@ export class Game {
         }
         const monsterEntityMap = {};
         monsterSquad.forEach(m => { monsterEntityMap[m.id] = m; });
+
+        // === 적대 용병 부대 생성 ===
+        const hostileMercGroup = this.metaAIManager.createGroup('hostile_mercenaries', STRATEGY.AGGRESSIVE);
+        const mercSquad = [];
+        const mercCount = 12;
+        const jobIds = Object.keys(JOBS);
+        for (let i = 0; i < mercCount; i++) {
+            const jobId = jobIds[Math.floor(Math.random() * jobIds.length)];
+            const merc = this.factory.create('mercenary', {
+                jobId,
+                x: 0,
+                y: 0,
+                tileSize: this.mapManager.tileSize,
+                groupId: hostileMercGroup.id,
+                image: assets[jobId] || assets.mercenary,
+            });
+            merc.equipmentRenderManager = this.equipmentRenderManager;
+            const consumable = this.itemFactory.create('potion', 0, 0, this.mapManager.tileSize);
+            if (consumable) merc.consumables.push(consumable);
+            this.monsterManager.addMonster(merc);
+            this.groupManager.addMember(merc);
+            mercSquad.push(merc);
+        }
+
+        const mercEntityMap = {};
+        mercSquad.forEach(m => { mercEntityMap[m.id] = m; });
+
+        const enemyEntityMap = { ...monsterEntityMap, ...mercEntityMap };
+
         monsterSquad.forEach((monster, idx) => {
             if (idx < 25) {
                 enemyFormationManager.assign(idx, monster.id);
             }
         });
-        enemyFormationManager.apply(enemyFormationOrigin, monsterEntityMap);
+        mercSquad.forEach((merc, idx) => {
+            const slotIndex = monsterSquad.length + idx;
+            if (slotIndex < 25) {
+                enemyFormationManager.assign(slotIndex, merc.id);
+            }
+        });
+        enemyFormationManager.apply(enemyFormationOrigin, enemyEntityMap);
 
-        // 월드맵에 첫 번째 몬스터를 지휘관으로 배치
+        // 월드맵에 첫 번째 몬스터와 적대 용병 지휘관 배치
         if (this.worldEngine && monsterSquad[0]) {
+            monsterSquad[0].troopSize = monsterSquad.length;
             this.worldEngine.addMonster(monsterSquad[0], 3, 2);
+        }
+        if (this.worldEngine && mercSquad[0]) {
+            mercSquad[0].troopSize = mercSquad.length;
+            this.worldEngine.addMonster(mercSquad[0], 6, 6);
         }
 
         // === 2. 플레이어 생성 ===

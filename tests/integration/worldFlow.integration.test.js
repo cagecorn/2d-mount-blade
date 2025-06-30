@@ -10,7 +10,7 @@ import { EntityManager } from '../../src/managers/entityManager.js';
 // 통합 시나리오: 월드맵 -> 적군 접근 -> 충돌로 전투 시작 -> 타이머 종료 -> 결과 반영
 
 describe('World-Battle Flow Integration', () => {
-  test('enemy approaches, battle occurs and results reflect on world map', () => {
+  test('player initiates combat with stationary enemy and results reflect on world map', () => {
     const eventManager = new EventManager();
 
     const entityManager = new EntityManager(eventManager);
@@ -63,12 +63,21 @@ describe('World-Battle Flow Integration', () => {
       microEngine.update(31); // 타이머 만료로 전투 종료
     });
 
-    // --- 적의 턴: 플레이어에게 두 칸 다가옴 ---
+    // --- 적의 턴: 적은 이동하지 않음 ---
     world.turnManager.currentTurn = 'ENEMY';
     world.update(1);
-    assert.strictEqual(enemyCommander.tileX, 2);
+    assert.strictEqual(enemyCommander.tileX, 4);
 
-    // --- 플레이어 턴: 이동하여 충돌 유발 ---
+    // --- 플레이어 턴: 한 칸 이동 ---
+    game.inputHandler.keysPressed['ArrowRight'] = true;
+    world.update(1);
+    game.inputHandler.keysPressed = {};
+    assert.strictEqual(playerCommander.tileX, 3);
+
+    // --- 적의 턴: 여전히 이동하지 않음 ---
+    world.update(1);
+
+    // --- 플레이어 턴: 다시 이동하여 충돌 유발 ---
     game.inputHandler.keysPressed['ArrowRight'] = true;
     world.update(1);
     game.inputHandler.keysPressed = {};
