@@ -4,7 +4,6 @@ import { StatManager } from '../stats.js';
 import { isImageLoaded } from '../utils/imageUtils.js';
 import { MeleeAI, RangedAI, HealerAI, WizardAI } from '../ai.js';
 import { DecisionEngine } from '../ai/engines/DecisionEngine.js';
-import { fluctuationEngine } from '../managers/ai/FluctuationEngine.js';
 
 class Unit {
     constructor(
@@ -224,16 +223,6 @@ class Unit {
                 }
                 if (this.decisionEngine.mistakeEngine?.getFinalAction) {
                     action = this.decisionEngine.mistakeEngine.getFinalAction(this, action, context, mbtiEngine);
-                }
-                if (fluctuationEngine.shouldInject(0.05)) {
-                    const types = ['TARGET_CHANGE', 'MOVE_TO_RANDOM_POS'];
-                    const rand = types[Math.floor(Math.random() * types.length)];
-                    action = fluctuationEngine.injectAndLog({
-                        unit: this,
-                        originalDecision: action,
-                        fluctuationType: rand,
-                        allUnits: units,
-                    });
                 }
             }
             this.executeAction(action, deltaTime);

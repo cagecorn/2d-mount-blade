@@ -46,9 +46,6 @@ class FluctuationEngine {
             originalDecision,
             injectedDecision: newDecision,
         });
-        if (typeof console !== 'undefined') {
-            console.log(`\uD83C\uDF00 Fluctuation! [${unit.name}] does [${fluctuationType}]`);
-        }
         return newDecision;
     }
 
