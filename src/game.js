@@ -973,32 +973,16 @@ export class Game {
             this.pendingMonsterParty = data.monsterParty;
             gameState.currentState = 'COMBAT';
             this.worldEngine.monsters.forEach(m => m.isActive = false);
-
-            // 전투를 실제로 시작하도록 이벤트를 발행한다.
-            const defender = data.monsterParty.entity || data.monsterParty;
-            this.eventManager.publish('combat_started', {
-                attacker: gameState.player,
-                defender
-            });
         });
 
         eventManager.subscribe('end_combat', (result) => {
             console.log(`전투 종료! 결과: ${result.outcome}`);
             gameState.currentState = 'WORLD';
             if (result.outcome === 'victory') {
-                if (this.pendingMonsterParty) {
-                    const defeatedId = this.pendingMonsterParty.id;
-                    this.worldEngine.monsters = this.worldEngine.monsters.filter(m => m.id !== defeatedId);
-                    this.pendingMonsterParty = null;
-                }
+                this.worldEngine.monsters = this.worldEngine.monsters.filter(m => m.isActive === false);
                 alert('Victory!');
             }
             this.worldEngine.monsters.forEach(m => m.isActive = true);
-
-            // 월드맵 화면으로 복귀한다.
-            if (typeof this.showWorldMap === 'function') {
-                this.showWorldMap();
-            }
         });
 
         // 공격 이벤트 처리
