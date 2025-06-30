@@ -191,7 +191,6 @@ export class Game {
             mapManager: this.mapManager,
             movementEngine: this.movementEngine,
             worldMapRenderManager: null, // placeholder, set below
-            gameState: this.gameState,
         };
 
         // 월드맵 로직을 담당하는 엔진
@@ -575,12 +574,6 @@ export class Game {
             zoomLevel: SETTINGS.DEFAULT_ZOOM,
             isPaused: false
         };
-        if (this.engineContext) {
-            this.engineContext.gameState = this.gameState;
-        }
-        if (this.skillManager) {
-            this.skillManager.gameState = this.gameState;
-        }
         this.cameraDrag = {
             isDragging: false,
             dragStart: { x: 0, y: 0 },
