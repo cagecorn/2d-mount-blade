@@ -1,5 +1,4 @@
 import { dataRecorder } from '../managers/dataRecorder.js';
-import { fluctuationEngine } from '../managers/ai/FluctuationEngine.js';
 import { Unit } from './Unit.js';
 import { JOBS } from '../data/jobs.js';
 import { ITEMS } from '../data/items.js';
@@ -118,7 +117,6 @@ class ArenaManager {
         this.roundCount++;
         console.log(`======== \ub77c\uc6b4\ub4dc ${this.roundCount} \uc2dc\uc791 ========`);
         this.game.clearAllUnits();
-        fluctuationEngine.reset();
         if (this.game?.eventManager) {
             this.game.eventManager.publish('arena_log', {
                 eventType: 'round_start',
@@ -291,7 +289,6 @@ class ArenaManager {
         const matchData = {
             round: this.roundCount,
             winner: `Team ${winner}`,
-            fluctuations: fluctuationEngine.getLog(),
         };
 
         const { best, worst, bestReason, worstReason } = this.getBestAndWorstUnits();
