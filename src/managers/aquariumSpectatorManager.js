@@ -93,6 +93,11 @@ export class AquariumSpectatorManager {
             clearInterval(this._interval);
             this._interval = null;
         }
+        // Reset any lingering ghost possessions between battles
+        if (this.possessionAIManager) {
+            this.possessionAIManager.ghosts = [];
+            this.possessionAIManager.possessedEntities.clear();
+        }
         this.vfxManager?.clear?.();
         this.projectileManager?.clear?.();
         this.groupManager?.removeGroup(this.playerGroupId);
