@@ -80,6 +80,9 @@ import { ArenaUIManager } from './managers/arenaUIManager.js';
 import { ArenaTensorFlowManager } from './managers/arenaTensorFlowManager.js';
 import { ArenaRewardManager } from './managers/arenaRewardManager.js';
 
+import { GameInitializer } from "./core/GameInitializer.js";
+import { EventBinder } from "./core/EventBinder.js";
+import { CameraController } from "./core/CameraController.js";
 export class Game {
     constructor() {
         this.loader = new AssetLoader();
@@ -97,59 +100,8 @@ export class Game {
     }
 
     start() {
-        this.loader.loadImage('player', 'assets/player.png');
-        this.loader.loadImage('monster', 'assets/monster.png');
-        this.loader.loadImage('epic_monster', 'assets/epic_monster.png');
-        // 병종별 용병 이미지를 로드한다
-        this.loader.loadImage('warrior', 'assets/images/warrior.png');
-        this.loader.loadImage('archer', 'assets/images/archer.png');
-        this.loader.loadImage('healer', 'assets/images/healer.png');
-        this.loader.loadImage('wizard', 'assets/images/wizard.png');
-        this.loader.loadImage('summoner', 'assets/images/summoner.png');
-        this.loader.loadImage('bard', 'assets/images/bard.png');
-        // 불의 신 이미지 키를 jobId와 맞춰 'fire_god'으로 로드한다
-        this.loader.loadImage('fire_god', 'assets/images/fire-god.png');
-        // 기존 호환성을 위해 기본 mercenary 키도 전사 이미지로 유지
-        this.loader.loadImage('mercenary', 'assets/images/warrior.png');
-        this.loader.loadImage('floor', 'assets/floor.png');
-        this.loader.loadImage('wall', 'assets/wall.png');
-        this.loader.loadImage('gold', 'assets/gold.png');
-        this.loader.loadImage('potion', 'assets/potion.png');
-        this.loader.loadImage('sword', 'assets/images/shortsword.png');
-        this.loader.loadWeaponImages();
-        this.loader.loadImage('shield', 'assets/images/shield.png');
-        this.loader.loadImage('bow', 'assets/images/bow.png');
-        this.loader.loadImage('arrow', 'assets/images/arrow.png');
-        this.loader.loadImage('leather_armor', 'assets/images/leatherarmor.png');
-        this.loader.loadImage('plate-armor', 'assets/images/plate-armor.png');
-        this.loader.loadImage('iron-helmet', 'assets/images/iron-helmet.png');
-        this.loader.loadImage('iron-gauntlets', 'assets/images/iron-gauntlets.png');
-        this.loader.loadImage('iron-boots', 'assets/images/iron-boots.png');
-        this.loader.loadImage('violin-bow', 'assets/images/violin-bow.png');
-        this.loader.loadImage('skeleton', 'assets/images/skeleton.png');
-        this.loader.loadImage('pet-fox', 'assets/images/pet-fox.png');
-        this.loader.loadImage('guardian-hymn-effect', 'assets/images/Guardian Hymn-effect.png');
-        this.loader.loadImage('courage-hymn-effect', 'assets/images/Courage Hymn-effect.png');
-        this.loader.loadImage('fire-ball', 'assets/images/fire-ball.png');
-        this.loader.loadImage('ice-ball', 'assets/images/ice-ball-effect.png');
-        this.loader.loadImage('strike-effect', 'assets/images/strike-effect.png');
-        this.loader.loadImage('healing-effect', 'assets/images/healing-effect.png');
-        this.loader.loadImage('purify-effect', 'assets/images/purify-effect.png');
-        this.loader.loadImage('corpse', 'assets/images/corpse.png');
-        this.loader.loadImage('parasite', 'assets/images/parasite.png');
-        this.loader.loadImage('leech', 'assets/images/parasite.png');
-        this.loader.loadImage('worm', 'assets/images/parasite.png');
-        // 월드맵 타일 이미지 로드
-        this.loader.loadImage('world-tile', 'assets/images/world-tile.png');
-        this.loader.loadImage('sea-tile', 'assets/images/sea-tile.png');
-        this.loader.loadImage('talisman1', 'assets/images/talisman-1.png');
-        this.loader.loadImage('talisman2', 'assets/images/talisman-2.png');
-        // 휘장 아이템 이미지 로드
-        this.loader.loadEmblemImages();
-        // 시각 효과 이미지 로드
-        this.loader.loadVfxImages();
-
-        this.loader.onReady(assets => this.init(assets));
+        this.initializer = new GameInitializer(this);
+        this.initializer.start();
     }
 
     init(assets) {
@@ -612,6 +564,7 @@ export class Game {
         };
         this.playerGroup.addMember(player);
         this.groupManager.addMember(player);
+        this.cameraController = new CameraController(this);
         // Game 인스턴스에서 직접 플레이어에 접근할 수 있도록 참조를 저장합니다.
         this.player = player;
         // 월드 엔진에서도 동일한 플레이어 데이터를 사용하도록 설정
@@ -979,7 +932,7 @@ export class Game {
             }
         });
 
-        this.setupEventListeners(assets, canvas);
+        EventBinder.bindAll(this);
         this.showWorldMap();
         this.gameLoop = new GameLoop(this.update, this.render);
         this.gameLoop.start();
@@ -1375,14 +1328,14 @@ export class Game {
             if (this.gameState.currentState === 'WORLD') {
                 this.worldEngine.startDrag(e.clientX, e.clientY);
             } else if (this.gameState.currentState === 'COMBAT' || this.gameState.currentState === 'ARENA') {
-                this.startDragCamera(e.clientX, e.clientY);
+                this.cameraController.startDragCamera(e.clientX, e.clientY);
             }
         });
         weatherLayer.addEventListener('mousemove', (e) => {
             if (this.gameState.currentState === 'WORLD') {
                 this.worldEngine.drag(e.clientX, e.clientY);
             } else if (this.gameState.currentState === 'COMBAT' || this.gameState.currentState === 'ARENA') {
-                this.dragCamera(e.clientX, e.clientY);
+                this.cameraController.dragCamera(e.clientX, e.clientY);
             }
         });
         ['mouseup', 'mouseleave'].forEach(ev => {
@@ -1390,7 +1343,7 @@ export class Game {
                 if (this.gameState.currentState === 'WORLD') {
                     this.worldEngine.endDrag();
                 } else if (this.gameState.currentState === 'COMBAT' || this.gameState.currentState === 'ARENA') {
-                    this.endDragCamera();
+                    this.cameraController.endDragCamera();
                 }
             });
         });
@@ -1448,48 +1401,6 @@ export class Game {
         this.eventManager.publish('entity_attack', { attacker, defender, skill });
     }
 
-    startDragCamera(screenX, screenY) {
-        const { cameraDrag, gameState } = this;
-        cameraDrag.isDragging = true;
-        cameraDrag.followPlayer = false;
-        cameraDrag.dragStart.x = screenX;
-        cameraDrag.dragStart.y = screenY;
-        cameraDrag.cameraStart.x = gameState.camera.x;
-        cameraDrag.cameraStart.y = gameState.camera.y;
-    }
-
-    dragCamera(screenX, screenY) {
-        const { cameraDrag, gameState, layerManager, mapManager } = this;
-        if (!cameraDrag.isDragging) return;
-        const zoom = gameState.zoomLevel || 1;
-        const deltaX = (screenX - cameraDrag.dragStart.x) / zoom;
-        const deltaY = (screenY - cameraDrag.dragStart.y) / zoom;
-        gameState.camera.x = cameraDrag.cameraStart.x - deltaX;
-        gameState.camera.y = cameraDrag.cameraStart.y - deltaY;
-        const canvas = layerManager.layers.mapBase;
-        const mapPixelWidth = mapManager.width * mapManager.tileSize;
-        const mapPixelHeight = mapManager.height * mapManager.tileSize;
-        gameState.camera.x = Math.max(0, Math.min(gameState.camera.x, mapPixelWidth - canvas.width / zoom));
-        gameState.camera.y = Math.max(0, Math.min(gameState.camera.y, mapPixelHeight - canvas.height / zoom));
-    }
-
-    endDragCamera() {
-        this.cameraDrag.isDragging = false;
-    }
-
-    // 플레이어와 모든 고용된 용병을 포함하는 파티 목록을 반환합니다.
-    getPartyMembers() {
-        const party = [this.player];
-        const mercenaries = this.mercenaryManager.getHiredMercenaries();
-        return party.concat(mercenaries);
-    }
-
-    handleCameraReset() {
-        if (!this.cameraDrag.followPlayer && Object.keys(this.inputHandler.keysPressed).length > 0) {
-            this.cameraDrag.followPlayer = true;
-            this.cameraDrag.isDragging = false;
-        }
-    }
 
 
     /**
