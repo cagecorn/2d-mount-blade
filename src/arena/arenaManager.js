@@ -4,7 +4,6 @@ import { Unit } from './Unit.js';
 import { JOBS } from '../data/jobs.js';
 import { ITEMS } from '../data/items.js';
 import { SKILLS } from '../data/skills.js';
-import { WebGPUArenaRenderer } from '../renderers/webgpuArenaRenderer.js';
 import { ArenaMapManager } from '../arenaMap.js';
 import { ProjectileManager } from '../managers/projectileManager.js';
 
@@ -16,8 +15,6 @@ class ArenaManager {
         this.combatCalculator = game.combatCalculator;
         this.movementManager = game.movementManager;
         this.motionManager = game.motionManager;
-        this.webgpuRenderer = new WebGPUArenaRenderer(this.game.battleCanvas);
-        this.webgpuRenderer.init();
         this.projectileManager = null;
         try {
             this.combatWorker = new Worker('src/workers/combatWorker.js', { type: 'module' });
@@ -266,10 +263,6 @@ class ArenaManager {
 
     render(contexts, mapManager, assets) {
         if (!this.isActive) return;
-        if (this.webgpuRenderer && this.webgpuRenderer.device) {
-            this.webgpuRenderer.render(this.game.units);
-            return;
-        }
         const { camera, zoomLevel } = this.game.gameState;
         for (const key in contexts) {
             const ctx = contexts[key];
