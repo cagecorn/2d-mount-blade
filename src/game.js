@@ -34,7 +34,6 @@ import { SupportEngine } from './systems/SupportEngine.js';
 import { SKILLS } from './data/skills.js';
 import { EFFECTS } from './data/effects.js';
 import { ITEMS } from './data/items.js';
-import { Item } from './entities.js';
 import { rollOnTable } from './utils/random.js';
 import { getMonsterLootTable } from './data/tables.js';
 import { MicroEngine } from './micro/MicroEngine.js';
@@ -81,6 +80,7 @@ import { ArenaTensorFlowManager } from './managers/arenaTensorFlowManager.js';
 import { ArenaRewardManager } from './managers/arenaRewardManager.js';
 import { WorkflowManager } from './managers/workflowManager.js';
 import { ShowCombatResultWorkflow } from './workflows/showCombatResultWorkflow.js';
+import { EntityDeathWorkflow } from './workflows/entityDeathWorkflow.js';
 
 import { GameInitializer } from "./core/GameInitializer.js";
 import { EventBinder } from "./core/EventBinder.js";
@@ -206,6 +206,7 @@ export class Game {
         this.workflowManager = new WorkflowManager(this.engineContext);
         this.engineContext.workflowManager = this.workflowManager;
         this.workflowManager.register('d3', ShowCombatResultWorkflow);
+        this.workflowManager.register('entity_death', EntityDeathWorkflow);
 
         // --- GridRenderer 인스턴스 생성 ---
         // AquariumMapManager의 정보를 바탕으로 GridRenderer를 초기화합니다.
@@ -226,6 +227,10 @@ export class Game {
 
         // VFXManager는 ItemManager와 EventManager가 모두 필요합니다.
         this.managers.VFXManager = new Managers.VFXManager(this.eventManager, this.itemManager);
+        if (this.engineContext) {
+            this.engineContext.itemManager = this.itemManager;
+            this.engineContext.vfxManager = this.managers.VFXManager;
+        }
 
         const otherManagerNames = Object.keys(Managers).filter(
             name =>
@@ -270,6 +275,12 @@ export class Game {
         this.soundManager = this.managers.SoundManager;
         this.bgmManager = this.managers.BgmManager;
         this.effectManager = this.managers.EffectManager;
+        if (this.engineContext) {
+            this.engineContext.monsterManager = this.monsterManager;
+            this.engineContext.mercenaryManager = this.mercenaryManager;
+            this.engineContext.vfxManager = this.vfxManager;
+            this.engineContext.itemManager = this.itemManager;
+        }
         this.auraManager = new Managers.AuraManager(this.effectManager, this.eventManager, this.vfxManager);
         this.microItemAIManager = new Managers.MicroItemAIManager();
         this.microEngine = new MicroEngine(this.eventManager);
@@ -1053,71 +1064,8 @@ export class Game {
         });
 
         // 죽음 이벤트가 발생하면 경험치 획득 및 애니메이션을 시작
-        eventManager.subscribe('entity_death', (data) => {
-            const { attacker, victim } = data;
-
-            victim.isDying = true;
-            this.vfxManager.addDeathAnimation(victim, 'explode');
-
-            eventManager.publish('log', { message: `${victim.constructor.name}가 쓰러졌습니다.`, color: 'red' });
-
-            if (victim.unitType === 'monster') {
-                this.eventManager.publish('monster_defeated', { monster: victim, attacker });
-                const dropPool = [];
-                if (victim.consumables) dropPool.push(...victim.consumables);
-                if (victim.equipment) {
-                    for (const slot in victim.equipment) {
-                        const it = victim.equipment[slot];
-                        if (it) dropPool.push(it);
-                    }
-                }
-                const dropCount = Math.min(dropPool.length, Math.floor(Math.random() * 6));
-                for (let i = 0; i < dropCount; i++) {
-                    const idx = Math.floor(Math.random() * dropPool.length);
-                    const item = dropPool.splice(idx, 1)[0];
-                    const startPos = { x: victim.x, y: victim.y };
-                    const endPos = this.findRandomEmptyAdjacentTile(victim.x, victim.y) || startPos;
-                    item.x = endPos.x;
-                    item.y = endPos.y;
-                    this.itemManager.addItem(item);
-                    this.vfxManager.addItemPopAnimation(item, startPos, endPos);
-                }
-            }
-
-            if (!victim.isFriendly && (attacker.isPlayer || attacker.isFriendly)) {
-                if (attacker.isPlayer) {
-                    // 플레이어가 직접 처치한 경우 전체 경험치 지급
-                    eventManager.publish('exp_gained', { player: attacker, exp: victim.expValue });
-                } else if (attacker.isFriendly) {
-                    // 용병이 처치한 경우 용병과 플레이어가 경험치를 절반씩 나눔
-                    const sharedExp = victim.expValue / 2;
-                    eventManager.publish('exp_gained', { player: attacker, exp: sharedExp });
-                    eventManager.publish('exp_gained', { player: gameState.player, exp: sharedExp });
-                }
-            }
-
-            // 몬스터 시체 생성
-            if (victim.unitType === 'monster' && assets.corpse) {
-                const corpse = new Item(
-                    victim.x,
-                    victim.y,
-                    this.mapManager.tileSize,
-                    'corpse',
-                    assets.corpse
-                );
-                corpse.bobbingSpeed = 0;
-                corpse.bobbingAmount = 0;
-                corpse.baseY = victim.y;
-                this.itemManager.addItem(corpse);
-            }
-
-            if (victim.unitType === 'monster') {
-                const remaining = this.monsterManager.monsters.filter(m => m.hp > 0 && !m.isDying);
-                if (remaining.length === 0) {
-                    this.eventManager.publish('log', { message: 'victory', color: 'green' });
-                    this.eventManager.publish('end_combat', { outcome: 'victory' });
-                }
-            }
+        eventManager.subscribe('entity_death', ({ attacker, victim }) => {
+            this.workflowManager.trigger('entity_death', attacker, victim);
         });
 
         // 게임오버 이벤트 구독 추가
