@@ -55,6 +55,8 @@ export class AquariumSpectatorManager {
         this.diary = [];
         this.currentBattle = null;
         this.fs = nodeFS;
+        this.survivingPlayerUnits = [];
+        this.survivingEnemyUnits = [];
     }
 
     start() {
@@ -126,7 +128,9 @@ export class AquariumSpectatorManager {
             assets: this.assets,
             playerGroupId: this.playerGroupId,
             enemyGroupId: this.enemyGroupId,
-            eventManager: this.eventManager
+            eventManager: this.eventManager,
+            existingPlayerUnits: this.survivingPlayerUnits,
+            existingEnemyUnits: this.survivingEnemyUnits
         });
 
         if (this.entityManager) {
@@ -171,6 +175,10 @@ export class AquariumSpectatorManager {
             playerUnits: (this.currentBattle?.playerUnits || []).map(u => ({ id: u.id, jobId: u.jobId })),
             enemyUnits: (this.currentBattle?.enemyUnits || []).map(u => ({ id: u.id, jobId: u.jobId }))
         };
+
+        // store survivors for the next stage
+        this.survivingPlayerUnits = result.survivors?.player || [];
+        this.survivingEnemyUnits = result.survivors?.enemy || [];
         this.diary.push(entry);
         if (this.fs) {
             try {

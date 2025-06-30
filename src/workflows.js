@@ -117,10 +117,16 @@ export function aquariumSpectatorWorkflow(context) {
         assets = {},
         playerGroupId = 'player_party',
         enemyGroupId = 'dungeon_monsters',
-        eventManager
+        eventManager,
+        existingPlayerUnits = [],
+        existingEnemyUnits = []
     } = context;
 
     const jobKeys = Object.keys(JOBS).filter(id => id !== 'fire_god');
+
+    // clear old formation assignments
+    formationManager.slots.forEach(set => set.clear());
+    enemyFormationManager.slots.forEach(set => set.clear());
 
     const makeMerc = (groupId) => {
         const jobId = jobKeys[Math.floor(Math.random() * jobKeys.length)];
@@ -142,9 +148,39 @@ export function aquariumSpectatorWorkflow(context) {
         return merc;
     };
 
-    const playerUnits = Array.from({ length: 12 }, () => makeMerc(playerGroupId));
-    const enemyUnits = Array.from({ length: 12 }, () => makeMerc(enemyGroupId));
-    if (entityManager?.mercenaries) entityManager.mercenaries.push(...enemyUnits);
+    // use survivors if provided, otherwise create fresh units
+    let playerUnits = existingPlayerUnits.length > 0
+        ? existingPlayerUnits
+        : Array.from({ length: 12 }, () => makeMerc(playerGroupId));
+    let enemyUnits = existingEnemyUnits.length > 0
+        ? existingEnemyUnits
+        : Array.from({ length: 12 }, () => makeMerc(enemyGroupId));
+
+    if (existingPlayerUnits.length > 0) {
+        existingPlayerUnits.forEach(u => {
+            entityManager?.addEntity(u);
+            groupManager?.addMember(u);
+            if (metaAIManager) {
+                const group = metaAIManager.groups[playerGroupId] || metaAIManager.createGroup(playerGroupId);
+                group.addMember(u);
+            }
+        });
+    }
+
+    if (existingEnemyUnits.length > 0) {
+        existingEnemyUnits.forEach(u => {
+            entityManager?.addEntity(u);
+            groupManager?.addMember(u);
+            if (metaAIManager) {
+                const group = metaAIManager.groups[enemyGroupId] || metaAIManager.createGroup(enemyGroupId);
+                group.addMember(u);
+            }
+        });
+    }
+
+    if (entityManager?.mercenaries && enemyUnits !== existingEnemyUnits) {
+        entityManager.mercenaries.push(...enemyUnits);
+    }
 
     const allMap = {};
     [...playerUnits, ...enemyUnits].forEach(m => { allMap[m.id] = m; });
