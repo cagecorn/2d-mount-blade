@@ -1442,6 +1442,27 @@ export class Game {
         this.arenaUIManager?.onShowBattleMap();
     }
 
+    /**
+     * 현재 플레이어 파티에 속한 모든 멤버를 반환한다.
+     * 그룹 매니저가 초기화된 경우 그룹 정보를 사용하고,
+     * 그렇지 않은 경우 EntityManager의 플레이어와 용병 리스트를 조합한다.
+     * @returns {Array<object>} 파티 멤버 리스트
+     */
+    getPartyMembers() {
+        if (this.groupManager && this.playerGroup) {
+            return this.groupManager
+                .getGroupMembers(this.playerGroup.id)
+                .filter(Boolean);
+        }
+
+        const members = [];
+        const player = this.entityManager?.getPlayer?.();
+        if (player) members.push(player);
+        const mercs = this.entityManager?.getMercenaries?.() || [];
+        members.push(...mercs);
+        return members;
+    }
+
     clearAllUnits() {
         this.units = [];
     }
