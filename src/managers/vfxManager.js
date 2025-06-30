@@ -18,6 +18,7 @@ export class VFXManager {
 
         if (this.eventManager) {
             this.eventManager.subscribe('vfx_request', data => this._handleVfxRequest(data));
+            this.eventManager.subscribe('before_map_load', () => this.clear());
         }
     }
 

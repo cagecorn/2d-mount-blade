@@ -5,6 +5,11 @@ export class EntityManager {
         this.player = null;
         this.mercenaries = [];
         this.monsters = [];
+
+        // 맵 로드 전 모든 엔티티를 정리하도록 이벤트에 구독합니다.
+        if (eventManager) {
+            eventManager.subscribe('before_map_load', () => this.clearAll());
+        }
     }
 
     init(player, mercenaries = [], monsters = []) {
@@ -63,5 +68,16 @@ export class EntityManager {
                 this.eventManager.publish('entity_removed', { victimId: id });
             }
         }
+    }
+
+    /**
+     * 모든 엔티티와 내부 상태를 초기화합니다.
+     */
+    clearAll() {
+        this.entities = new Map();
+        this.player = null;
+        this.mercenaries = [];
+        this.monsters = [];
+        console.log('[EntityManager] 모든 엔티티가 제거되었습니다.');
     }
 }
