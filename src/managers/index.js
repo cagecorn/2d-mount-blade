@@ -37,7 +37,6 @@ import { SynergyManager } from '../micro/SynergyManager.js';
 import { SpeechBubbleManager } from './speechBubbleManager.js';
 import { AuraManager } from './AuraManager.js';
 import { PossessionAIManager } from './possessionAIManager.js';
-import { ProcessTerminationManager } from './processTerminationManager.js';
 import { CombatDecisionEngine } from './ai/CombatDecisionEngine.js';
 import { FluctuationEngine } from './ai/FluctuationEngine.js';
 import { ReputationManager } from './ReputationManager.js';
@@ -116,5 +115,4 @@ export {
     ArenaTensorFlowManager,
     ArenaRewardManager,
     AquariumSpectatorManager,
-    ProcessTerminationManager,
 };
