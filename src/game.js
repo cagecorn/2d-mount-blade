@@ -964,19 +964,14 @@ export class Game {
         // 월드맵과 전투 상태 전환 이벤트 처리
         eventManager.subscribe('start_combat', (data) => {
             if (gameState.currentState !== 'WORLD') return;
-            console.log(`전투 준비! 상대 부대 규모: ${data.monsterParty.troopSize}`);
-            gameState.currentState = 'FORMATION_SETUP';
-            this.pendingMonsterParty = data.monsterParty;
-            this.uiManager.showPanel('squad-management-ui');
-            this.worldEngine.monsters.forEach(m => m.isActive = false);
-        });
-
-        eventManager.subscribe('formation_confirmed', () => {
+            console.log(`전투 시작! 상대 부대 규모: ${data.monsterParty.troopSize}`);
             const origin = { x: gameState.player.x, y: gameState.player.y };
             const entityMap = { [gameState.player.id]: gameState.player };
             this.mercenaryManager.mercenaries.forEach(m => { entityMap[m.id] = m; });
             this.formationManager.apply(origin, entityMap);
+            this.pendingMonsterParty = data.monsterParty;
             gameState.currentState = 'COMBAT';
+            this.worldEngine.monsters.forEach(m => m.isActive = false);
         });
 
         eventManager.subscribe('end_combat', (result) => {
@@ -1394,8 +1389,6 @@ export class Game {
             if (this.worldMapAIManager) {
                 this.worldMapAIManager.update(deltaTime);
             }
-            return;
-        } else if (this.gameState.currentState === 'FORMATION_SETUP') {
             return;
         } else if (this.gameState.currentState !== 'COMBAT' && this.gameState.currentState !== 'ARENA') {
             return;
