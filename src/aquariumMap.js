@@ -17,7 +17,6 @@ export class AquariumMapManager extends MapManager {
         this.openArea = 6;
         // 테스트 편의를 위해 기본 맵을 넓은 빈 공간으로 생성한다
         this.useLanes = false;
-        this.map = this._generateEmptyMap();
     }
 
     // 벽으로 둘러싸인 빈 맵을 생성한다
