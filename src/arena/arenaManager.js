@@ -179,8 +179,7 @@ class ArenaManager {
             const id = (typeof crypto !== 'undefined' && crypto.randomUUID)
                 ? crypto.randomUUID()
                 : Math.random().toString(36).slice(2);
-            // Arena map에서는 유닛 이미지를 사용하지 않고 기본 원형으로 그립니다.
-            const image = null;
+            const image = this.game.assets?.[jobId] || null;
             const skillId = skillKeys[Math.floor(Math.random() * skillKeys.length)];
 
             let x, y, attempts = 0;
