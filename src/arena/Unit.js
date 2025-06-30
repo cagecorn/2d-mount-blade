@@ -62,7 +62,7 @@ class Unit {
 
         if (this.eventManager) {
             this._damageHandler = (data) => {
-                if (data.attacker === this) {
+                if (data.attacker === this && this.eventManager) {
                     this.eventManager.publish('arena_log', {
                         eventType: 'attack',
                         attackerId: data.attacker.id,
@@ -70,6 +70,18 @@ class Unit {
                         damage: data.damage,
                         message: `${data.attacker.id} -> ${data.defender.id} (${data.damage})`
                     });
+                }
+                if (data.defender === this) {
+                    const prevHp = this.hp;
+                    this.hp = Math.max(0, this.hp - data.damage);
+                    if (prevHp > 0 && this.hp <= 0 && data.attacker) {
+                        data.attacker.kills++;
+                        this.eventManager.publish('arena_log', {
+                            eventType: 'unit_death',
+                            unitId: this.id,
+                            message: `${this.id} 사망`
+                        });
+                    }
                 }
             };
             this.eventManager.subscribe('damage_calculated', this._damageHandler);
@@ -131,10 +143,6 @@ class Unit {
 
     isAlive() {
         return this.hp > 0;
-    }
-
-    takeDamage(amount) {
-        this.hp = Math.max(0, this.hp - amount);
     }
 
     update(deltaTime, units) {
