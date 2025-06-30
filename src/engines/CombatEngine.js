@@ -9,7 +9,7 @@ export class CombatEngine {
     update(deltaTime) {
         const game = this.game;
 
-        game.handleCameraReset();
+        game.cameraController.handleCameraReset();
 
         const { gameState, mercenaryManager, monsterManager, itemManager, mapManager, inputHandler, effectManager, turnManager, metaAIManager, eventManager, pathfindingManager, microEngine, microItemAIManager } = game;
         if (gameState.isPaused || gameState.isGameOver) return;
