@@ -912,7 +912,11 @@ export class Game {
         });
 
         this.setupEventListeners(assets, canvas);
-        this.showWorldMap();
+        if (SETTINGS.START_WITH_AQUARIUM) {
+            this.showBattleMap();
+        } else {
+            this.showWorldMap();
+        }
         this.gameLoop = new GameLoop(this.update, this.render);
         this.gameLoop.start();
     }
