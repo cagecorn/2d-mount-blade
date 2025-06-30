@@ -47,6 +47,7 @@ import { StatusEffectsManager } from './managers/statusEffectsManager.js';
 import { disarmWorkflow, armorBreakWorkflow } from './workflows.js';
 import { PossessionAIManager } from './managers/possessionAIManager.js';
 import { AquariumSpectatorManager } from './managers/aquariumSpectatorManager.js';
+import { ProcessTerminationManager } from './managers/processTerminationManager.js';
 import { Ghost } from './entities.js';
 import { TankerGhostAI, RangedGhostAI, SupporterGhostAI, CCGhostAI } from './ai.js';
 import { EMBLEMS } from './data/emblems.js';
@@ -156,6 +157,7 @@ export class Game {
 
         // === 1. 모든 매니저 및 시스템 생성 ===
         this.eventManager = new EventManager();
+        this.terminationManager = new ProcessTerminationManager(this.eventManager);
         this.arenaLogStorage = new ArenaLogStorage(this.eventManager);
         this.tfArenaVisualizer = new TFArenaVisualizer(this.arenaLogStorage);
         this.battlePredictionManager = new BattlePredictionManager(this.eventManager);
@@ -379,7 +381,10 @@ export class Game {
         this.guidelineLoader = new GuidelineLoader(SETTINGS.GUIDELINE_REPO_URL);
         this.guidelineLoader.load();
         if (SETTINGS.ENABLE_POSSESSION_SYSTEM) {
-            this.possessionAIManager = new PossessionAIManager(this.eventManager);
+            this.possessionAIManager = new PossessionAIManager(
+                this.eventManager,
+                this.terminationManager
+            );
         } else {
             this.possessionAIManager = null;
         }

@@ -3,7 +3,7 @@ import { SKILLS } from '../data/skills.js';
 import { FearAI, ConfusionAI, BerserkAI, CharmAI } from '../ai.js';
 
 export class PossessionAIManager {
-    constructor(eventManager) {
+    constructor(eventManager, terminationManager = null) {
         this.eventManager = eventManager;
         this.ghosts = [];
         this.possessedEntities = new Set();
@@ -15,6 +15,9 @@ export class PossessionAIManager {
             this.eventManager.subscribe('emblem_unequipped', ({ entity }) => {
                 this.removePossession(entity);
             });
+        }
+        if (terminationManager) {
+            terminationManager.register('battle_ended', () => this.reset());
         }
         console.log("[PossessionAIManager] Initialized");
     }
@@ -163,5 +166,14 @@ export class PossessionAIManager {
                 }
             }
         }
+    }
+
+    /**
+     * 매니저의 상태를 초기화하는 정리(cleanup) 메서드.
+     */
+    reset() {
+        this.ghosts = [];
+        this.possessedEntities.clear();
+        console.log('[PossessionAIManager] 상태가 깨끗하게 초기화되었습니다.');
     }
 }
