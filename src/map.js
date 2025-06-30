@@ -16,7 +16,6 @@ export class MapManager {
         this.rooms = [];
         this.corridorWidth = 5; // 전역적으로 사용할 통로 너비
         this.map = this._generateMaze();
-        this.preRenderedMap = null;
     }
 
     _random() {
@@ -358,37 +357,23 @@ export class MapManager {
         return false;
     }
 
-    _preRenderMap(assets) {
-        if (this.preRenderedMap) return;
-        const canvas = document.createElement('canvas');
-        canvas.width = this.width * this.tileSize;
-        canvas.height = this.height * this.tileSize;
-        const ctx = canvas.getContext('2d');
+    render(ctxBase, ctxDecor, assets) {
         const wallImage = assets.wall;
         const floorImage = assets.floor;
         const lavaImage = assets.lava || floorImage;
 
-        ctx.imageSmoothingEnabled = false;
         for (let y = 0; y < this.height; y++) {
             for (let x = 0; x < this.width; x++) {
-                let img = floorImage;
+                let imageToDraw = floorImage;
                 if (this.map[y][x] === this.tileTypes.WALL) {
-                    img = wallImage;
+                    imageToDraw = wallImage;
                 } else if (this.map[y][x] === this.tileTypes.LAVA) {
-                    img = lavaImage;
+                    imageToDraw = lavaImage;
                 }
-                if (img) {
-                    ctx.drawImage(img, x * this.tileSize, y * this.tileSize, this.tileSize, this.tileSize);
+                if (imageToDraw) {
+                    ctxBase.drawImage(imageToDraw, x * this.tileSize, y * this.tileSize, this.tileSize, this.tileSize);
                 }
             }
-        }
-        this.preRenderedMap = canvas;
-    }
-
-    render(ctxBase, ctxDecor, assets) {
-        this._preRenderMap(assets);
-        if (this.preRenderedMap) {
-            ctxBase.drawImage(this.preRenderedMap, 0, 0);
         }
     }
 }
