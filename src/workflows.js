@@ -213,37 +213,3 @@ export function aquariumSpectatorWorkflow(context) {
     eventManager?.publish('aquarium_spectator_ready', { playerUnits, enemyUnits });
     return { playerUnits, enemyUnits };
 }
-
-// === 수족관 스테이지 초기화 워크플로우 ===
-// 기존 맵을 완전히 초기화하고 새로운 맵 인스턴스를 발행한 뒤
-// 무작위 몬스터 그룹과 거품 효과를 생성한다.
-export function aquariumStageSetupWorkflow(context) {
-    const { game, aquariumManager, eventManager } = context;
-
-    if (!game || !aquariumManager) {
-        console.warn('[aquariumStageSetupWorkflow] missing game or aquariumManager');
-        return null;
-    }
-
-    // 1) 맵 로딩 전에 알림을 보낸다
-    eventManager?.publish('aquarium_stage_reset');
-
-    // 2) 새 수족관 맵 인스턴스를 로드한다
-    game.loadMap('aquarium');
-
-    // 3) 무작위 몬스터 그룹 생성 (최소 1개)
-    const groupCount = Math.floor(Math.random() * 3) + 1; // 1~3
-    for (let i = 0; i < groupCount; i++) {
-        const size = 2 + Math.floor(Math.random() * 3); // 2~4 마리
-        aquariumManager.spawnMonsterGroup(size);
-    }
-
-    // 4) 거품 같은 환경 효과를 약간 추가한다
-    const bubbleCount = Math.floor(Math.random() * 3); // 0~2
-    for (let i = 0; i < bubbleCount; i++) {
-        aquariumManager.addTestingFeature({ type: 'bubble' });
-    }
-
-    eventManager?.publish('aquarium_stage_ready', { groups: groupCount, bubbles: bubbleCount });
-    return { groups: groupCount, bubbles: bubbleCount };
-}
