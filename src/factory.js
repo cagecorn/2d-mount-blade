@@ -349,4 +349,14 @@ export class ItemFactory {
     _createSockets() {
         return [];
     }
+
+    /**
+     * 맵 데이터를 기반으로 타일 엔티티를 생성합니다.
+     * 현재는 타일 엔티티 시스템이 단순하여 구현을 비워둡니다.
+     */
+    createMapTiles(mapManager, entityManager) {
+        if (!mapManager || !entityManager) return;
+        // TODO: 실제 타일 엔티티 생성 로직이 준비되면 여기에 구현합니다.
+        console.log('[CharacterFactory] createMapTiles 호출', mapManager.name);
+    }
 }

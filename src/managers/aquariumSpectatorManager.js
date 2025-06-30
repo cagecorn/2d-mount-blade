@@ -15,6 +15,7 @@ if (typeof window === 'undefined') {
 export class AquariumSpectatorManager {
     constructor(options) {
         const {
+            game,
             eventManager,
             mapManager,
             formationManager,
@@ -32,6 +33,7 @@ export class AquariumSpectatorManager {
             enemyGroupId = 'dungeon_monsters',
             diaryPath = 'aquarium_spectator_diary.json'
         } = options;
+        this.game = game;
         this.eventManager = eventManager;
         this.mapManager = mapManager;
         this.formationManager = formationManager || new FormationManager(5,5,mapManager.tileSize*2);
@@ -49,17 +51,19 @@ export class AquariumSpectatorManager {
         this.enemyGroupId = enemyGroupId;
         this.diaryPath = diaryPath;
         this.battleCount = 0;
+        this.stageCount = 0;
         this.diary = [];
         this.currentBattle = null;
         this.fs = nodeFS;
     }
 
     start() {
+        console.log('[AquariumSpectatorManager] 관람 모드를 시작합니다.');
         if (this.eventManager) {
             this.eventManager.subscribe('battle_ended', r => this.onBattleEnded(r));
         }
         this.initUI();
-        this.startNewBattle();
+        this.startNextStage();
     }
 
     initUI() {
@@ -88,30 +92,27 @@ export class AquariumSpectatorManager {
         }
     }
 
-    startNewBattle() {
+    /**
+     * 새로운 스테이지를 시작하며 맵을 새로 로드합니다.
+     */
+    startNextStage() {
+        this.stageCount++;
+        console.log(`--- 새로운 스테이지 시작: #${this.stageCount} ---`);
+
+        this.game?.loadMap('aquarium');
+
+        this.setupNewBattle();
+    }
+
+    setupNewBattle() {
         if (this._interval) {
             clearInterval(this._interval);
             this._interval = null;
         }
-        // Reset any lingering ghost possessions between battles
+        // 전투 사이에 남은 유령 AI 상태를 리셋합니다.
         if (this.possessionAIManager) {
             this.possessionAIManager.ghosts = [];
             this.possessionAIManager.possessedEntities.clear();
-        }
-        this.vfxManager?.clear?.();
-        this.projectileManager?.clear?.();
-        this.groupManager?.removeGroup(this.playerGroupId);
-        this.groupManager?.removeGroup(this.enemyGroupId);
-        if (this.entityManager?.entities) {
-            for (const id of [...this.entityManager.entities.keys()]) {
-                if (id !== this.entityManager.player?.id) {
-                    this.entityManager.removeEntityById(id);
-                }
-            }
-        }
-        if (this.entityManager) {
-            this.entityManager.mercenaries = [];
-            this.entityManager.monsters = [];
         }
 
         const result = aquariumSpectatorWorkflow({
@@ -179,6 +180,7 @@ export class AquariumSpectatorManager {
             }
         }
         this.battleCount++;
-        this.startNewBattle();
+        // 2초 후 다음 스테이지를 시작합니다.
+        setTimeout(() => this.startNextStage(), 2000);
     }
 }

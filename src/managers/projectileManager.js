@@ -9,6 +9,10 @@ export class ProjectileManager {
         this.vfxManager = vfxManager;
         this.knockbackEngine = knockbackEngine;
         console.log("[ProjectileManager] Initialized");
+
+        if (this.eventManager) {
+            this.eventManager.subscribe('before_map_load', () => this.clear());
+        }
     }
 
     create(caster, target, skill) {

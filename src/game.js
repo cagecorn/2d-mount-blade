@@ -12,6 +12,7 @@ import { TagManager } from './managers/tagManager.js';
 import { WorldEngine } from './worldEngine.js';
 import { MapManager } from './map.js';
 import { AquariumMapManager } from './aquariumMap.js';
+import { ArenaMapManager } from './arenaMap.js';
 import { AquariumManager, AquariumInspector } from './managers/aquariumManager.js';
 import * as Managers from './managers/index.js'; // managers/index.js에서 모든 매니저를 한 번에 불러옴
 import { ReputationManager } from './managers/ReputationManager.js';
@@ -551,6 +552,7 @@ export class Game {
         if (SETTINGS.ENABLE_AQUARIUM_SPECTATOR_MODE) {
             const enemyFormationManager = new FormationManager(5, 5, formationSpacing, 'RIGHT', formationAngle);
             this.spectatorManager = new AquariumSpectatorManager({
+                game: this,
                 eventManager: this.eventManager,
                 mapManager: this.mapManager,
                 formationManager: this.formationManager,
@@ -887,7 +889,7 @@ export class Game {
         const randomLoopBtn = document.getElementById('random-loop-btn');
         if (randomLoopBtn && this.spectatorManager) {
             randomLoopBtn.onclick = () => {
-                this.spectatorManager.startNewBattle();
+                this.spectatorManager.startNextStage();
             };
         }
 
@@ -1522,12 +1524,33 @@ export class Game {
     }
 
     loadMap(mapId) {
+        console.log(`[Game] 맵 로딩 시작: ${mapId}`);
+
+        // 맵 변경 직전 정리 작업 기회를 줍니다.
+        this.eventManager?.publish('before_map_load');
+
+        // 맵 매니저를 새 인스턴스로 교체합니다.
+        if (mapId === 'aquarium') {
+            this.mapManager = new AquariumMapManager();
+        } else if (mapId === 'arena') {
+            this.mapManager = new ArenaMapManager();
+        } else {
+            this.mapManager = new MapManager();
+        }
+        if (this.pathfindingManager) this.pathfindingManager.mapManager = this.mapManager;
+        if (this.motionManager) this.motionManager.mapManager = this.mapManager;
+        if (this.movementManager) this.movementManager.mapManager = this.mapManager;
         this.currentMapId = mapId;
-        console.log(`맵 로딩: ${mapId}`);
+
+        // 모든 엔티티 제거 후 맵 타일 생성
+        this.entityManager?.clearAll?.();
+        this.factory?.createMapTiles?.(this.mapManager, this.entityManager);
+
         if (mapId === 'arena') {
             this.arenaEngine.start();
         } else {
             this.arenaEngine.stop();
         }
+        console.log(`[Game] 맵 로딩 완료: ${mapId}`);
     }
 }

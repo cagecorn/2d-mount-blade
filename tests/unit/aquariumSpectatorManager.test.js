@@ -26,7 +26,9 @@ describe('AquariumSpectatorManager', () => {
         const ef = new EnemyFormationManager();
         const factory = new StubFactory();
         const entityManager = { entities: new Map(), removeEntityById(){}, init(){} };
+        const fakeGame = { loadMap(){ /* noop */ } };
         const manager = new AquariumSpectatorManager({
+            game: fakeGame,
             eventManager: em,
             mapManager: map,
             formationManager: f,
