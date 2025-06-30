@@ -1,8 +1,9 @@
 import { EFFECTS } from '../data/effects.js';
 
 export class CombatEngine {
-    constructor(game) {
-        this.game = game;
+    constructor(context) {
+        this.context = context;
+        this.game = context.game;
     }
 
     update(deltaTime) {

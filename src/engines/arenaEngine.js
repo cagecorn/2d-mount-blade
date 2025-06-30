@@ -5,8 +5,16 @@ import { ArenaManager } from '../arena/arenaManager.js';
  * \uAC8C\uC784 \uC0C1\uD0DC \uAD00\uB9AC, \uC5C5\uB370\uC774\uD2B8 \uBC0F \uB80C\uB354\uB9C1 \uD638\uCD9C\uC744 \uB2F4\uB2F9\uD569\uB2C8\uB2E4.
  */
 export class ArenaEngine {
-    constructor(game) {
-        this.game = game;
+    constructor(context) {
+        console.log("\uC544\uB808\uB098 \uC9C0\uD718\uC2E4\uC774 \ubaa8\ub4e0 \ub9e4\uB2DD\uB4E4\uc744 \BC1B\uc544\uc654\uc2b5\ub2c8\ub2e4!");
+
+        // assign managers from shared context
+        this.eventManager = context.eventManager;
+        this.unitFactory = context.unitFactory;
+        this.combatEngine = context.combatEngine;
+        this.aiManager = context.aiManager;
+
+        this.game = context.game;
         this.isActive = false;
 
         // ArenaEngine\uC740 ArenaManager\uB97C \uC18C\uC720\uD558\uACE0 \uAD00\uB9AC\uD569\uB2C8\uB2E4.
@@ -48,7 +56,9 @@ export class ArenaEngine {
 
         // ArenaEngine\uc740 \ud544\uc694\ud55c \ud558\uc704 \uc5d4\uc9c4\ub4e4\uc744 \uc21c\uc11c\ub300\ub85c \uc5c5\ub370\uc774\ud2b8\ud569\ub2c8\uB2E4.
         // 1. \uc804\ud22c \uacc4\uc0b0\uc740 CombatEngine\uc5d0 \uc704\uc784
-        this.game.combatEngine.update(deltaTime);
+        if (this.combatEngine) {
+            this.combatEngine.update(deltaTime);
+        }
         // 2. \ub77c\uc6b4\ub4dc \uad00\ub9ac \ub4f1 \uacbd\uae30 \ud654\ub294 ArenaManager\uc5d0 \uc704\uc784
         this.arenaManager.update(deltaTime);
     }

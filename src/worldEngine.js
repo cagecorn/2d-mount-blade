@@ -5,11 +5,12 @@ import { WalkManager } from './managers/walkManager.js';
 import { WorldmapRenderManager } from './rendering/worldMapRenderManager.js';
 
 export class WorldEngine {
-    constructor(game, assets, movementEngine = new MovementEngine({ tileSize: game.mapManager?.tileSize || 192 }), renderManager = new WorldmapRenderManager()) {
-        this.game = game;
-        this.assets = assets;
-        this.movementEngine = movementEngine;
-        this.renderManager = renderManager;
+    constructor(context) {
+        this.context = context;
+        this.game = context.game;
+        this.assets = context.assets;
+        this.movementEngine = context.movementEngine || new MovementEngine({ tileSize: this.game.mapManager?.tileSize || 192 });
+        this.renderManager = context.worldMapRenderManager || new WorldmapRenderManager();
         this.worldMapImage = this.assets['world-tile'];
         // 전투 맵과 동일한 타일 크기를 사용해 월드맵 크기를 계산
         this.tileSize = this.game.mapManager?.tileSize || 192;
