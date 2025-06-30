@@ -52,6 +52,7 @@ import { BattleMemoryManager } from './battleMemoryManager.js';
 import { ArenaUIManager } from './arenaUIManager.js';
 import { ArenaTensorFlowManager } from './arenaTensorFlowManager.js';
 import { ArenaRewardManager } from './arenaRewardManager.js';
+import { WorldCombatManager } from './worldCombatManager.js';
 // DataRecorder is only needed in a Node.js environment so we lazy-load it
 let DataRecorder = null;
 if (typeof process !== 'undefined' && process.versions?.node) {
@@ -114,5 +115,6 @@ export {
     ArenaUIManager,
     ArenaTensorFlowManager,
     ArenaRewardManager,
+    WorldCombatManager,
     AquariumSpectatorManager,
 };

@@ -79,6 +79,7 @@ import { JOBS } from './data/jobs.js';
 import { ArenaUIManager } from './managers/arenaUIManager.js';
 import { ArenaTensorFlowManager } from './managers/arenaTensorFlowManager.js';
 import { ArenaRewardManager } from './managers/arenaRewardManager.js';
+import { WorldCombatManager } from './managers/worldCombatManager.js';
 
 export class Game {
     constructor() {
@@ -227,6 +228,7 @@ export class Game {
         this.worldEngine = new WorldEngine(this, assets, this.movementEngine, this.worldMapRenderManager);
         this.combatEngine = new CombatEngine(this);
         this.battleManager = new BattleManager(this, this.eventManager, this.groupManager, this.entityManager, this.factory);
+        this.worldCombatManager = new WorldCombatManager(this, this.eventManager, this.worldEngine);
 
         // --- GridRenderer 인스턴스 생성 ---
         // AquariumMapManager의 정보를 바탕으로 GridRenderer를 초기화합니다.
@@ -961,28 +963,7 @@ export class Game {
         const { eventManager, combatCalculator, monsterManager, mercenaryManager, mapManager, metaAIManager, pathfindingManager } = this;
         const gameState = this.gameState;
 
-        // 월드맵과 전투 상태 전환 이벤트 처리
-        eventManager.subscribe('start_combat', (data) => {
-            if (gameState.currentState !== 'WORLD') return;
-            console.log(`전투 시작! 상대 부대 규모: ${data.monsterParty.troopSize}`);
-            const origin = { x: gameState.player.x, y: gameState.player.y };
-            const entityMap = { [gameState.player.id]: gameState.player };
-            this.mercenaryManager.mercenaries.forEach(m => { entityMap[m.id] = m; });
-            this.formationManager.apply(origin, entityMap);
-            this.pendingMonsterParty = data.monsterParty;
-            gameState.currentState = 'COMBAT';
-            this.worldEngine.monsters.forEach(m => m.isActive = false);
-        });
-
-        eventManager.subscribe('end_combat', (result) => {
-            console.log(`전투 종료! 결과: ${result.outcome}`);
-            gameState.currentState = 'WORLD';
-            if (result.outcome === 'victory') {
-                this.worldEngine.monsters = this.worldEngine.monsters.filter(m => m.isActive === false);
-                alert('Victory!');
-            }
-            this.worldEngine.monsters.forEach(m => m.isActive = true);
-        });
+        // 전투 관련 로직은 WorldCombatManager가 처리한다
 
         // 공격 이벤트 처리
         eventManager.subscribe('entity_attack', (data) => {
