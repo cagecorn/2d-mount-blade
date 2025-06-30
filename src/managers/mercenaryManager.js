@@ -81,4 +81,17 @@ export class MercenaryManager {
             this.uiManager.hideCharacterSheet(mercId);
         }
     }
+
+    /**
+     * Apply experience gain to all hired mercenaries.
+     * @param {number} exp - amount of experience to grant
+     */
+    applyExperienceGain(exp) {
+        if (!exp || this.mercenaries.length === 0) return;
+        for (const merc of this.mercenaries) {
+            if (merc.stats && typeof merc.stats.addExp === 'function') {
+                merc.stats.addExp(exp);
+            }
+        }
+    }
 }

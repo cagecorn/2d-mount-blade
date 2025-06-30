@@ -70,5 +70,6 @@
 | `../micro/MicroEngine.js` | 미시 세계 전투와 아이템 상태 갱신을 담당하는 엔진입니다. |
 | `../micro/MicroTurnManager.js` | 모든 아이템의 쿨타임 감소를 전담합니다. |
 | `timerManager.js` | 제한 시간을 다루는 범용 타이머 매니저입니다. |
+| `workflowManager.js` | 이름으로 워크플로 클래스를 등록하고 호출하는 중앙 관리 모듈입니다. |
 
 추가 매니저가 도입되면 이 목록을 계속 확장해 주세요.

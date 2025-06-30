@@ -36,3 +36,11 @@ single `context` object that contains only the data it needs.
 
 By documenting these patterns and growing the workflows file gradually, we can
 avoid bloated managers and maintain predictable game loops.
+
+## WorkflowManager
+
+Larger projects may include many workflows. The `WorkflowManager` (see
+`src/managers/workflowManager.js`) lets you register workflow classes under a
+short name and trigger them later. This keeps input handlers or cheat codes
+decoupled from the actual logic. Create an instance with the game's shared
+context and call `register('code', WorkflowClass)`.

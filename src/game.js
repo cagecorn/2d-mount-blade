@@ -79,6 +79,8 @@ import { JOBS } from './data/jobs.js';
 import { ArenaUIManager } from './managers/arenaUIManager.js';
 import { ArenaTensorFlowManager } from './managers/arenaTensorFlowManager.js';
 import { ArenaRewardManager } from './managers/arenaRewardManager.js';
+import { WorkflowManager } from './managers/workflowManager.js';
+import { ShowCombatResultWorkflow } from './workflows/showCombatResultWorkflow.js';
 
 import { GameInitializer } from "./core/GameInitializer.js";
 import { EventBinder } from "./core/EventBinder.js";
@@ -199,6 +201,11 @@ export class Game {
         this.combatEngine = new CombatEngine(this.engineContext);
         this.engineContext.combatEngine = this.combatEngine;
         this.battleManager = new BattleManager(this, this.eventManager, this.groupManager, this.entityManager, this.factory);
+
+        // Workflow system to coordinate high level flows like combat result display
+        this.workflowManager = new WorkflowManager(this.engineContext);
+        this.engineContext.workflowManager = this.workflowManager;
+        this.workflowManager.register('d3', ShowCombatResultWorkflow);
 
         // --- GridRenderer 인스턴스 생성 ---
         // AquariumMapManager의 정보를 바탕으로 GridRenderer를 초기화합니다.
