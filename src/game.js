@@ -89,7 +89,10 @@ export class Game {
         this.aquarium = document.getElementById('aquarium');
         this.isPaused = false;
         this.units = [];
-        this.arenaEngine = new ArenaEngine(this);
+        // ArenaEngine will be created after core managers are ready
+        this.arenaEngine = null;
+        // shared context placeholder
+        this.engineContext = null;
         this.currentMapId = null;
     }
 
@@ -222,10 +225,27 @@ export class Game {
             eventManager: this.eventManager,
             entityManager: this.entityManager,
         });
+
+        // 핵심 매니저들을 묶은 공유 컨텍스트 생성
+        this.engineContext = {
+            game: this,
+            eventManager: this.eventManager,
+            assets,
+            unitFactory: this.factory,
+            groupManager: this.groupManager,
+            entityManager: this.entityManager,
+            mapManager: this.mapManager,
+            movementEngine: this.movementEngine,
+            worldMapRenderManager: null, // placeholder, set below
+        };
+
         // 월드맵 로직을 담당하는 엔진
         this.worldMapRenderManager = new WorldmapRenderManager(this.groupManager);
-        this.worldEngine = new WorldEngine(this, assets, this.movementEngine, this.worldMapRenderManager);
-        this.combatEngine = new CombatEngine(this);
+        this.engineContext.worldMapRenderManager = this.worldMapRenderManager;
+        this.worldEngine = new WorldEngine(this.engineContext);
+        this.engineContext.worldEngine = this.worldEngine;
+        this.combatEngine = new CombatEngine(this.engineContext);
+        this.engineContext.combatEngine = this.combatEngine;
         this.battleManager = new BattleManager(this, this.eventManager, this.groupManager, this.entityManager, this.factory);
 
         // --- GridRenderer 인스턴스 생성 ---
@@ -365,6 +385,10 @@ export class Game {
         });
         this.metaAIManager = new MetaAIManager(this.eventManager, this.squadManager);
         this.monsterManager.setMetaAIManager(this.metaAIManager);
+        // 공유 컨텍스트에 AI 매니저 추가
+        if (this.engineContext) {
+            this.engineContext.aiManager = this.metaAIManager;
+        }
         if (SETTINGS.ENABLE_REPUTATION_SYSTEM) {
             this.reputationManager = new ReputationManager(this.eventManager);
             this.reputationManager.mercenaryManager = this.mercenaryManager;
@@ -386,6 +410,9 @@ export class Game {
             this.possessionAIManager = null;
         }
         this.itemFactory.emblems = EMBLEMS;
+
+        // 모든 매니저가 준비된 후 ArenaEngine 생성
+        this.arenaEngine = new ArenaEngine(this.engineContext);
 
         this.skillManager = new Managers.SkillManager(
             this.eventManager,
