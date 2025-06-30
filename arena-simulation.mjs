@@ -4,13 +4,6 @@ import { MicroEngine } from './src/micro/MicroEngine.js';
 import { JOBS } from './src/data/jobs.js';
 import { promises as fs } from 'fs';
 
-// 양자 요동을 표현하기 위한 간단한 난수 가중치 함수
-function quantumFluctuate(value, enable) {
-  if (!enable) return value;
-  const factor = 1 + (Math.random() - 0.5) * 0.2; // ±10% 변동
-  return Math.max(0, value * factor);
-}
-
 function randomJob() {
   const keys = Object.keys(JOBS).filter(j => j !== 'fire_god');
   return keys[Math.floor(Math.random() * keys.length)];
@@ -26,7 +19,7 @@ function createTeam(factory, groupId) {
   return team;
 }
 
-async function simulate({ quantum = false } = {}) {
+async function simulate() {
   const assets = { mercenary:{} };
   const factory = new CharacterFactory(assets);
   const eventManager = new EventManager();
@@ -42,8 +35,8 @@ async function simulate({ quantum = false } = {}) {
   eventManager.subscribe('battle_ended', r => { result = r; });
 
   // 간단한 전투 해석: 공격력 합산 비교 후 즉시 종료
-  const powerA = teamA.reduce((sum,u)=>sum + quantumFluctuate(u.attackPower||0, quantum),0);
-  const powerB = teamB.reduce((sum,u)=>sum + quantumFluctuate(u.attackPower||0, quantum),0);
+  const powerA = teamA.reduce((sum,u)=>sum + (u.attackPower || 0),0);
+  const powerB = teamB.reduce((sum,u)=>sum + (u.attackPower || 0),0);
   result = {
     winner: powerA >= powerB ? 'A' : 'B',
     teamA_alive: powerA >= powerB ? Math.ceil(Math.random()*6) : 0,
@@ -57,10 +50,10 @@ async function simulate({ quantum = false } = {}) {
   return result;
 }
 
-export async function runSimulations(count = 1, { quantum = false } = {}) {
+export async function runSimulations(count = 1) {
   const results = [];
   for (let i = 0; i < count; i++) {
-    const r = await simulate({ quantum });
+    const r = await simulate();
     results.push(r);
   }
   await fs.writeFile(
@@ -74,7 +67,6 @@ export async function runSimulations(count = 1, { quantum = false } = {}) {
 if (import.meta.main) {
   const countArg = process.argv.find(a => a.startsWith('--count='));
   const count = countArg ? parseInt(countArg.split('=')[1]) : 1;
-  const quantum = process.argv.includes('--quantum');
-  await runSimulations(count, { quantum });
+  await runSimulations(count);
 }
 

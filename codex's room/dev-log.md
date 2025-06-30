@@ -101,3 +101,7 @@
 - JOBS 검증을 포함한 dataIntegrity 테스트를 갱신.
 - Unit 클래스에 DecisionEngine과 FluctuationEngine을 연동해 MBTI 영향과 실수/요동 처리를 적용.
 - arena-integration-log.md에 2~3단계 진행 상황을 정리.
+
+## 세션 23
+- `arena-simulation.mjs`의 양자 요동 기능을 제거하여 전투 계산을 단순화.
+- `--quantum` 옵션 삭제에 따라 관련 문서와 결과 파일(arena-quantum-results.md) 제거.
