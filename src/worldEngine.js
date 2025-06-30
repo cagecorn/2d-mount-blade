@@ -147,16 +147,8 @@ export class WorldEngine {
     }
 
     handleEnemyTurn() {
-        for (const monster of this.monsters) {
-            if (!monster || this.movementEngine.isMoving(monster)) continue;
-
-            const nextStep = this.walkManager.getNextStep(monster, this.player, 2);
-
-            if (nextStep.x >= 0 && nextStep.x < this.worldWidth / this.tileSize &&
-                nextStep.y >= 0 && nextStep.y < this.worldHeight / this.tileSize) {
-                this.movementEngine.startMovement(monster, nextStep);
-            }
-        }
+        // 월드맵의 적들은 플레이어를 추격하지 않는다.
+        // 향후 AI 확장을 고려하여 턴 전환만 처리한다.
         this.turnManager.nextTurn();
     }
 
