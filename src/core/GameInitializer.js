@@ -57,7 +57,7 @@ export class GameInitializer {
 
     l.onReady(() => {
       console.log('에셋 로딩 완료, 게임 설정 시작...');
-      setupAndStartGame(this.context);
+      setupAndStartGame(this.context, this.loader.assets);
       // Ensure the canvas becomes visible once the game is ready
       if (this.context?.canvas) {
         this.context.canvas.style.display = 'block';
