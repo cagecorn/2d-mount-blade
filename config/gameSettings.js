@@ -27,7 +27,7 @@ export const SETTINGS = {
     // Set this to false to revert to a standard dungeon layout.
     ENABLE_AQUARIUM_LANES: false,
     // 자동 12vs12 전투를 감상하는 수족관 관람 모드 활성화 여부
-    ENABLE_AQUARIUM_SPECTATOR_MODE: false,
+    ENABLE_AQUARIUM_SPECTATOR_MODE: true,
     // guideline markdown files will be loaded from this GitHub API path
     // example: 'user/repo/contents/guidelines?ref=main'
     // Remote markdown guidelines are fetched via the GitHub API.
