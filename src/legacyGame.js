@@ -82,8 +82,8 @@ import { ShowCombatResultWorkflow } from './workflows/showCombatResultWorkflow.j
 import { EntityDeathWorkflow } from './workflows/entityDeathWorkflow.js';
 
 import { GameInitializer } from "./core/GameInitializer.js";
-import { EventBinder } from "./core/EventBinder.js";
 import { CameraController } from "./core/CameraController.js";
+import { LegacyGameEngine } from "./core/LegacyGameEngine.js";
 export class Game {
     constructor() {
         this.loader = new AssetLoader();
@@ -98,6 +98,7 @@ export class Game {
         // shared context placeholder
         this.engineContext = null;
         this.currentMapId = null;
+        this.gameEngine = new LegacyGameEngine(this);
     }
 
     start() {
@@ -444,274 +445,11 @@ export class Game {
             }
         }
 
-        // === 그룹 생성 ===
+        // === 그룹 생성 및 유닛 초기화 ===
         this.playerGroup = this.metaAIManager.createGroup('player_party', STRATEGY.AGGRESSIVE);
-        // 플레이어는 직접 조종하므로 AI를 비활성화하지만 용병은 계속 행동하게 둡니다.
         this.monsterGroup = this.metaAIManager.createGroup('dungeon_monsters', STRATEGY.AGGRESSIVE);
-
-        // === 몬스터 부대 생성 ===
-        const enemyFormationManager = new FormationManager(5, 5, formationSpacing, 'RIGHT', formationAngle);
-        const enemyFormationOrigin = {
-            x: (this.mapManager.width - 4) * this.mapManager.tileSize,
-            y: (this.mapManager.height / 2) * this.mapManager.tileSize,
-        };
-        const monsterSquad = [];
-        const monsterCount = 15;
-        for (let i = 0; i < monsterCount; i++) {
-            const monster = this.factory.create('monster', {
-                x: 0,
-                y: 0,
-                tileSize: this.mapManager.tileSize,
-                groupId: this.monsterGroup.id,
-                image: assets.monster,
-            });
-            monster.equipmentRenderManager = this.equipmentRenderManager;
-
-            const weaponIds = ['short_sword','long_bow','axe','mace','staff','spear','scythe','whip','dagger','estoc'];
-            const wId = weaponIds[Math.floor(Math.random() * weaponIds.length)];
-            const weapon = this.itemFactory.create(wId, 0, 0, this.mapManager.tileSize);
-            if (weapon) this.equipmentManager.equip(monster, weapon, null);
-
-            const armorParts = ['iron_helmet','iron_gauntlets','iron_boots','leather_armor'];
-            armorParts.forEach(p => {
-                const item = this.itemFactory.create(p, 0, 0, this.mapManager.tileSize);
-                if (item) this.equipmentManager.equip(monster, item, null);
-            });
-
-            const consumable = this.itemFactory.create('potion', 0, 0, this.mapManager.tileSize);
-            if (consumable) monster.consumables.push(consumable);
-
-            this.monsterManager.addMonster(monster);
-            this.groupManager.addMember(monster);
-            monsterSquad.push(monster);
-        }
-        const monsterEntityMap = {};
-        monsterSquad.forEach(m => { monsterEntityMap[m.id] = m; });
-
-        // === 적대 용병 부대 생성 ===
-        const hostileMercGroup = this.metaAIManager.createGroup('hostile_mercenaries', STRATEGY.AGGRESSIVE);
-        const mercSquad = [];
-        const mercCount = 12;
-        const jobIds = Object.keys(JOBS);
-        for (let i = 0; i < mercCount; i++) {
-            const jobId = jobIds[Math.floor(Math.random() * jobIds.length)];
-            const merc = this.factory.create('mercenary', {
-                jobId,
-                x: 0,
-                y: 0,
-                tileSize: this.mapManager.tileSize,
-                groupId: hostileMercGroup.id,
-                image: assets[jobId] || assets.mercenary,
-            });
-            merc.equipmentRenderManager = this.equipmentRenderManager;
-            const consumable = this.itemFactory.create('potion', 0, 0, this.mapManager.tileSize);
-            if (consumable) merc.consumables.push(consumable);
-            this.monsterManager.addMonster(merc);
-            this.groupManager.addMember(merc);
-            mercSquad.push(merc);
-        }
-
-        const mercEntityMap = {};
-        mercSquad.forEach(m => { mercEntityMap[m.id] = m; });
-
-        const enemyEntityMap = { ...monsterEntityMap, ...mercEntityMap };
-
-        monsterSquad.forEach((monster, idx) => {
-            if (idx < 25) {
-                enemyFormationManager.assign(idx, monster.id);
-            }
-        });
-        mercSquad.forEach((merc, idx) => {
-            const slotIndex = monsterSquad.length + idx;
-            if (slotIndex < 25) {
-                enemyFormationManager.assign(slotIndex, merc.id);
-            }
-        });
-        enemyFormationManager.apply(enemyFormationOrigin, enemyEntityMap);
-
-        // 월드맵에 첫 번째 몬스터와 적대 용병 지휘관 배치
-        if (this.worldEngine && monsterSquad[0]) {
-            monsterSquad[0].troopSize = monsterSquad.length;
-            this.worldEngine.addMonster(monsterSquad[0], 3, 2);
-        }
-        if (this.worldEngine && mercSquad[0]) {
-            mercSquad[0].troopSize = mercSquad.length;
-            this.worldEngine.addMonster(mercSquad[0], 6, 6);
-        }
-
-        // === 2. 플레이어 생성 ===
-        let startPos;
-        startPos = { x: this.mapManager.tileSize * 4, y: (this.mapManager.height * this.mapManager.tileSize) / 2 };
-        const player = this.factory.create('player', {
-            x: startPos.x,
-            y: startPos.y,
-            tileSize: this.mapManager.tileSize,
-            groupId: this.playerGroup.id,
-            image: assets.player,
-            // 초반 난이도를 맞추기 위해 이동 속도를 낮춘다
-            baseStats: { strength: 5, agility: 5, endurance: 15, movement: 4 }
-        });
-        player.ai = null; // disable any automatic skills for the player
-        player.equipmentRenderManager = this.equipmentRenderManager;
-
-        // 초기 장비 세팅
-        const pHelmet = this.itemFactory.create('iron_helmet', 0, 0, this.mapManager.tileSize);
-        const pGloves = this.itemFactory.create('iron_gauntlets', 0, 0, this.mapManager.tileSize);
-        const pBoots = this.itemFactory.create('iron_boots', 0, 0, this.mapManager.tileSize);
-        const pArmor = this.itemFactory.create('leather_armor', 0, 0, this.mapManager.tileSize);
-        if (pHelmet) this.equipmentManager.equip(player, pHelmet, null);
-        if (pGloves) this.equipmentManager.equip(player, pGloves, null);
-        if (pBoots) this.equipmentManager.equip(player, pBoots, null);
-        if (pArmor) this.equipmentManager.equip(player, pArmor, null);
-        this.gameState = {
-            currentState: 'WORLD',
-            player,
-            inventory: this.inventoryManager.getSharedInventory(),
-            gold: 1000,
-            statPoints: 5,
-            camera: { x: 0, y: 0 },
-            isGameOver: false,
-            zoomLevel: SETTINGS.DEFAULT_ZOOM,
-            isPaused: false
-        };
-        this.cameraDrag = {
-            isDragging: false,
-            dragStart: { x: 0, y: 0 },
-            cameraStart: { x: 0, y: 0 },
-            followPlayer: true
-        };
-        this.playerGroup.addMember(player);
-        this.groupManager.addMember(player);
-        this.cameraController = new CameraController(this);
-        // Game 인스턴스에서 직접 플레이어에 접근할 수 있도록 참조를 저장합니다.
-        this.player = player;
-        // 월드 엔진에서도 동일한 플레이어 데이터를 사용하도록 설정
-        this.worldEngine.setPlayer(player);
-
-        if (SETTINGS.ENABLE_AQUARIUM_SPECTATOR_MODE) {
-            const enemyFormationManager = new FormationManager(5, 5, formationSpacing, 'RIGHT', formationAngle);
-            this.spectatorManager = new AquariumSpectatorManager({
-                game: this,
-                eventManager: this.eventManager,
-                mapManager: this.mapManager,
-                formationManager: this.formationManager,
-                enemyFormationManager,
-                factory: this.factory,
-                entityManager: this.entityManager,
-                groupManager: this.groupManager,
-                metaAIManager: this.metaAIManager,
-                mercenaryManager: this.mercenaryManager,
-                monsterManager: this.monsterManager,
-                projectileManager: this.projectileManager,
-                vfxManager: this.vfxManager,
-                assets,
-                playerGroupId: this.playerGroup.id,
-                enemyGroupId: this.monsterGroup.id
-            });
-            this.spectatorManager.start();
-        }
-
-        // 초기 아이템 배치
-        if (this.mapManager.name !== 'aquarium') {
-            const potion = this.itemFactory.create(
-                                    'potion',
-                                    player.x + this.mapManager.tileSize,
-                                    player.y,
-                                    this.mapManager.tileSize);
-            const dagger = this.itemFactory.create('short_sword',
-                                    player.x - this.mapManager.tileSize,
-                                    player.y,
-                                    this.mapManager.tileSize);
-            const bow = this.itemFactory.create('long_bow',
-                                    player.x,
-                                    player.y + this.mapManager.tileSize,
-                                    this.mapManager.tileSize);
-            const violinBow = this.itemFactory.create('violin_bow',
-                                    player.x + this.mapManager.tileSize,
-                                    player.y - this.mapManager.tileSize,
-                                    this.mapManager.tileSize);
-            const plateArmor = this.itemFactory.create('plate_armor',
-                                    player.x + this.mapManager.tileSize * 2,
-                                    player.y - this.mapManager.tileSize,
-                                    this.mapManager.tileSize);
-            const foxEgg = this.itemFactory.create('pet_fox',
-                                    player.x - this.mapManager.tileSize * 2,
-                                    player.y,
-                                    this.mapManager.tileSize);
-            const foxCharm = this.itemFactory.create('fox_charm',
-                                    player.x,
-                                    player.y - this.mapManager.tileSize * 2,
-                                    this.mapManager.tileSize);
-            // --- 테스트용 휘장 아이템 4종 배치 ---
-            const emblemGuardian = this.itemFactory.create('emblem_guardian', player.x + 64, player.y + 64, this.mapManager.tileSize);
-            const emblemDestroyer = this.itemFactory.create('emblem_destroyer', player.x - 64, player.y + 64, this.mapManager.tileSize);
-            const emblemDevotion = this.itemFactory.create('emblem_devotion', player.x + 64, player.y - 64, this.mapManager.tileSize);
-            const emblemConductor = this.itemFactory.create('emblem_conductor', player.x - 64, player.y - 64, this.mapManager.tileSize);
-            this.itemManager.addItem(potion);
-            if (dagger) this.itemManager.addItem(dagger);
-            if (bow) this.itemManager.addItem(bow);
-            if (violinBow) this.itemManager.addItem(violinBow);
-            if (plateArmor) this.itemManager.addItem(plateArmor);
-            if (foxEgg) this.itemManager.addItem(foxEgg);
-            if (foxCharm) this.itemManager.addItem(foxCharm);
-            if(emblemGuardian) this.itemManager.addItem(emblemGuardian);
-            if(emblemDestroyer) this.itemManager.addItem(emblemDestroyer);
-            if(emblemDevotion) this.itemManager.addItem(emblemDevotion);
-            if(emblemConductor) this.itemManager.addItem(emblemConductor);
-        }
-
-        // === 3. 몬스터 생성 ===
-        // 기존 무작위 스폰 로직을 제거하고 formationManager를 통해 일괄 배치합니다.
-
-        if (SETTINGS.ENABLE_AQUARIUM_LANES) {
-            // --- 3-Lane 모드 설정 로직 ---
-            const friendlySquads = this.squadManager.getSquads();
-            const lanes = ['TOP', 'MID', 'BOTTOM'];
-            Object.values(friendlySquads).forEach((squad, index) => {
-                const lane = lanes[index];
-                if (!lane) return;
-                squad.name = lane;
-                squad.members.forEach(mercId => {
-                    const merc = this.entityManager.getEntityById(mercId);
-                    if (merc) {
-                        merc.team = 'LEFT';
-                        merc.lane = lane;
-                        merc.ai = new LanePusherAI();
-                        merc.currentWaypointIndex = 0;
-                    }
-                });
-            });
-
-            const allMonsters = this.monsterManager.getMonsters();
-            const monstersPerLane = Math.floor(allMonsters.length / 3);
-            allMonsters.forEach((monster, idx) => {
-                let lane = 'MID';
-                if (idx < monstersPerLane) lane = 'TOP';
-                else if (idx < monstersPerLane * 2) lane = 'BOTTOM';
-
-                monster.team = 'RIGHT';
-                monster.lane = lane;
-                monster.ai = new LanePusherAI();
-                monster.currentWaypointIndex = 0;
-                const startWaypoint = this.laneManager.getNextWaypoint(monster);
-                if (startWaypoint) {
-                    monster.x = startWaypoint.x;
-                    monster.y = startWaypoint.y;
-                }
-            });
-        }
-
+        this.gameEngine.initializeUnits(assets);
         this.entityManager.init(this.gameState.player, this.mercenaryManager.mercenaries, this.monsterManager.monsters);
-        // Apply initial formation for player party
-        const origin = { x: this.gameState.player.x, y: this.gameState.player.y };
-        const entityMap = { [player.id]: this.gameState.player };
-        this.mercenaryManager.mercenaries.forEach(m => { entityMap[m.id] = m; });
-        this.formationManager.assign(12, player.id);
-        this.mercenaryManager.mercenaries.forEach((m, idx) => {
-            const slotIndex = [6, 7, 8, 11, 13][idx] || idx;
-            this.formationManager.assign(slotIndex, m.id);
-        });
-        this.formationManager.apply(origin, entityMap);
         this.equipmentManager.entityManager = this.entityManager;
         this.aspirationManager = new AspirationManager(this.eventManager, this.microWorld, this.effectManager, this.vfxManager, this.entityManager);
 
@@ -950,7 +688,7 @@ export class Game {
             }
         });
 
-        EventBinder.bindAll(this);
+        this.gameEngine.bindEvents();
         this.showWorldMap();
         this.gameLoop = new GameLoop(this.update, this.render);
         this.gameLoop.start();
@@ -1472,31 +1210,6 @@ export class Game {
     }
 
     loadMap(mapId) {
-        console.log(`[Game] 맵 로딩 시작: ${mapId}`);
-
-        // 맵 변경 직전 정리 작업 기회를 줍니다.
-        this.eventManager?.publish('before_map_load');
-
-        // 맵 매니저를 새 인스턴스로 교체합니다.
-        if (mapId === 'arena') {
-            this.mapManager = new ArenaMapManager();
-        } else {
-            this.mapManager = new MapManager();
-        }
-        if (this.pathfindingManager) this.pathfindingManager.mapManager = this.mapManager;
-        if (this.motionManager) this.motionManager.mapManager = this.mapManager;
-        if (this.movementManager) this.movementManager.mapManager = this.mapManager;
-        this.currentMapId = mapId;
-
-        // 모든 엔티티 제거 후 맵 타일 생성
-        this.entityManager?.clearAll?.();
-        this.factory?.createMapTiles?.(this.mapManager, this.entityManager);
-
-        if (mapId === 'arena') {
-            this.arenaEngine.start();
-        } else {
-            this.arenaEngine.stop();
-        }
-        console.log(`[Game] 맵 로딩 완료: ${mapId}`);
+        this.gameEngine.loadMap(mapId);
     }
 }
