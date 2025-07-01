@@ -2,10 +2,15 @@
 // Fixed three-lane map for testing lane mechanics
 import { MapManager } from './map.js';
 import { SETTINGS } from '../config/gameSettings.js';
+import { Wall, Floor, Water, VBridge, HBridge } from './tile.js';
 
 export class AquariumMapManager extends MapManager {
     constructor(seed) {
         super(seed);
+
+        // 이후 로직을 위해 별도의 타일 데이터 보관소를 만든다
+        this._mapData = {};
+
         // 기본 크기를 절반으로 줄여 수족관 맵을 더 작게 만든다
         this.width = Math.floor(this.width / 2);
         this.height = Math.floor(this.height / 2);
@@ -17,78 +22,47 @@ export class AquariumMapManager extends MapManager {
         this.openArea = 6;
         // 테스트 편의를 위해 기본 맵을 넓은 빈 공간으로 생성한다
         this.useLanes = false;
+
+        // 크기 조정 이후 다시 맵을 생성한다
+        this.map = this._generateMaze();
     }
 
     // 벽으로 둘러싸인 빈 맵을 생성한다
     _generateEmptyMap() {
         const map = Array.from({ length: this.height }, () =>
-            Array(this.width).fill(this.tileTypes.FLOOR)
+            Array(this.width).fill(null)
         );
 
         for (let x = 0; x < this.width; x++) {
-            map[0][x] = this.tileTypes.WALL;
-            map[this.height - 1][x] = this.tileTypes.WALL;
+            for (let y = 0; y < this.height; y++) {
+                const key = `${x},${y}`;
+                if (
+                    x === 0 ||
+                    x === this.width - 1 ||
+                    y === 0 ||
+                    y === this.height - 1
+                ) {
+                    this._mapData[key] = new Wall(x, y);
+                    map[y][x] = this.tileTypes.WALL;
+                } else {
+                    this._mapData[key] = new Floor(x, y);
+                    map[y][x] = this.tileTypes.FLOOR;
+                }
+            }
         }
-        for (let y = 0; y < this.height; y++) {
-            map[y][0] = this.tileTypes.WALL;
-            map[y][this.width - 1] = this.tileTypes.WALL;
-        }
+
         return map;
     }
 
     // Generate a simple three-lane layout separated by walls. Left and right edges
     // are open so all lanes converge at the bases.
     _generateMaze() {
-        if (!this.useLanes) {
-            return super._generateEmptyMap();
+        // MapManager constructor calls this before our fields are set.
+        // In that case, fall back to the default maze generation.
+        if (!this._mapData) {
+            return super._generateMaze();
         }
-
-        const map = Array.from({ length: this.height }, () =>
-            Array(this.width).fill(this.tileTypes.WALL)
-        );
-
-        const openArea = this.openArea; // width of the bases at left and right
-        const half = Math.floor(this.corridorWidth / 2);
-        const lanes = [
-            Math.floor(this.height * 0.2),
-            Math.floor(this.height * 0.5),
-            Math.floor(this.height * 0.8)
-        ];
-        this.lanes = lanes;
-        this.laneCenters = lanes.map(l => l * this.tileSize + this.tileSize / 2);
-
-        for (let x = 0; x < this.width; x++) {
-            const isBaseColumn = x < openArea || x >= this.width - openArea;
-            for (const laneY of lanes) {
-                for (let y = laneY - half; y <= laneY + half; y++) {
-                    if (y >= 0 && y < this.height) {
-                        // lanes themselves are wide open
-                        map[y][x] = this.tileTypes.FLOOR;
-                    }
-                }
-            }
-
-            if (isBaseColumn) {
-                // also open the rest of the base columns
-                for (let y = 0; y < this.height; y++) {
-                    map[y][x] = this.tileTypes.FLOOR;
-                }
-            }
-        }
-
-        // carve jungle-style maze between lanes
-        for (let i = 0; i < lanes.length - 1; i++) {
-            const top = lanes[i] + half + 1;
-            const bottom = lanes[i + 1] - half - 1;
-            if (bottom > top) {
-                this._generateJungleZone(map, top, bottom);
-            }
-        }
-
-        // create entrances from each lane into the jungle areas
-        this._addJungleEntrances(map, lanes, half);
-
-        return map;
+        return this._generateEmptyMap();
     }
 
     _generateJungleZone(map, startY, endY) {
