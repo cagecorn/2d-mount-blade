@@ -22,6 +22,7 @@ export class GameInitializer {
     l.loadImage('mercenary', 'assets/images/warrior.png');
     l.loadImage('floor', 'assets/floor.png');
     l.loadImage('wall', 'assets/wall.png');
+    l.loadImage('obstacle', 'assets/images/wall-tile.png');
     l.loadImage('gold', 'assets/gold.png');
     l.loadImage('potion', 'assets/potion.png');
     l.loadImage('sword', 'assets/images/shortsword.png');

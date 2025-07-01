@@ -58,7 +58,7 @@ export class PathfindingManager {
                 const nKey = `${nx},${ny}`;
 
                 if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
-                if (map[ny][nx] === tileTypes.WALL) continue;
+                if (map[ny][nx] === tileTypes.WALL || map[ny][nx] === tileTypes.OBSTACLE) continue;
                 if (isBlocked(nx, ny) && !(nx === endX && ny === endY)) continue;
                 if (visited.has(nKey)) continue;
 
@@ -103,7 +103,7 @@ export class PathfindingManager {
             const nx = endX + dir.x;
             const ny = endY + dir.y;
             if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
-            if (map[ny][nx] === tileTypes.WALL) continue;
+            if (map[ny][nx] === tileTypes.WALL || map[ny][nx] === tileTypes.OBSTACLE) continue;
             const path = this._bfs(startX, startY, nx, ny, isBlocked);
             if (path.length > 0 && (bestPath.length === 0 || path.length < bestPath.length)) {
                 bestPath = path;
@@ -134,7 +134,7 @@ export class PathfindingManager {
 
                 if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
                 if (visited.has(key)) continue;
-                if (map[ny][nx] === tileTypes.WALL) {
+                if (map[ny][nx] === tileTypes.WALL || map[ny][nx] === tileTypes.OBSTACLE) {
                     visited.add(key);
                     continue;
                 }
