@@ -11,7 +11,6 @@ import { CombatCalculator } from './combat.js';
 import { TagManager } from './managers/tagManager.js';
 import { WorldEngine } from './worldEngine.js';
 import { MapManager } from './map.js';
-import { ArenaMapManager } from './arenaMap.js';
 import { AquariumManager, AquariumInspector } from './managers/aquariumManager.js';
 import * as Managers from './managers/index.js'; // managers/index.js에서 모든 매니저를 한 번에 불러옴
 import { ReputationManager } from './managers/ReputationManager.js';
@@ -1478,11 +1477,7 @@ export class Game {
         this.eventManager?.publish('before_map_load');
 
         // 맵 매니저를 새 인스턴스로 교체합니다.
-        if (mapId === 'arena') {
-            this.mapManager = new ArenaMapManager();
-        } else {
-            this.mapManager = new MapManager();
-        }
+        this.mapManager = new MapManager();
         if (this.pathfindingManager) this.pathfindingManager.mapManager = this.mapManager;
         if (this.motionManager) this.motionManager.mapManager = this.mapManager;
         if (this.movementManager) this.movementManager.mapManager = this.mapManager;

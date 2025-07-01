@@ -3,7 +3,7 @@ import { Unit } from './Unit.js';
 import { JOBS } from '../data/jobs.js';
 import { ITEMS } from '../data/items.js';
 import { SKILLS } from '../data/skills.js';
-import { ArenaMapManager } from '../arenaMap.js';
+import { MapManager } from '../map.js';
 import { ProjectileManager } from '../managers/projectileManager.js';
 
 class ArenaManager {
@@ -58,7 +58,7 @@ class ArenaManager {
         this.isActive = true;
         if (this.game.gameLoop) this.game.gameLoop.timeScale = 5;
         this.prevMapManager = this.game.mapManager;
-        this.game.mapManager = new ArenaMapManager();
+        this.game.mapManager = new MapManager();
         // reset camera for arena
         if (this.game.gameState) {
             this.game.gameState.camera = { x: 0, y: 0 };

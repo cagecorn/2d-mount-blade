@@ -1,12 +1,12 @@
 // 게임 시작 시 사용할 기본 맵 매니저로 전장 맵을 불러옵니다.
-import { BattlefieldMapManager } from './battlefieldMap.js';
+import { MapManager } from './map.js';
 import { Commander } from './commander.js';
 import { Entity } from './entities.js';
 
 // 데모용 간단한 월드 객체
 export const world = {
     // 기본 월드 맵을 전장 타입으로 설정합니다.
-    map: new BattlefieldMapManager(),
+    map: new MapManager(),
     entities: [],
     addEntity(e) { this.entities.push(e); }
 };
