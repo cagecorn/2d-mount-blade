@@ -4,6 +4,7 @@ const TILE_TYPES = {
     FLOOR: 0,
     WALL: 1,
     LAVA: 2,
+    OBSTACLE: 3,
 };
 
 export class MapManager {
@@ -353,7 +354,8 @@ export class MapManager {
             const mapX = Math.floor(point.x / this.tileSize);
             const mapY = Math.floor(point.y / this.tileSize);
             if (mapX < 0 || mapX >= this.width || mapY < 0 || mapY >= this.height) return true;
-            if (this.map[mapY][mapX] === this.tileTypes.WALL) return true;
+            const tile = this.map[mapY][mapX];
+            if (tile === this.tileTypes.WALL || tile === this.tileTypes.OBSTACLE) return true;
         }
         return false;
     }
@@ -362,6 +364,7 @@ export class MapManager {
         const wallImage = assets.wall;
         const floorImage = assets.floor;
         const lavaImage = assets.lava || floorImage;
+        const obstacleImage = assets.obstacle || wallImage;
 
         for (let y = 0; y < this.height; y++) {
             for (let x = 0; x < this.width; x++) {
@@ -370,6 +373,8 @@ export class MapManager {
                     imageToDraw = wallImage;
                 } else if (this.map[y][x] === this.tileTypes.LAVA) {
                     imageToDraw = lavaImage;
+                } else if (this.map[y][x] === this.tileTypes.OBSTACLE) {
+                    imageToDraw = obstacleImage;
                 }
                 if (imageToDraw) {
                     ctxBase.drawImage(imageToDraw, x * this.tileSize, y * this.tileSize, this.tileSize, this.tileSize);
