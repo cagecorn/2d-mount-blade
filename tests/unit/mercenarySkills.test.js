@@ -30,14 +30,14 @@ test('기본 용병 무작위 스킬 - charge_attack', () => {
     assert.strictEqual(merc.skills[0], SKILLS.charge_attack.id);
 });
 
-test('궁수 스킬 부여 - double_thrust', () => {
+test('궁수 스킬 부여 - double_strike', () => {
     const merc = createMerc('archer', 0.1);
-    assert.strictEqual(merc.skills[0], SKILLS.double_thrust.id);
+    assert.strictEqual(merc.skills[0], SKILLS.double_strike.id);
 });
 
-test('궁수 스킬 부여 - hawk_eye', () => {
+test('궁수 스킬 부여 - double_strike (high roll)', () => {
     const merc = createMerc('archer', 0.9);
-    assert.strictEqual(merc.skills[0], SKILLS.hawk_eye.id);
+    assert.strictEqual(merc.skills[0], SKILLS.double_strike.id);
 });
 
 test('마법사 스킬 부여 - fireball', () => {
