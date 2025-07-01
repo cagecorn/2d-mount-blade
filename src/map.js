@@ -16,6 +16,7 @@ export class MapManager {
         this.rooms = [];
         this.corridorWidth = 5; // 전역적으로 사용할 통로 너비
         this.map = this._generateMaze();
+        this.assets = null;
     }
 
     _random() {
@@ -375,5 +376,14 @@ export class MapManager {
                 }
             }
         }
+    }
+
+    update() {
+        // Map has no dynamic elements yet
+    }
+
+    draw(ctx) {
+        if (!this.assets) return;
+        this.render(ctx, ctx, this.assets);
     }
 }
