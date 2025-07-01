@@ -11,7 +11,6 @@ import { CombatCalculator } from './combat.js';
 import { TagManager } from './managers/tagManager.js';
 import { WorldEngine } from './worldEngine.js';
 import { MapManager } from './map.js';
-import { AquariumMapManager } from './aquariumMap.js';
 import { ArenaMapManager } from './arenaMap.js';
 import { AquariumManager, AquariumInspector } from './managers/aquariumManager.js';
 import * as Managers from './managers/index.js'; // managers/index.js에서 모든 매니저를 한 번에 불러옴
@@ -144,8 +143,8 @@ export class Game {
         this.statusEffectsManager = new StatusEffectsManager(this.eventManager);
         this.tagManager = new TagManager();
         this.combatCalculator = new CombatCalculator(this.eventManager, this.tagManager);
-        // Player begins in the Aquarium map for feature testing
-        this.mapManager = new AquariumMapManager();
+        // 기본 맵 매니저를 생성합니다.
+        this.mapManager = new MapManager();
         // MovementEngine은 맵의 타일 크기를 기반으로 동작합니다.
         this.movementEngine = new MovementEngine({ tileSize: this.mapManager.tileSize });
 
@@ -209,7 +208,7 @@ export class Game {
         this.workflowManager.register('entity_death', EntityDeathWorkflow);
 
         // --- GridRenderer 인스턴스 생성 ---
-        // AquariumMapManager의 정보를 바탕으로 GridRenderer를 초기화합니다.
+        // 초기 맵 정보를 바탕으로 GridRenderer를 초기화합니다.
         this.gridRenderer = new GridRenderer({
             mapWidth: this.mapManager.width * this.mapManager.tileSize,
             mapHeight: this.mapManager.height * this.mapManager.tileSize,
@@ -1478,9 +1477,7 @@ export class Game {
         this.eventManager?.publish('before_map_load');
 
         // 맵 매니저를 새 인스턴스로 교체합니다.
-        if (mapId === 'aquarium') {
-            this.mapManager = new AquariumMapManager();
-        } else if (mapId === 'arena') {
+        if (mapId === 'arena') {
             this.mapManager = new ArenaMapManager();
         } else {
             this.mapManager = new MapManager();
