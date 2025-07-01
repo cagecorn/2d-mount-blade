@@ -712,6 +712,15 @@ export class Game {
             this.pendingMonsterParty = data.monsterParty;
             gameState.currentState = 'COMBAT';
             this.worldEngine.monsters.forEach(m => m.isActive = false);
+            // 전투에 돌입하면 수족관 맵을 로드하여 전투 전용 환경을 구성한다.
+            this.loadMap('aquarium');
+        });
+
+        // 부대 편성 UI에서 전투 시작을 누르면 맵을 다시 한번 확실히 로드한다.
+        eventManager.subscribe('formation_confirmed', () => {
+            if (gameState.currentState === 'COMBAT') {
+                this.loadMap('aquarium');
+            }
         });
 
         eventManager.subscribe('end_combat', (result) => {
