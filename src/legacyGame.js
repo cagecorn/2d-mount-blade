@@ -10,9 +10,8 @@ import { CombatLogManager, SystemLogManager } from './managers/logManager.js';
 import { CombatCalculator } from './combat.js';
 import { TagManager } from './managers/tagManager.js';
 import { WorldEngine } from './worldEngine.js';
-import { MapManager } from './map.js';
-// 전투는 수족관 맵을 기본 전장으로 사용합니다.
-import { AquariumMapManager } from './aquariumMap.js';
+import { MapManager, Map } from './map.js';
+import { mapData } from '../mapData.js';
 import { AquariumManager, AquariumInspector } from './managers/aquariumManager.js';
 import * as Managers from './managers/index.js'; // managers/index.js에서 모든 매니저를 한 번에 불러옴
 import { ReputationManager } from './managers/ReputationManager.js';
@@ -110,6 +109,9 @@ export class Game {
 
     init(assets) {
         this.assets = assets;
+        console.log('게임 초기화 중, 로드된 에셋:', this.assets);
+        // 기존 맵 데이터를 사용하여 단순 맵을 생성합니다.
+        this.map = new Map(this, this.assets.tileset, mapData, 32);
         // 설정에 따라 WebGL 레이어를 활성화한다
         this.layerManager = new LayerManager(SETTINGS.ENABLE_WEBGL_RENDERER);
         const canvas = this.layerManager.layers.mapBase;

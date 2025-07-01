@@ -400,3 +400,30 @@ export class MapManager {
         this.render(ctx, ctx, this.assets);
     }
 }
+
+// Simple static map renderer used by legacy code
+export class Map {
+    constructor(game, tilesetImage, mapData, tileSize = 32) {
+        this.game = game;
+        this.tilesetImage = tilesetImage;
+        this.mapData = mapData;
+        this.tileSize = tileSize;
+        this.width = mapData[0].length;
+        this.height = mapData.length;
+    }
+
+    draw(ctx, assets = this.game.assets) {
+        const floorImg = assets.floor;
+        const wallImg = assets.wall;
+        for (let y = 0; y < this.height; y++) {
+            for (let x = 0; x < this.width; x++) {
+                const tile = this.mapData[y][x];
+                const img = tile === 1 ? wallImg : floorImg;
+                if (img) {
+                    ctx.drawImage(img, x * this.tileSize, y * this.tileSize, this.tileSize, this.tileSize);
+                }
+            }
+        }
+    }
+}
+
