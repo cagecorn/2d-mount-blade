@@ -1,6 +1,7 @@
 import { EventBinder } from './EventBinder.js';
 import { MapManager } from '../map.js';
 import { ArenaMapManager } from '../arenaMap.js';
+import { AquariumMapManager } from '../aquariumMap.js';
 
 export class LegacyGameEngine {
   constructor(game) {
@@ -121,7 +122,9 @@ export class LegacyGameEngine {
     console.log(`[Game] 맵 로딩 시작: ${mapId}`);
     eventManager?.publish('before_map_load');
 
-    this.game.mapManager = mapId === 'arena' ? new ArenaMapManager() : new MapManager();
+    this.game.mapManager = mapId === 'arena'
+      ? new ArenaMapManager()
+      : (mapId === 'aquarium' ? new AquariumMapManager() : new MapManager());
     if (this.game.pathfindingManager) this.game.pathfindingManager.mapManager = this.game.mapManager;
     if (this.game.motionManager) this.game.motionManager.mapManager = this.game.mapManager;
     if (this.game.movementManager) this.game.movementManager.mapManager = this.game.mapManager;
