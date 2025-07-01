@@ -452,6 +452,8 @@ export class Game {
         this.playerGroup = this.metaAIManager.createGroup('player_party', STRATEGY.AGGRESSIVE);
         this.monsterGroup = this.metaAIManager.createGroup('dungeon_monsters', STRATEGY.AGGRESSIVE);
         this.gameEngine.initializeUnits(assets);
+        // 카메라 드래그와 자동 추적을 관리하는 컨트롤러를 초기화합니다.
+        this.cameraController = new CameraController(this);
         this.entityManager.init(this.gameState.player, this.mercenaryManager.mercenaries, this.monsterManager.monsters);
         this.equipmentManager.entityManager = this.entityManager;
         this.aspirationManager = new AspirationManager(this.eventManager, this.microWorld, this.effectManager, this.vfxManager, this.entityManager);
