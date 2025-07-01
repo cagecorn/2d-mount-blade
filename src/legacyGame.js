@@ -145,8 +145,11 @@ export class Game {
         this.statusEffectsManager = new StatusEffectsManager(this.eventManager);
         this.tagManager = new TagManager();
         this.combatCalculator = new CombatCalculator(this.eventManager, this.tagManager);
-        // 기본 맵 매니저를 생성합니다.
+        // 기본 맵 매니저를 생성하고 타일 이미지를 연결합니다.
         this.mapManager = new MapManager();
+        // mapManager.draw는 내부의 assets 객체를 사용하므로 로딩된
+        // 에셋을 즉시 할당해준다. 할당되지 않으면 맵이 검게만 보인다.
+        this.mapManager.assets = assets;
         // MovementEngine은 맵의 타일 크기를 기반으로 동작합니다.
         this.movementEngine = new MovementEngine({ tileSize: this.mapManager.tileSize });
 
