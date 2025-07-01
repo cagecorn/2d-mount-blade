@@ -11,6 +11,9 @@ export class GameInitializer {
     const l = this.loader;
     l.loadImage('player', 'assets/player.png');
     l.loadImage('monster', 'assets/monster.png');
+    // 원래 맵에서 사용하는 기본 타일셋 이미지
+    l.loadImage('floor', 'assets/floor.png');
+    l.loadImage('wall', 'assets/wall.png');
     l.loadImage('epic_monster', 'assets/epic_monster.png');
     l.loadImage('warrior', 'assets/images/warrior.png');
     l.loadImage('archer', 'assets/images/archer.png');
@@ -20,8 +23,6 @@ export class GameInitializer {
     l.loadImage('bard', 'assets/images/bard.png');
     l.loadImage('fire_god', 'assets/images/fire-god.png');
     l.loadImage('mercenary', 'assets/images/warrior.png');
-    l.loadImage('floor', 'assets/floor.png');
-    l.loadImage('wall', 'assets/wall.png');
     l.loadImage('obstacle', 'assets/images/wall-tile.png');
     l.loadImage('gold', 'assets/gold.png');
     l.loadImage('potion', 'assets/potion.png');
