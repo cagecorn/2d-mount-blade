@@ -376,13 +376,4 @@ export class MapManager {
             }
         }
     }
-
-    setAssets(assets) {
-        this.assets = assets;
-    }
-
-    draw(ctx) {
-        const assets = this.assets || {};
-        this.render(ctx, ctx, assets);
-    }
 }
