@@ -1,5 +1,5 @@
 import { GameEngine } from './engine.js';
-import { AquariumMapManager } from './aquariumMap.js';
+import { MapManager } from './map.js';
 import { EntityManager } from './managers/entityManager.js';
 import { UIManager } from './managers/uiManager.js';
 import { Player } from './entities.js';
@@ -8,7 +8,7 @@ import { InputManager } from './inputManager.js';
 export function setupAndStartGame(context) {
     const engine = new GameEngine(context);
     const inputManager = new InputManager();
-    const mapManager = new AquariumMapManager();
+    const mapManager = new MapManager();
     const entityManager = new EntityManager();
     const uiManager = new UIManager();
 
