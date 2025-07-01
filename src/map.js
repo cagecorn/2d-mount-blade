@@ -345,14 +345,6 @@ export class MapManager {
         return null;
     }
 
-    /**
-     * Returns a suitable starting position for the player. By default this
-     * picks a random floor tile. Subclasses may override for custom logic.
-     */
-    getPlayerStartingPosition() {
-        return this.getRandomFloorPosition() || { x: this.tileSize, y: this.tileSize };
-    }
-
     isWallAt(worldX, worldY, entityWidth = 0, entityHeight = 0) {
         const checkPoints = [
             {x: worldX, y: worldY}, {x: worldX + entityWidth, y: worldY},
