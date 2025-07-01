@@ -31,7 +31,12 @@ describe('World-Battle Flow Integration', () => {
     // 월드 엔진 초기화
     const assets = { 'world-tile': {}, 'sea-tile': {}, player: {}, monster: {} };
     const movementEngine = new MovementEngine({ tileSize: 1 });
-    const world = new WorldEngine(game, assets, movementEngine, { renderMap(){}, renderEntities(){} });
+    const world = new WorldEngine({
+      game,
+      assets,
+      movementEngine,
+      worldMapRenderManager: { renderMap(){}, renderEntities(){} }
+    });
 
     // 지휘관 및 부대 설정
     const playerCommander = { id: 'player', groupId: 'player', x: 2, y: 2, tileX: 2, tileY: 2, width:1, height:1 };
@@ -72,7 +77,7 @@ describe('World-Battle Flow Integration', () => {
     game.inputHandler.keysPressed['ArrowRight'] = true;
     world.update(1);
     game.inputHandler.keysPressed = {};
-    assert.strictEqual(playerCommander.tileX, 3);
+    assert.strictEqual(world.player.tileX, 3);
 
     // --- 적의 턴: 여전히 이동하지 않음 ---
     world.update(1);
