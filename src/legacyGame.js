@@ -146,6 +146,8 @@ export class Game {
         this.combatCalculator = new CombatCalculator(this.eventManager, this.tagManager);
         // 기본 맵 매니저를 생성합니다.
         this.mapManager = new MapManager();
+        // MapManager가 타일 이미지를 사용할 수 있도록 로딩된 에셋을 연결합니다.
+        this.mapManager.assets = this.assets;
         // MovementEngine은 맵의 타일 크기를 기반으로 동작합니다.
         this.movementEngine = new MovementEngine({ tileSize: this.mapManager.tileSize });
 
@@ -540,8 +542,11 @@ export class Game {
         }
 
         // === 2. 플레이어 생성 ===
-        let startPos;
-        startPos = { x: this.mapManager.tileSize * 4, y: (this.mapManager.height * this.mapManager.tileSize) / 2 };
+        // 플레이어가 벽에 끼지 않도록 맵에서 안전한 위치를 얻습니다.
+        let startPos = this.mapManager.getRandomFloorPosition();
+        if (!startPos) {
+            startPos = { x: this.mapManager.tileSize * 4, y: (this.mapManager.height * this.mapManager.tileSize) / 2 };
+        }
         const player = this.factory.create('player', {
             x: startPos.x,
             y: startPos.y,
@@ -1483,6 +1488,8 @@ export class Game {
         } else {
             this.mapManager = new MapManager();
         }
+        // 새로 생성한 맵 매니저가 타일 이미지를 사용할 수 있도록 에셋을 전달합니다.
+        this.mapManager.assets = this.assets;
         if (this.pathfindingManager) this.pathfindingManager.mapManager = this.mapManager;
         if (this.motionManager) this.motionManager.mapManager = this.mapManager;
         if (this.movementManager) this.movementManager.mapManager = this.mapManager;
