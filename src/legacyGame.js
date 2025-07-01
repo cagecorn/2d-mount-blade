@@ -101,7 +101,9 @@ export class Game {
     }
 
     start() {
-        this.initializer = new GameInitializer(this);
+        // GameInitializer expects a CanvasRenderingContext2D so use the
+        // dedicated getter instead of passing the Game instance itself.
+        this.initializer = new GameInitializer(this.getBattleCanvasContext());
         this.initializer.start();
     }
 
