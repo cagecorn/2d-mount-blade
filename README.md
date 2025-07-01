@@ -23,6 +23,7 @@
 * **예측 메모리 시스템:** TensorFlow 연산을 전용 Web Worker가 처리하며, 각 전투의 승부 예측과 MVP 정보를 IndexedDB에 저장합니다.
 * **TensorFlow 길찾기 토글:** `config/gameSettings.js`의 `ENABLE_TENSORFLOW_PATHING`을 활성화하면 학습된 모델을 이용해 보다 자연스러운 경로를 계산합니다. 기본값은 꺼져 있으며, 모델 파일이 없을 경우 자동으로 기존 BFS 로직을 사용합니다.
 * **평판 시스템 토글:** `config/gameSettings.js`의 `ENABLE_REPUTATION_SYSTEM` 값을 false로 설정하면 평판 기록과 모델 로드를 생략하여 성능을 높일 수 있습니다.
+* **초기 로딩 후 캔버스 표시:** `index.html`의 `battleCanvas` 요소는 기본적으로 숨겨져 있으며, `GameInitializer`가 모든 에셋을 불러오면 자동으로 표시되어 로딩 완료 시점을 명확히 보여 줍니다.
 
 ## 개발 원칙
 
