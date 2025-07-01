@@ -1,9 +1,8 @@
 import { AssetLoader } from '../assetLoader.js';
-import { setupAndStartGame } from '../game.js';
 
 export class GameInitializer {
-  constructor(context) {
-    this.context = context;
+  constructor(game) {
+    this.game = game;
     this.loader = new AssetLoader();
   }
 
@@ -56,8 +55,7 @@ export class GameInitializer {
     l.loadVfxImages();
 
     l.onReady((assets) => {
-      console.log('에셋 로딩 완료, 게임 설정 시작...');
-      setupAndStartGame(this.context, assets);
+      this.game.init(assets);
     });
   }
 }

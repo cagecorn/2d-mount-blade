@@ -70,22 +70,6 @@ export class EntityManager {
         }
     }
 
-    update(deltaTime) {
-        for (const entity of this.entities.values()) {
-            if (typeof entity.update === 'function') {
-                entity.update(deltaTime);
-            }
-        }
-    }
-
-    draw(ctx) {
-        for (const entity of this.entities.values()) {
-            if (typeof entity.render === 'function') {
-                entity.render(ctx);
-            }
-        }
-    }
-
     /**
      * 모든 엔티티와 내부 상태를 초기화합니다.
      */
