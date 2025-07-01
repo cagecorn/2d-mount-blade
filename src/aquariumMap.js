@@ -40,7 +40,7 @@ export class AquariumMapManager extends MapManager {
     // are open so all lanes converge at the bases.
     _generateMaze() {
         if (!this.useLanes) {
-            return super._generateMaze();
+            return super._generateEmptyMap();
         }
 
         const map = Array.from({ length: this.height }, () =>
