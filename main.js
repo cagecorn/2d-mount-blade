@@ -1,11 +1,12 @@
 // main.js
-import { GameInitializer } from './src/core/GameInitializer.js';
+
+// legacyGame.js에 정의된 Game 클래스를 불러와 실행 진입점을 단순화한다.
+import { Game } from './src/legacyGame.js';
 import { registerServiceWorker } from './src/utils/swRegister.js';
 
 window.onload = () => {
     registerServiceWorker();
-    const canvas = document.getElementById('battleCanvas');
-    const context = canvas.getContext('2d');
-    const initializer = new GameInitializer(context);
-    initializer.start();
+    // Game 인스턴스를 생성하여 초기화 과정을 모두 맡긴다.
+    const game = new Game();
+    game.start();
 };

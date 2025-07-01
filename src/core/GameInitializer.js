@@ -1,8 +1,8 @@
 import { AssetLoader } from '../assetLoader.js';
-import { setupAndStartGame } from '../game.js';
 
 export class GameInitializer {
   constructor(context) {
+    // context는 Game 인스턴스로, 초기화 완료 후 init()을 호출한다.
     this.context = context;
     this.loader = new AssetLoader();
   }
@@ -57,10 +57,14 @@ export class GameInitializer {
 
     l.onReady(() => {
       console.log('에셋 로딩 완료, 게임 설정 시작...');
-      setupAndStartGame(this.context, this.loader.assets);
+      // 로딩이 끝나면 Game 인스턴스의 init을 호출해 본격적으로 게임을 시작한다.
+      this.context.init(this.loader.assets);
+
       // Ensure the canvas becomes visible once the game is ready
-      if (this.context?.canvas) {
-        this.context.canvas.style.display = 'block';
+      // battleCanvas 대신 canvas-container를 표시한다.
+      const container = document.getElementById('canvas-container');
+      if (container) {
+          container.style.display = 'block';
       }
     });
   }

@@ -101,9 +101,8 @@ export class Game {
     }
 
     start() {
-        // GameInitializer expects a CanvasRenderingContext2D so use the
-        // dedicated getter instead of passing the Game instance itself.
-        this.initializer = new GameInitializer(this.getBattleCanvasContext());
+        // GameInitializer는 Game 인스턴스를 받아 초기화 과정을 진행한다.
+        this.initializer = new GameInitializer(this);
         this.initializer.start();
     }
 
